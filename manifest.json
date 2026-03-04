@@ -1,7 +1,7 @@
 {
   "name": "Lembretes",
   "short_name": "Lembretes",
-  "start_url": "Lembretes.html",
+  "start_url": "https://dedefoundation.github.io/Lembretes.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#2196f3",
