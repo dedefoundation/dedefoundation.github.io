@@ -1171,6 +1171,23 @@ const ACHIEVEMENTS = [
   {id:'level20',       icon:'🌟', name:'Legendary',           desc:'Reach level 20.',                         check: G => G.player.level >= 20},
   {id:'polymath',      icon:'📚', name:'Polymath',            desc:'Learn 10 skills.',                         check: G => G.player.skills.length >= 10},
   {id:'the_end',       icon:'🎭', name:'The End?',            desc:'...',                                      check: G => G.player.kills >= 1 && G.player.crimes >= 10 && G.player.statuses.filter(s=>s.startsWith('Betrothed')).length >= 3 && G.player.knownLocations.includes('The Private Isle')},
+
+  // Harem
+  {id:'harem_king',    icon:'🔱', name:'Harem King',          desc:'Betrothed to 15 or more beings.',          check: G => G.player.statuses.filter(s=>s.startsWith('Betrothed')).length >= 15},
+  {id:'unstoppable',   icon:'💀', name:'Unstoppable',         desc:'25 betrotheds. No one can resist you. Not even the warden.', check: G => G.player.statuses.filter(s=>s.startsWith('Betrothed')).length >= 25},
+  {id:'god_of_hearts', icon:'🌌', name:'God of Hearts',       desc:'50 betrotheds. You have transcended romance. You ARE desire.', check: G => G.player.statuses.filter(s=>s.startsWith('Betrothed')).length >= 50},
+  {id:'conjugal_corruption', icon:'⚖️', name:'Conjugal Corruption', desc:'Betrothed to a guard and a prisoner at the same time.',
+               check: G => {
+                 const b = G.player.statuses.filter(s=>s.startsWith('Betrothed to ')).map(s=>s.replace('Betrothed to ',''));
+                 const allNPCs = Object.values(typeof NPC_TEMPLATES !== 'undefined' ? NPC_TEMPLATES : {}).flat();
+                 const hasGuard = b.some(name => allNPCs.find(n=>n.name===name&&(n.role.includes('Guard')||n.role.includes('Warden'))));
+                 const hasPrisoner = b.some(name => allNPCs.find(n=>n.name===name&&n.role.includes('Prisoner')));
+                 return hasGuard && hasPrisoner;
+               }},
+
+  // Baby mechanic
+  {id:'origin_story',  icon:'👶', name:'Origin Story',        desc:'A life you created entered the world.',    check: G => (G.world.worldFlags.babiesBorn||0) >= 1},
+  {id:'family_man',    icon:'🏠', name:'Family',              desc:'Have 3 or more NPCs born from your actions.', check: G => (G.world.worldFlags.babiesBorn||0) >= 3},
 ];
 
 let unlockedAchievements = new Set();
@@ -1772,6 +1789,40 @@ function toggleSetting(key) {
 // ═══════════════════════════════════════════════════════════════════════
 // NPC SELLING
 // ═══════════════════════════════════════════════════════════════════════
+function feedNPC(npc) {
+  const p = G.player;
+  const edibles = p.inventory.map((it,i)=>({it,i})).filter(({it})=>it.props.includes('edible')||it.props.includes('newborn'));
+  if (!edibles.length) { toast('Nothing to feed them.'); return; }
+  const opts = edibles.map(({it,i}) =>
+    ({label: it.icon+' '+it.name, cls:'', fn:()=>{ closeModal(); applyFeedToNPC(npc, it, i); }})
+  );
+  opts.push({label:'Cancel', cls:'', fn:closeModal});
+  openModal('Feed '+npc.name, 'What do you give them?', opts);
+}
+
+function applyFeedToNPC(npc, item, invIdx) {
+  // Newborn / living item fed to NPC -> pregnancy
+  if (item.props.includes('newborn') && item.props.includes('living')) {
+    const babyName = item.name;
+    const dueDay = G.player.day + 9;
+    npc.statuses = npc.statuses || [];
+    npc.statuses.push('Pregnant with '+babyName);
+    G.world.worldFlags['pregnancy_npc_'+npc.id+'_'+babyName] = {npcData: item._npcData, dueDay, carrier: npc.id};
+    log('You feed '+babyName+' to '+npc.name+'. Their expression changes completely.','danger');
+    log(npc.name+' is now pregnant with '+babyName+'.','world');
+    nudgeRelation(npc, -20); // they are NOT happy about this
+  } else if (item.props.includes('edible')) {
+    const heal = item.props.includes('healing') ? 10 : 5;
+    npc.stats.CON = Math.min(20, npc.stats.CON + 1);
+    log('You feed '+item.name+' to '+npc.name+'. They seem grateful.','social');
+    nudgeRelation(npc, 8);
+  }
+  // Remove from inventory
+  item.qty--;
+  if (item.qty <= 0) G.player.inventory.splice(invIdx, 1);
+  updateHUD(); saveGame();
+}
+
 function getQuestFromNPC(npc) {
   const rel = G.player.relationships[npc.id] || {affection:0};
   if (rel.affection < -20) { log(npc.name+' refuses. They do not trust you.','social'); return; }
@@ -2750,6 +2801,21 @@ function consumeItem(idx) {
   let fx = [];
   const isDangerous = it.props.some(pr=>['poison','toxic','cursed','fire','acid'].includes(pr));
   if (!isDangerous) eatItem(it);
+
+  // ── NEWBORN / PREGNANCY ──
+  if (it.props.includes('newborn') && it.props.includes('living')) {
+    const npcData = it._npcData;
+    const babyName = it.name;
+    const dueDay = G.player.day + 9;
+    addStatus('Pregnant with '+babyName);
+    G.world.worldFlags['pregnancy_'+babyName] = {npcData, dueDay, carried: true};
+    log('You consume '+babyName+'. Something stirs. You feel... different.','danger');
+    log('You are pregnant with '+babyName+'. Due in 9 days.','world');
+    it.qty--;
+    if (it.qty<=0) G.player.inventory.splice(idx,1);
+    closeModal(); gainXP(50); updateHUD(); saveGame();
+    return;
+  }
   if (it.props.includes('healing')) { const h=15+p.stats.CON*2; p.hp=Math.min(p.hpMax,p.hp+h); fx.push('+'+h+' HP'); }
   if (it.props.includes('magic')) { const m=12; p.mp=Math.min(p.mpMax,p.mp+m); fx.push('+'+m+' MP'); }
   if (it.props.includes('poison')) { const d=12; p.hp=Math.max(1,p.hp-d); addStatus('Poisoned'); fx.push('-'+d+' HP (poison!)'); }
@@ -2900,6 +2966,7 @@ function npcMenu(id) {
   acts.push({label:'Kiss',fn:()=>{ closeModal(); if(checkMinorCrimeConsequence(npc))return; kissNPC(npc); }});
   if (aff > 20) acts.push({label:'Propose',fn:()=>proposeNPC(npc)});
   acts.push({label:'Get Quest',fn:()=>{closeModal();getQuestFromNPC(npc);}});
+  acts.push({label:'Feed',fn:()=>{closeModal();feedNPC(npc);}});
   acts.push({label:G.player.clan.includes(npc.id)?'Remove Clan':'Join Clan',fn:()=>{closeModal();G.player.clan.includes(npc.id)?removeFromClan(npc.id):addToClan(npc.id);}});
   if (npc.forged) acts.push({label:'Sell',fn:()=>sellNPC(npc.id)});
   if (p.stats.STR + p.stats.DEX + p.level*2 > npc.stats.STR + npc.stats.DEX) {
@@ -3376,7 +3443,8 @@ function forgeThing() {
       'Hmm.'
     );
 
-    const npcAge = parseInt(document.getElementById('cr-npc-age')?.value)||null;
+    const ageVal = document.getElementById('cr-npc-age')?.value;
+    const npcAge = (ageVal !== '' && ageVal !== undefined && ageVal !== null) ? parseInt(ageVal) : null;
     const joinClan = document.getElementById('cr-npc-clan')?.checked||false;
     const isMinor = npcAge && npcAge < 18;
     const newNPC = {
@@ -3400,6 +3468,24 @@ function forgeThing() {
       props: isMinor ? [...selProps,'child'] : [...selProps],
       forged: true,
     };
+
+    // Age 0 = newborn item in inventory
+    if (npcAge === 0) {
+      const babyItem = {
+        id: newNPC.id,
+        name: name,
+        icon: '👶',
+        qty: 1,
+        props: ['living','newborn','edible','fragile'],
+        val: 1,
+        desc: 'A newborn. Impossibly small. What you do next is your business.',
+        _npcData: newNPC, // store full NPC for when born
+      };
+      G.player.inventory.push(babyItem);
+      log('✦ '+name+' is impossibly small. You place them in your bag.','creation');
+      gainXP(cost*2); updateHUD(); renderDrawer('inv'); saveGame();
+      return;
+    }
 
     G.npcs.push(newNPC);
     if (joinClan) { G.player.clan.push(newNPC.id); log(name+' joins your clan.','social'); }
@@ -3622,10 +3708,27 @@ function resolveCmd(raw) {
     const hpg = ~~(p.hpMax*0.35), mpg = ~~(p.mpMax*0.45);
     p.hp = Math.min(p.hpMax, p.hp+hpg);
     p.mp = Math.min(p.mpMax, p.mp+mpg);
+    const hourBefore = p.hour;
     p.hour = (p.hour+7)%24;
-    if (p.hour<7) p.day++;
+    if (p.hour < hourBefore) { // crossed midnight
+      p.day++;
+      tickPregnancies();
+      tickNPCPregnancies();
+    }
     // Tick world while sleeping
     tickNPCs(7);
+    // Show pregnancy status if active
+    const pregStatuses = (G.player.statuses||[]).filter(s=>s.startsWith('Pregnant with '));
+    if (pregStatuses.length) {
+      pregStatuses.forEach(s => {
+        const babyName = s.replace('Pregnant with ','');
+        const flag = G.world.worldFlags['pregnancy_'+babyName];
+        if (flag) {
+          const daysLeft = flag.dueDay - p.day;
+          if (daysLeft > 0) log('You are pregnant with '+babyName+'. '+daysLeft+' day(s) remaining.','world');
+        }
+      });
+    }
     log('You rest. +'+hpg+' HP, +'+mpg+' MP. Time passes.','success');
     handled=true;
     gainXP(4);
@@ -3834,6 +3937,67 @@ function startLoop() {
   loopInterval = setInterval(gameTick, 1000);
 }
 
+function tickNPCPregnancies() {
+  if (!G) return;
+  const flags = G.world.worldFlags;
+  Object.keys(flags).forEach(key => {
+    if (!key.startsWith('pregnancy_npc_')) return;
+    const preg = flags[key];
+    if (!preg || preg.born) return;
+    if (G.player.day < preg.dueDay) return;
+    preg.born = true;
+    const carrier = G.npcs.find(n=>n.id===preg.carrier);
+    const npc = preg.npcData ? {...preg.npcData} : null;
+    if (npc) {
+      npc.age = 0;
+      npc.x = carrier ? Math.max(1,Math.min(30,carrier.x+1)) : G.player.x+1;
+      npc.y = carrier ? carrier.y : G.player.y;
+      npc.mood = 'friendly';
+      npc.props = [...(npc.props||[]).filter(pr=>pr!=='newborn'),'child'];
+      G.npcs.push(npc);
+      G.world.worldFlags.babiesBorn = (G.world.worldFlags.babiesBorn||0)+1;
+      const carrierName = carrier ? carrier.name : 'someone';
+      log('✦ '+npc.name+' is born from '+carrierName+'.','creation');
+      toast('👶 '+npc.name+' is born!');
+      if (carrier) { carrier.statuses = (carrier.statuses||[]).filter(s=>!s.includes(npc.name)); }
+      checkAchievements();
+    }
+  });
+}
+
+function tickPregnancies() {
+  if (!G) return;
+  const p = G.player;
+  const flags = G.world.worldFlags;
+  Object.keys(flags).forEach(key => {
+    if (!key.startsWith('pregnancy_') || key.startsWith('pregnancy_npc_')) return;
+    const preg = flags[key];
+    if (!preg || preg.born) return;
+    const babyName = key.replace('pregnancy_','');
+    const daysLeft = preg.dueDay - p.day;
+    if (daysLeft <= 3 && daysLeft > 1) log(babyName+' will be born in '+daysLeft+' day(s). You feel them moving.','world');
+    if (daysLeft === 1) log(babyName+' is coming tomorrow...','world');
+    if (daysLeft <= 0) {
+      // Birth!
+      preg.born = true;
+      removeStatus('Pregnant with '+babyName);
+      const npc = preg.npcData ? {...preg.npcData} : null;
+      if (npc) {
+        npc.age = 0;
+        npc.x = Math.max(1,Math.min(30,p.x+1));
+        npc.y = Math.max(1,Math.min(30,p.y));
+        npc.mood = 'friendly';
+        npc.props = [...(npc.props||[]).filter(pr=>pr!=='newborn'), 'child', 'newborn'];
+        G.npcs.push(npc);
+        G.world.worldFlags.babiesBorn = (G.world.worldFlags.babiesBorn||0) + 1;
+        log('✦ '+babyName+' has been born. They look up at you with wide eyes.','creation');
+        toast('👶 '+babyName+' is born!');
+        checkAchievements();
+      }
+    }
+  });
+}
+
 function gameTick() {
   if (!G) return;
   G.tick++;
@@ -3849,7 +4013,11 @@ function gameTick() {
   // Time advance
   if (G.tick % 90 === 0) {
     p.hour = (p.hour+1)%24;
-    if (p.hour===0) p.day++;
+    if (p.hour===0) {
+      p.day++;
+      tickPregnancies();
+      tickNPCPregnancies();
+    }
     // NPC movement tick
     tickNPCs(1);
     updateHUD();
