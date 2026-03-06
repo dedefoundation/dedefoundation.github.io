@@ -1,0 +1,3014 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>ANIMUS</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0c0a08">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #0c0a08;
+  --parchment: #1a1610;
+  --parchment2: #221d16;
+  --parchment3: #2a2318;
+  --gold: #d4a84b;
+  --gold2: #f0c866;
+  --gold3: #fff0b0;
+  --ember: #c84030;
+  --ember2: #e85040;
+  --frost: #4878a8;
+  --frost2: #6898c8;
+  --sage: #4a7850;
+  --sage2: #6a9870;
+  --violet: #6840a0;
+  --violet2: #8860c0;
+  --text: #c8b890;
+  --text2: #907860;
+  --text3: #504030;
+  --white: #f5ead8;
+  --border: #3a2e1e;
+  --border2: #5a4830;
+  --glow: rgba(212,168,75,0.15);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--ink);display:flex;flex-direction:column;}
+body{font-family:'EB Garamond',serif;font-size:15px;color:var(--text);cursor:default;}
+
+/* ── TITLE ── */
+#screen-title{
+  position:fixed;inset:0;z-index:900;
+  background:var(--ink);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background-image:
+    radial-gradient(ellipse 80% 60% at 50% 40%, rgba(212,168,75,0.06) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 40% at 20% 80%, rgba(104,40,160,0.05) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 40% at 80% 20%, rgba(200,64,48,0.04) 0%, transparent 60%);
+}
+#screen-title::before{
+  content:'';position:absolute;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg width='400' height='400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  opacity:0.4;pointer-events:none;
+}
+.title-rune{
+  font-family:'Cinzel',serif;
+  font-size:clamp(3.5rem,10vw,8rem);
+  font-weight:700;
+  color:var(--gold);
+  letter-spacing:0.4em;
+  text-shadow:0 0 80px rgba(212,168,75,0.5),0 0 160px rgba(212,168,75,0.15);
+  animation:runeGlow 4s ease-in-out infinite;
+  margin-bottom:0.15em;
+}
+@keyframes runeGlow{
+  0%,100%{text-shadow:0 0 60px rgba(212,168,75,0.4),0 0 120px rgba(212,168,75,0.1);}
+  50%{text-shadow:0 0 100px rgba(212,168,75,0.7),0 0 200px rgba(212,168,75,0.2),0 0 300px rgba(212,168,75,0.05);}
+}
+.title-sub{
+  font-family:'EB Garamond',serif;font-style:italic;
+  font-size:clamp(0.8rem,2vw,1.1rem);
+  color:var(--text2);letter-spacing:0.5em;text-transform:uppercase;
+  margin-bottom:3.5rem;
+}
+.title-divider{
+  width:200px;height:1px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  margin-bottom:2.5rem;opacity:0.4;
+}
+.tbtn{
+  background:transparent;border:1px solid var(--gold);
+  color:var(--gold);font-family:'Cinzel',serif;
+  font-size:0.85rem;letter-spacing:0.25em;text-transform:uppercase;
+  padding:0.75em 3em;cursor:pointer;margin:0.3em;
+  transition:all 0.25s;position:relative;overflow:hidden;
+  min-width:180px;
+}
+.tbtn::after{content:'';position:absolute;inset:0;background:var(--gold);transform:scaleX(0);transform-origin:left;transition:transform 0.25s;z-index:-1;}
+.tbtn:hover{color:var(--ink);}
+.tbtn:hover::after{transform:scaleX(1);}
+.title-quote{
+  position:absolute;bottom:2rem;
+  font-style:italic;color:var(--text3);font-size:0.78rem;letter-spacing:0.1em;
+}
+
+/* ── CHAR CREATION ── */
+#screen-char{
+  position:fixed;inset:0;z-index:800;display:none;
+  background:var(--ink);overflow-y:auto;
+  padding:2rem 1rem;
+  align-items:flex-start;justify-content:center;
+  background-image:radial-gradient(ellipse 60% 50% at 50% 30%, rgba(212,168,75,0.05) 0%, transparent 60%);
+}
+.char-wrap{max-width:680px;width:100%;margin:0 auto;}
+.char-wrap h2{
+  font-family:'Cinzel',serif;color:var(--gold);
+  font-size:1.6rem;letter-spacing:0.2em;
+  border-bottom:1px solid var(--border);padding-bottom:0.8rem;margin-bottom:1.5rem;
+}
+.crow{display:flex;gap:0.8rem;margin-bottom:0.8rem;align-items:center;}
+.crow label{color:var(--text2);font-size:0.75rem;text-transform:uppercase;letter-spacing:0.12em;width:110px;flex-shrink:0;}
+.cfield{
+  background:var(--parchment2);border:1px solid var(--border);
+  color:var(--white);font-family:'EB Garamond',serif;font-size:1rem;
+  padding:0.5em 0.7em;flex:1;outline:none;transition:border-color 0.2s;
+  appearance:none;-webkit-appearance:none;
+}
+.cfield:focus{border-color:var(--gold);}
+.cfield option{background:var(--parchment2);}
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;margin-bottom:1rem;}
+.stat-box{background:var(--parchment2);border:1px solid var(--border);padding:0.6rem;text-align:center;transition:border-color 0.2s;}
+.stat-box:hover{border-color:var(--gold);}
+.stat-box .sn{font-size:0.62rem;color:var(--text2);text-transform:uppercase;letter-spacing:0.12em;font-family:'JetBrains Mono',monospace;}
+.stat-box .sv{font-size:1.6rem;color:var(--gold);font-family:'JetBrains Mono',monospace;line-height:1.2;}
+.stat-box .sc{display:flex;justify-content:center;gap:0.4rem;margin-top:0.2rem;}
+.sbtn{background:var(--border);border:none;color:var(--text);width:22px;height:22px;cursor:pointer;font-size:1rem;line-height:1;transition:all 0.15s;}
+.sbtn:hover{background:var(--gold);color:var(--ink);}
+.pts{color:var(--gold2);font-size:0.8rem;text-align:right;font-family:'JetBrains Mono',monospace;margin-bottom:0.5rem;}
+
+/* ── GAME SHELL — flex column, fills body naturally ── */
+#game{display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden;}
+
+/* ── WORLD ZONE — takes all remaining space between HUD and bnav ── */
+#world-zone{flex:1;min-height:0;position:relative;overflow:hidden;}
+/* ── WORLD CANVAS ── */
+#world-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;image-rendering:pixelated;}
+
+/* ── TOP HUD — flex row item, never shrinks ── */
+#hud-top{
+  flex-shrink:0;
+  z-index:10;
+  background:rgba(12,10,8,0.97);
+  border-bottom:1px solid var(--border);
+  padding:7px 12px;
+  pointer-events:none;
+}
+#hud-top.interactive{pointer-events:auto;}
+.hud-row1{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.hud-name{
+  font-family:'Cinzel',serif;font-size:0.85rem;color:var(--gold);
+  letter-spacing:0.15em;flex-shrink:0;
+}
+.hud-role{font-size:0.72rem;color:var(--text2);font-style:italic;flex-shrink:0;}
+.hud-bars{display:flex;gap:8px;flex:1;min-width:0;}
+.hbar{display:flex;align-items:center;gap:4px;flex:1;min-width:60px;}
+.hbar-lbl{font-family:'JetBrains Mono',monospace;font-size:0.55rem;color:var(--text3);width:16px;flex-shrink:0;text-transform:uppercase;}
+.hbar-track{flex:1;height:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);overflow:hidden;position:relative;}
+.hbar-fill{height:100%;transition:width 0.4s ease;position:relative;}
+.hbar-fill::after{content:'';position:absolute;top:0;left:0;right:0;height:50%;background:rgba(255,255,255,0.2);}
+.fill-hp{background:linear-gradient(90deg,#a03030,#e05050);}
+.fill-mp{background:linear-gradient(90deg,#305080,#5090d0);}
+.fill-xp{background:linear-gradient(90deg,#806020,#d0a040);}
+.hud-meta{display:flex;gap:10px;align-items:center;flex-shrink:0;}
+.hud-gold{font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--gold);}
+.hud-time{font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--text2);}
+.hud-loc{font-size:0.65rem;color:var(--text3);font-style:italic;}
+
+/* ── LOG FEED — absolute inside #world-zone (desktop) ── */
+#log-feed{
+  position:absolute;bottom:0;left:0;right:0;z-index:50;
+  background:linear-gradient(to top,rgba(12,10,8,0.97),rgba(12,10,8,0.8),transparent);
+  padding:20px 14px 8px;
+  pointer-events:none;
+  max-height:45vh;
+  display:flex;flex-direction:column;justify-content:flex-end;
+}
+#log-entries{overflow:hidden;display:flex;flex-direction:column;gap:1px;max-height:120px;}
+.log-line{
+  font-size:0.8rem;line-height:1.45;padding:1px 0;
+  animation:logIn 0.3s ease;white-space:pre-wrap;
+}
+@keyframes logIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+.log-line.sys{color:var(--text3);font-style:italic;}
+.log-line.act{color:var(--text);}
+.log-line.combat{color:var(--ember2);}
+.log-line.loot{color:var(--gold2);}
+.log-line.social{color:var(--frost2);}
+.log-line.creation{color:var(--violet2);}
+.log-line.success{color:var(--sage2);}
+.log-line.danger{color:var(--ember);}
+.log-line.world{color:var(--text2);font-style:italic;}
+
+/* ── CMD INPUT ── */
+#cmd-bar{
+  position:absolute;bottom:8px;left:50%;transform:translateX(-50%);
+  z-index:60;display:flex;gap:6px;
+  width:min(520px,calc(100vw - 120px));
+  pointer-events:auto;
+}
+#cmd-in{
+  flex:1;background:rgba(12,10,8,0.92);
+  border:1px solid var(--border2);border-bottom:2px solid var(--gold);
+  color:var(--white);font-family:'EB Garamond',serif;font-size:0.95rem;
+  padding:0.45em 0.8em;outline:none;
+  transition:border-color 0.2s,box-shadow 0.2s;
+  backdrop-filter:blur(8px);
+}
+#cmd-in:focus{border-color:var(--gold);box-shadow:0 0 20px rgba(212,168,75,0.15);}
+#cmd-in::placeholder{color:var(--text3);font-style:italic;}
+#cmd-go{
+  background:var(--gold);border:none;color:var(--ink);
+  font-family:'Cinzel',serif;font-size:0.75rem;
+  padding:0 1.2em;cursor:pointer;letter-spacing:0.1em;
+  transition:background 0.15s;flex-shrink:0;
+}
+#cmd-go:hover{background:var(--gold2);}
+
+/* ── SIDE DRAWER — absolute inside #world-zone ── */
+#drawer{
+  position:absolute;top:0;right:0;bottom:0;z-index:70;
+  width:min(300px,85vw);
+  background:rgba(12,10,8,0.97);
+  border-left:1px solid var(--border);
+  display:flex;flex-direction:column;
+  transform:translateX(100%);
+  transition:transform 0.28s cubic-bezier(0.4,0,0.2,1);
+  backdrop-filter:blur(12px);
+}
+#drawer.open{transform:translateX(0);}
+#drawer-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;}
+.dtab{
+  flex:1;padding:0.55rem 0;text-align:center;
+  font-family:'JetBrains Mono',monospace;font-size:0.58rem;
+  text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);
+  cursor:pointer;border-right:1px solid var(--border);transition:all 0.2s;
+}
+.dtab:last-child{border-right:none;}
+.dtab:hover{color:var(--text);background:rgba(255,255,255,0.03);}
+.dtab.on{color:var(--gold);background:rgba(212,168,75,0.05);border-bottom:2px solid var(--gold);}
+#drawer-body{flex:1;overflow-y:auto;padding:0.8rem;}
+#drawer-body::-webkit-scrollbar{width:3px;}
+#drawer-body::-webkit-scrollbar-thumb{background:var(--border2);}
+#drawer-close{
+  position:absolute;top:0.5rem;left:-36px;
+  width:32px;height:32px;background:rgba(12,10,8,0.9);
+  border:1px solid var(--border);border-right:none;
+  color:var(--text2);font-size:1rem;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all 0.2s;
+}
+#drawer-close:hover{color:var(--gold);border-color:var(--gold);}
+#drawer-toggle{
+  position:absolute;top:50%;right:0;transform:translateY(-50%);
+  z-index:71;
+  background:rgba(12,10,8,0.9);border:1px solid var(--border2);border-right:none;
+  color:var(--text2);font-size:0.7rem;cursor:pointer;
+  padding:0.5rem 0.3rem;writing-mode:vertical-rl;letter-spacing:0.15em;
+  font-family:'JetBrains Mono',monospace;text-transform:uppercase;
+  transition:all 0.2s;line-height:1;
+}
+#drawer-toggle:hover{color:var(--gold);border-color:var(--gold);}
+#drawer-toggle.hidden{display:none;}
+
+/* ── PANEL COMMON ── */
+.psec{border-bottom:1px solid var(--border);padding-bottom:0.7rem;margin-bottom:0.7rem;}
+.plabel{
+  font-family:'JetBrains Mono',monospace;font-size:0.58rem;
+  text-transform:uppercase;letter-spacing:0.15em;color:var(--text3);
+  margin-bottom:0.45rem;display:block;
+}
+.prow{display:flex;justify-content:space-between;align-items:center;padding:0.15rem 0;font-size:0.8rem;}
+.prow .k{color:var(--text2);}
+.prow .v{color:var(--gold);font-family:'JetBrains Mono',monospace;font-size:0.75rem;}
+
+/* ── ITEMS ── */
+.item-card{
+  background:var(--parchment2);border:1px solid var(--border);
+  padding:0.45rem 0.6rem;margin-bottom:0.3rem;cursor:pointer;
+  transition:all 0.18s;display:flex;justify-content:space-between;align-items:center;
+}
+.item-card:hover{border-color:var(--gold);background:var(--parchment3);}
+.item-card .in{font-size:0.85rem;color:var(--white);}
+.item-card .ip{display:flex;gap:0.3rem;flex-wrap:wrap;margin-top:0.15rem;}
+.item-card .iq{font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--text2);flex-shrink:0;}
+.prop-chip{
+  font-family:'JetBrains Mono',monospace;font-size:0.55rem;
+  padding:0.1em 0.4em;border:1px solid var(--border);color:var(--text3);
+  text-transform:uppercase;letter-spacing:0.05em;
+}
+.prop-chip.fire{border-color:var(--ember);color:var(--ember2);}
+.prop-chip.ice{border-color:#5090d0;color:#70b0f0;}
+.prop-chip.poison{border-color:#608040;color:#80a060;}
+.prop-chip.healing{border-color:var(--sage);color:var(--sage2);}
+.prop-chip.cursed{border-color:var(--violet);color:var(--violet2);}
+.prop-chip.enchanted,.prop-chip.magic{border-color:var(--gold);color:var(--gold2);}
+.prop-chip.holy{border-color:#d0c080;color:#f0e0a0;}
+.prop-chip.shadow{border-color:#604080;color:#906080;}
+
+/* ── NPC CARD ── */
+.npc-card{
+  background:var(--parchment2);border:1px solid var(--border);
+  padding:0.5rem 0.6rem;margin-bottom:0.3rem;cursor:pointer;transition:all 0.18s;
+}
+.npc-card:hover{border-color:var(--frost);background:var(--parchment3);}
+.npc-card .nn{font-size:0.9rem;color:var(--white);}
+.npc-card .nr{font-size:0.7rem;color:var(--text2);}
+.npc-card .nm{float:right;font-size:0.8rem;}
+.npc-card .nstats{font-family:'JetBrains Mono',monospace;font-size:0.58rem;color:var(--text3);margin-top:0.2rem;}
+
+/* ── CREATION ── */
+.cinput{
+  background:var(--parchment2);border:1px solid var(--border);
+  color:var(--white);font-family:'EB Garamond',serif;font-size:0.9rem;
+  padding:0.45em 0.6em;width:100%;outline:none;
+  margin-bottom:0.35rem;transition:border-color 0.2s;
+  appearance:none;-webkit-appearance:none;
+}
+.cinput:focus{border-color:var(--violet2);}
+.cinput option{background:var(--parchment2);}
+.prop-grid{display:flex;flex-wrap:wrap;gap:0.25rem;margin-bottom:0.5rem;}
+.ptag{
+  font-family:'JetBrains Mono',monospace;font-size:0.58rem;
+  padding:0.2em 0.5em;border:1px solid var(--border);color:var(--text3);
+  cursor:pointer;transition:all 0.15s;text-transform:uppercase;letter-spacing:0.05em;
+  user-select:none;-webkit-user-select:none;
+}
+.ptag:hover{border-color:var(--text2);color:var(--text2);}
+.ptag.sel{border-color:var(--violet2);color:var(--violet2);background:rgba(136,96,192,0.1);}
+.forge-btn{
+  width:100%;background:transparent;border:1px solid var(--violet2);
+  color:var(--violet2);font-family:'Cinzel',serif;font-size:0.78rem;
+  padding:0.55em;cursor:pointer;letter-spacing:0.15em;transition:all 0.2s;
+  text-transform:uppercase;margin-top:0.3rem;
+}
+.forge-btn:hover{background:rgba(136,96,192,0.15);color:var(--gold);border-color:var(--gold);}
+
+/* ── MODAL ── */
+#modal{
+  display:none;position:fixed;inset:0;z-index:200;
+  background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);
+  align-items:center;justify-content:center;
+}
+#modal.on{display:flex;}
+.mbox{
+  background:var(--parchment);border:1px solid var(--border2);
+  box-shadow:0 0 80px rgba(0,0,0,0.8),inset 0 1px 0 rgba(212,168,75,0.1);
+  max-width:460px;width:92%;padding:1.4rem;position:relative;
+  max-height:85vh;overflow-y:auto;
+}
+.mbox h3{
+  font-family:'Cinzel',serif;color:var(--gold);
+  font-size:1.05rem;letter-spacing:0.12em;
+  margin-bottom:0.8rem;padding-bottom:0.6rem;border-bottom:1px solid var(--border);
+  padding-right:1.5rem;
+}
+.mbody{font-size:0.88rem;line-height:1.7;color:var(--text);margin-bottom:1rem;}
+.macts{display:flex;flex-wrap:wrap;gap:0.4rem;justify-content:flex-end;}
+.mbtn{
+  background:transparent;border:1px solid var(--border2);color:var(--text);
+  font-family:'EB Garamond',serif;font-size:0.85rem;
+  padding:0.4em 1.1em;cursor:pointer;transition:all 0.18s;
+}
+.mbtn:hover{border-color:var(--gold);color:var(--gold);}
+.mbtn.ok{border-color:var(--gold);color:var(--gold);}
+.mbtn.ok:hover{background:var(--gold);color:var(--ink);}
+.mbtn.bad{border-color:var(--ember);color:var(--ember2);}
+.mbtn.bad:hover{background:var(--ember);color:var(--white);}
+.mbtn.mp{border-color:var(--violet);color:var(--violet2);}
+.mclose{
+  position:absolute;top:0.7rem;right:0.7rem;
+  background:none;border:none;color:var(--text2);font-size:1.1rem;cursor:pointer;
+}
+.mclose:hover{color:var(--white);}
+
+/* ── NOTIF TOAST ── */
+/* Hide dpad/qring when drawer is open */
+body.drawer-open #dpad { display:none !important; }
+body.drawer-open #qring { display:none !important; }
+
+/* Mobile cmd row flex */
+@media(max-width:768px){
+  #mobile-cmd-row { display:flex !important; }
+}
+
+#toast{
+  position:fixed;top:60px;left:50%;transform:translateX(-50%);
+  background:var(--parchment);border:1px solid var(--gold);
+  color:var(--gold);font-family:'Cinzel',serif;font-size:0.82rem;
+  padding:0.5rem 1.5rem;z-index:500;display:none;
+  letter-spacing:0.1em;box-shadow:0 4px 30px rgba(0,0,0,0.6);
+  animation:toastIn 0.25s ease;white-space:nowrap;
+}
+@keyframes toastIn{from{opacity:0;top:50px;}to{opacity:1;top:60px;}}
+
+/* ── D-PAD — absolute inside #world-zone ── */
+#dpad{
+  position:absolute;bottom:12px;left:12px;
+  width:162px;height:162px;z-index:40;
+  user-select:none;-webkit-user-select:none;touch-action:none;
+  display:none;
+}
+#dpad button{
+  position:absolute;width:54px;height:54px;
+  background:rgba(12,10,8,0.8);
+  border:1.5px solid rgba(212,168,75,0.45);
+  color:var(--gold);font-size:1.3rem;cursor:pointer;
+  border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  -webkit-tap-highlight-color:transparent;touch-action:none;
+  backdrop-filter:blur(6px);
+  transition:background 0.08s,border-color 0.08s,transform 0.08s;
+}
+#dpad button:active,#dpad button.pressed{
+  background:rgba(212,168,75,0.25);
+  border-color:rgba(212,168,75,0.9);
+  transform:scale(0.93);
+}
+#dpad .dup   {top:0;    left:54px;}
+#dpad .ddown {top:108px;left:54px;}
+#dpad .dleft {top:54px; left:0;}
+#dpad .dright{top:54px; left:108px;}
+#dpad .dctr  {top:54px; left:54px;border-radius:50%;font-size:0.5rem;color:var(--text3);pointer-events:none;border-color:rgba(212,168,75,0.15);}
+
+/* ── QUICK ACTIONS RING — absolute inside #world-zone ── */
+#qring{
+  position:absolute;bottom:12px;right:8px;
+  display:none;flex-direction:column;gap:6px;z-index:40;
+}
+.qbtn{
+  width:48px;height:48px;border-radius:50%;
+  background:rgba(12,10,8,0.85);border:1.5px solid var(--border2);
+  color:var(--text);font-size:1rem;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  -webkit-tap-highlight-color:transparent;
+  backdrop-filter:blur(6px);transition:all 0.15s;
+}
+.qbtn:active{transform:scale(0.9);}
+.qbtn.gold-btn{border-color:var(--gold);color:var(--gold);}
+.qbtn.red-btn{border-color:var(--ember);color:var(--ember2);}
+.qbtn.blue-btn{border-color:var(--frost);color:var(--frost2);}
+
+/* ── BOTTOM NAV — flex row item, never shrinks ── */
+#bnav{
+  flex-shrink:0;
+  height:52px;
+  background:rgba(12,10,8,0.97);
+  border-top:1px solid var(--border2);
+  z-index:10;
+  display:none;
+  flex-direction:row;
+}
+.bnbtn{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--text3);font-size:0.5rem;text-transform:uppercase;
+  letter-spacing:0.06em;gap:2px;background:none;border:none;
+  font-family:'JetBrains Mono',monospace;
+  -webkit-tap-highlight-color:transparent;transition:color 0.15s;
+}
+.bnbtn .bi{font-size:1.1rem;}
+.bnbtn.on{color:var(--gold);}
+
+/* ── RESPONSIVE ── */
+
+/* ---- MOBILE: show dpad/qring/bnav, hide desktop ui ---- */
+@media(max-width:768px){
+  /* Show mobile-only elements */
+  #dpad{ display:block; }
+  #qring{ display:flex; }
+  #bnav{ display:flex; }
+  #mobile-cmd-row{ display:flex !important; }
+
+  /* Compact HUD */
+  .hud-role{ display:none; }
+  .hud-loc{ display:none; }
+  .hbar-track{ height:5px; }
+
+  /* Hide desktop-only ui */
+  #log-feed{ display:none; }
+  #cmd-bar{ display:none; }
+  #drawer-close{ display:none; }
+  #drawer-toggle{ display:none; }
+
+  /* Drawer covers world-zone on mobile (slides up) */
+  #drawer{
+    top:0; bottom:0; left:0; right:0;
+    width:100%;
+    transform:translateY(100%);
+    border-left:none;
+    border-top:1px solid var(--border2);
+  }
+  #drawer.open{ transform:translateY(0); }
+
+  /* Hide dpad/qring when drawer is open */
+  body.drawer-open #dpad{ display:none !important; }
+  body.drawer-open #qring{ display:none !important; }
+
+  /* Event flash */
+  #event-flash{
+    position:absolute;
+    top:8px; left:50%;
+    transform:translateX(-50%);
+    max-width:calc(100% - 24px);
+    font-size:0.8rem;
+    text-align:center;
+    z-index:50;
+    pointer-events:auto;
+    cursor:pointer;
+  }
+
+  /* Touch-friendly modals */
+  .mbtn{ padding:0.55em 1em; font-size:0.9rem; }
+  .mbox{ max-height:88vh; width:95%; }
+}
+
+/* ---- DESKTOP ---- */
+@media(min-width:769px){
+  #drawer{ width:290px; }
+  #bnav{ display:none; }
+  #dpad{ display:none; }
+  #qring{ display:none; }
+  #mobile-cmd-row{ display:none; }
+}
+
+/* ── SPRITE AREA ── */
+#sprite-wrap{
+  display:flex;align-items:center;justify-content:center;
+  padding:1rem 0 0.5rem;border-bottom:1px solid var(--border);margin-bottom:0.6rem;
+}
+#spr-canvas{image-rendering:pixelated;}
+
+/* ── STATUS CHIPS ── */
+.status-chips{display:flex;flex-wrap:wrap;gap:0.25rem;}
+.schip{
+  font-family:'JetBrains Mono',monospace;font-size:0.55rem;
+  padding:0.15em 0.5em;border:1px solid var(--border);color:var(--text3);
+  text-transform:uppercase;letter-spacing:0.06em;
+}
+.schip.good{border-color:var(--sage);color:var(--sage2);}
+.schip.bad{border-color:var(--ember);color:var(--ember2);}
+.schip.magic{border-color:var(--violet);color:var(--violet2);}
+.schip.info{border-color:var(--frost);color:var(--frost2);}
+
+/* ── WORLD INFO ── */
+.wloc{
+  font-family:'Cinzel',serif;color:var(--gold);font-size:0.9rem;
+  letter-spacing:0.1em;margin-bottom:0.5rem;
+}
+.wevent{
+  padding:0.3rem 0;border-bottom:1px solid rgba(58,46,30,0.4);
+  font-size:0.78rem;color:var(--text2);line-height:1.5;
+}
+.wtrav{
+  padding:0.35rem 0.5rem;margin-bottom:0.25rem;
+  background:var(--parchment2);border:1px solid var(--border);
+  cursor:pointer;font-size:0.82rem;color:var(--text);
+  transition:all 0.18s;display:flex;justify-content:space-between;
+}
+.wtrav:hover{border-color:var(--gold);color:var(--gold);}
+.wtrav .wdist{font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--text3);}
+
+/* ── SKILL LIST ── */
+.skill-row{
+  padding:0.35rem 0;border-bottom:1px solid rgba(58,46,30,0.3);
+  font-size:0.82rem;display:flex;justify-content:space-between;align-items:center;
+}
+.skill-row .sk{color:var(--white);}
+.skill-row .sd{font-size:0.7rem;color:var(--text2);margin-top:0.1rem;}
+
+/* scrollbar */
+*{scrollbar-width:thin;scrollbar-color:var(--border2) transparent;}
+</style>
+</head>
+<body>
+<!-- TITLE -->
+<div id="screen-title">
+  <div class="title-rune">ANIMUS</div>
+  <div class="title-sub">A World That Remembers Everything</div>
+  <div class="title-divider"></div>
+  <button class="tbtn" onclick="showChar()">Begin</button>
+  <button class="tbtn" onclick="loadGame()" id="btn-continue">Continue</button>
+  <div class="title-quote">"Whatever you are — the world will react accordingly."</div>
+</div>
+
+<!-- CHAR CREATION -->
+<div id="screen-char" style="display:none;flex-direction:column;">
+  <div class="char-wrap">
+    <h2>Who Are You?</h2>
+    <div class="crow"><label>Name</label><input class="cfield" id="cc-name" placeholder="Your name..." maxlength="24"></div>
+    <div class="crow">
+      <label>Origin</label>
+      <select class="cfield" id="cc-origin">
+        <option value="wanderer">Wanderer — no home, no past</option>
+        <option value="noble">Fallen Noble — once had everything</option>
+        <option value="streetrat">Street Rat — survived the gutters</option>
+        <option value="scholar">Failed Scholar — knowledge without power</option>
+        <option value="exile">Exile — banished, reason unknown</option>
+        <option value="merchant">Merchant's Kin — numbers and greed</option>
+        <option value="soldier">Deserter — left the war behind</option>
+        <option value="criminal">Criminal — the law knows your face</option>
+      </select>
+    </div>
+    <div class="crow"><label>Role / Archetype</label><input class="cfield" id="cc-role" placeholder="Knight, Bum, Pimp, Herbalist, Assassin..." maxlength="32"></div>
+    <div class="crow">
+      <label>Reputation</label>
+      <select class="cfield" id="cc-rep">
+        <option value="unknown">Unknown — nobody knows you yet</option>
+        <option value="public">Public — your nature is visible</option>
+        <option value="feared">Feared — your name causes dread</option>
+        <option value="beloved">Beloved — people adore you</option>
+        <option value="wanted">Wanted — guards are looking for you</option>
+        <option value="ghost">Ghost — officially dead, off the records</option>
+      </select>
+    </div>
+    <div class="crow">
+      <label>Appearance</label>
+      <select class="cfield" id="cc-skin">
+        <option value="fair">Fair skin</option>
+        <option value="tan">Tan skin</option>
+        <option value="brown">Brown skin</option>
+        <option value="dark">Dark skin</option>
+      </select>
+    </div>
+    <div class="crow">
+      <label>Hair</label>
+      <select class="cfield" id="cc-hair">
+        <option value="black">Black</option>
+        <option value="brown">Brown</option>
+        <option value="blonde">Blonde</option>
+        <option value="red">Red</option>
+        <option value="white">White / Grey</option>
+        <option value="bald">Bald</option>
+      </select>
+    </div>
+    <div style="margin:1rem 0 0.3rem;">
+      <div class="pts">Stat points remaining: <span id="pts-left">12</span></div>
+    </div>
+    <div class="stat-grid" id="stat-grid"></div>
+    <div style="display:flex;gap:0.5rem;margin-top:1rem;">
+      <button class="tbtn" style="flex:1;font-size:0.78rem;padding:0.65em;" onclick="startGame()">Enter World</button>
+      <button class="tbtn" style="flex:1;font-size:0.78rem;padding:0.65em;" onclick="randChar()">Randomize</button>
+    </div>
+  </div>
+</div>
+
+<!-- GAME SHELL — flex column that fills whatever space body gives it -->
+<div id="game">
+
+  <!-- HUD ROW — flex-shrink:0, natural height -->
+  <div id="hud-top">
+    <div class="hud-row1">
+      <span class="hud-name" id="h-name">—</span>
+      <span class="hud-role" id="h-role">—</span>
+      <div class="hud-bars">
+        <div class="hbar"><span class="hbar-lbl">HP</span><div class="hbar-track"><div class="hbar-fill fill-hp" id="b-hp"></div></div></div>
+        <div class="hbar"><span class="hbar-lbl">MP</span><div class="hbar-track"><div class="hbar-fill fill-mp" id="b-mp"></div></div></div>
+        <div class="hbar"><span class="hbar-lbl">XP</span><div class="hbar-track"><div class="hbar-fill fill-xp" id="b-xp"></div></div></div>
+      </div>
+      <div class="hud-meta">
+        <span class="hud-gold" id="h-gold">⬡ 0</span>
+        <span class="hud-time" id="h-time">—</span>
+        <span class="hud-loc" id="h-loc">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- WORLD ZONE — flex:1, all overlays are absolute inside this -->
+  <div id="world-zone">
+    <canvas id="world-canvas"></canvas>
+
+    <!-- LOG (desktop only) -->
+    <div id="log-feed">
+      <div id="log-entries"></div>
+    </div>
+
+    <!-- CMD (desktop only) -->
+    <div id="cmd-bar">
+      <input id="cmd-in" placeholder="kiss Mara, steal from guard, brew poison tea, open a stall, help..." maxlength="140">
+      <button id="cmd-go" onclick="doCmd()">Act</button>
+    </div>
+
+    <!-- DESKTOP DRAWER TOGGLE -->
+    <button id="drawer-toggle" onclick="toggleDrawer()">Menu</button>
+
+    <!-- DRAWER — absolute inside world-zone -->
+    <div id="drawer">
+      <button id="drawer-close" onclick="toggleDrawer()">◀</button>
+      <div id="drawer-tabs">
+        <div class="dtab on" onclick="drawerTab('char')">Self</div>
+        <div class="dtab" onclick="drawerTab('inv')">Bag</div>
+        <div class="dtab" onclick="drawerTab('create')">Forge</div>
+        <div class="dtab" onclick="drawerTab('world')">World</div>
+        <div class="dtab" onclick="drawerTab('npcs')">Folk</div>
+      </div>
+      <div id="drawer-body"></div>
+      <div id="mobile-cmd-row" style="display:none;flex-shrink:0;padding:6px 8px;background:var(--parchment);border-top:1px solid var(--border);gap:6px;align-items:center;">
+        <input id="mcmd-in" style="flex:1;background:var(--parchment2);border:1px solid var(--border2);color:var(--white);font-family:'EB Garamond',serif;font-size:0.9rem;padding:0.4em 0.6em;outline:none;min-width:0;" placeholder="do anything...">
+        <button onclick="doMcmd()" style="background:var(--gold);border:none;color:var(--ink);font-family:'JetBrains Mono',monospace;font-size:0.7rem;padding:0.5em 0.8em;cursor:pointer;flex-shrink:0;letter-spacing:0.05em;">ACT</button>
+      </div>
+    </div>
+
+    <!-- DPAD — absolute inside world-zone, bottom-left -->
+    <div id="dpad">
+      <button class="dup"    data-dx="0"  data-dy="-1">▲</button>
+      <button class="ddown"  data-dx="0"  data-dy="1">▼</button>
+      <button class="dleft"  data-dx="-1" data-dy="0">◀</button>
+      <button class="dright" data-dx="1"  data-dy="0">▶</button>
+      <button class="dctr">✦</button>
+    </div>
+
+    <!-- QUICK RING — absolute inside world-zone, bottom-right -->
+    <div id="qring">
+      <button class="qbtn gold-btn" onclick="openDrawerTo('inv')" title="Inventory">🎒</button>
+      <button class="qbtn blue-btn" onclick="openDrawerTo('npcs')" title="Nearby NPCs">👥</button>
+      <button class="qbtn" onclick="doCmd2('rest')" title="Rest">💤</button>
+      <button class="qbtn" onclick="doCmd2('forage')" title="Forage">🌿</button>
+    </div>
+  </div><!-- end world-zone -->
+
+  <!-- BOTTOM NAV — flex-shrink:0, natural height, always last -->
+  <div id="bnav">
+    <button class="bnbtn on" id="bn-map"   onclick="bnav('map')"><span class="bi">🗺</span>Map</button>
+    <button class="bnbtn"    id="bn-inv"    onclick="bnav('inv')"><span class="bi">🎒</span>Bag</button>
+    <button class="bnbtn"    id="bn-forge"  onclick="bnav('create')"><span class="bi">✦</span>Forge</button>
+    <button class="bnbtn"    id="bn-world"  onclick="bnav('world')"><span class="bi">🌍</span>World</button>
+    <button class="bnbtn"    id="bn-self"   onclick="bnav('char')"><span class="bi">🧍</span>Self</button>
+    <button class="bnbtn"    id="bn-log"    onclick="openLogModal()"><span class="bi">📜</span>Log</button>
+  </div>
+
+</div>
+
+<!-- MODAL -->
+<div id="modal">
+  <div class="mbox">
+    <button class="mclose" onclick="closeModal()">✕</button>
+    <h3 id="m-title">—</h3>
+    <div class="mbody" id="m-body"></div>
+    <div class="macts" id="m-acts"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- EVENT FLASH — absolute inside #world-zone -->
+<div id="event-flash" style="
+  display:none;position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:120;
+  background:rgba(12,10,8,0.92);border:1px solid var(--border2);
+  color:var(--text);font-family:'EB Garamond',serif;font-size:0.78rem;
+  padding:6px 12px;line-height:1.4;
+  box-shadow:0 4px 20px rgba(0,0,0,0.7);
+  pointer-events:none;max-width:320px;
+  transition:opacity 0.5s;
+"></div>
+
+<!-- LOG HISTORY MODAL -->
+<div id="log-modal" style="
+  display:none;position:fixed;inset:0;z-index:150;
+  background:rgba(0,0,0,0.8);backdrop-filter:blur(4px);
+  align-items:flex-end;justify-content:center;
+">
+  <div style="
+    background:var(--parchment);border:1px solid var(--border2);border-bottom:none;
+    width:100%;max-width:600px;max-height:75vh;
+    display:flex;flex-direction:column;
+    box-shadow:0 -8px 40px rgba(0,0,0,0.8);
+  ">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);flex-shrink:0;">
+      <span style="font-family:'Cinzel',serif;color:var(--gold);font-size:0.9rem;letter-spacing:0.12em;">Event Log</span>
+      <button onclick="closeLogModal()" style="background:none;border:none;color:var(--text2);font-size:1.2rem;cursor:pointer;padding:0 4px;">✕</button>
+    </div>
+    <div id="log-modal-entries" style="flex:1;overflow-y:auto;padding:10px 14px;display:flex;flex-direction:column-reverse;gap:2px;"></div>
+  </div>
+</div>
+<script>
+// ═══════════════════════════════════════════════════════════════════════
+// CONSTANTS & DATA
+// ═══════════════════════════════════════════════════════════════════════
+const STATS = ['STR','DEX','INT','CON','CHA','WIS'];
+const STAT_NAMES = {STR:'Strength',DEX:'Dexterity',INT:'Intellect',CON:'Constitution',CHA:'Charisma',WIS:'Wisdom'};
+
+const ALL_PROPS = [
+  // Elemental
+  'fire','ice','electric','poison','acid','water','wind','earth',
+  // Magic
+  'holy','cursed','enchanted','shadow','magic','ancient','forbidden','divine',
+  // Physical
+  'sharp','blunt','heavy','light','fragile','durable','sticky','slippery','explosive',
+  // Life
+  'living','sentient','edible','healing','draining','flammable','waterproof','toxic',
+  // Social/Psych
+  'charming','repulsive','arousing','terrifying','calming','maddening','addictive',
+  // Functional
+  'invisible','loud','silent','fast','slow','contagious','transforming','binding',
+  // Meta
+  'stat-boost','stat-drain','skill-grant','property-copy','world-edit','time-alter'
+];
+
+const PROP_COLORS = {
+  fire:'#e85040',ice:'#70b0f0',electric:'#f0e040',poison:'#80a060',
+  acid:'#a0c040',water:'#5090d0',holy:'#f0e0a0',cursed:'#906080',
+  enchanted:'#d0a040',shadow:'#604080',magic:'#8860c0',healing:'#6a9870',
+  charming:'#d080a0',terrifying:'#c04030',arousing:'#d06080',
+  'stat-boost':'#f0c866','stat-drain':'#e05050','skill-grant':'#80c0a0',
+  'world-edit':'#c0a0f0','time-alter':'#f0c0a0',
+};
+
+const SKIN_COLORS = {
+  fair:{skin:'#f5d5b5',shadow:'#d4a87a',lip:'#c08070'},
+  tan: {skin:'#d4956a',shadow:'#a06840',lip:'#a06858'},
+  brown:{skin:'#a06040',shadow:'#784830',lip:'#8a5040'},
+  dark: {skin:'#6a3820',shadow:'#4a2810',lip:'#5a3028'},
+};
+const HAIR_COLORS = {
+  black:'#1a1010',brown:'#5a3018',blonde:'#d4a840',
+  red:'#b04020',white:'#d0c8c0',bald:null
+};
+
+// ═══════════════════════════════════════════════════════════════════════
+// WORLD DATA — Locations with real distinct environments
+// ═══════════════════════════════════════════════════════════════════════
+const LOCATION_DATA = {
+  'Crossroads Town': {
+    desc:'A dusty crossroads settlement. Merchants, guards, and the desperate congregate here.',
+    ambient:['Someone argues loudly at the inn.','A dog barks in the distance.','The smell of bread from the bakery.','Coins clink somewhere nearby.','Children run past laughing.'],
+    danger:1, wealth:2, type:'town',
+    color:{ground:'#2a2015',path:'#3a2e18',accent:'#4a3820'},
+    objects:[
+      {icon:'🏠',x:4,y:4},{icon:'🏠',x:6,y:4},{icon:'🏠',x:12,y:3},{icon:'🏠',x:18,y:4},
+      {icon:'🏨',x:10,y:6,name:'The Leaky Flagon'},{icon:'🏪',x:14,y:7,name:'Market'},
+      {icon:'⛲',x:11,y:10},{icon:'🔥',x:8,y:11},{icon:'🔥',x:14,y:11},
+      {icon:'🌲',x:2,y:2},{icon:'🌲',x:22,y:2},{icon:'🌲',x:2,y:18},{icon:'🌲',x:22,y:18},
+      {icon:'⚒️',x:6,y:8,name:'Blacksmith'},{icon:'🌿',x:16,y:12,name:'Herbalist'},
+    ]
+  },
+  'Dark Forest': {
+    desc:'Ancient trees block the sky. Things move in the shadows. Predators hunt here.',
+    ambient:['A branch snaps somewhere close.','Distant howling.','Something watches you from the canopy.','The air smells of rot and mushrooms.','A bird shrieks and goes silent.'],
+    danger:4, wealth:3, type:'wilderness',
+    color:{ground:'#0f1208',path:'#1a1810',accent:'#252018'},
+    objects:[
+      {icon:'🌲',x:3,y:3},{icon:'🌲',x:5,y:4},{icon:'🌲',x:2,y:7},{icon:'🌲',x:7,y:2},
+      {icon:'🌲',x:14,y:5},{icon:'🌲',x:16,y:3},{icon:'🌲',x:18,y:7},{icon:'🌲',x:20,y:4},
+      {icon:'🌲',x:9,y:14},{icon:'🌲',x:12,y:16},{icon:'🌲',x:4,y:17},{icon:'🌲',x:19,y:15},
+      {icon:'🍄',x:8,y:8},{icon:'🍄',x:13,y:11},{icon:'🌿',x:6,y:12},{icon:'🌿',x:17,y:9},
+      {icon:'🕳️',x:11,y:11,name:'Dark Cave'},{icon:'💀',x:15,y:14,name:'Old Bones'},
+      {icon:'🔥',x:10,y:10,name:'Campfire'},
+    ]
+  },
+  'The Ruins': {
+    desc:'A collapsed civilization. Crumbling towers, overgrown plazas, cursed artifacts buried in rubble.',
+    ambient:['Wind moans through hollow stone.','An echo where there should be none.','The ground feels wrong here.','Something glints under the debris.','A cold feeling, despite the sun.'],
+    danger:5, wealth:5, type:'ruins',
+    color:{ground:'#1a1510',path:'#252015',accent:'#302a18'},
+    objects:[
+      {icon:'🗼',x:5,y:5,name:'Broken Tower'},{icon:'🗼',x:19,y:4,name:'Crumbled Spire'},
+      {icon:'🪬',x:11,y:9,name:'Ancient Altar'},{icon:'📦',x:8,y:14,name:'Buried Chest'},
+      {icon:'📦',x:17,y:12,name:'Rubble Cache'},{icon:'⚰️',x:13,y:6,name:'Tomb'},
+      {icon:'🌿',x:4,y:12},{icon:'🌿',x:16,y:16},{icon:'🌿',x:7,y:17},
+      {icon:'🪨',x:6,y:8},{icon:'🪨',x:15,y:8},{icon:'🪨',x:10,y:15},
+    ]
+  },
+  'Hilltop Village': {
+    desc:'A quiet farming village above the valley. Simple folk, simple troubles, simple secrets.',
+    ambient:['Chickens cluck somewhere.','A windmill turns slowly.','The smell of hay and manure.','A farmer waves from the fields.','Church bells in the distance.'],
+    danger:1, wealth:1, type:'village',
+    color:{ground:'#1e2010',path:'#2a2a14',accent:'#383818'},
+    objects:[
+      {icon:'🏠',x:5,y:6},{icon:'🏠',x:9,y:5},{icon:'🏠',x:14,y:5},{icon:'🏠',x:18,y:7},
+      {icon:'⛪',x:11,y:8,name:'Chapel'},{icon:'🌾',x:6,y:13},{icon:'🌾',x:8,y:14},
+      {icon:'🌾',x:15,y:12},{icon:'🌾',x:17,y:13},{icon:'🌲',x:3,y:3},{icon:'🌲',x:21,y:3},
+      {icon:'🐄',x:13,y:15,name:'Cow'},{icon:'🐑',x:16,y:15,name:'Sheep'},
+      {icon:'💧',x:10,y:10,name:'Well'},
+    ]
+  },
+  'Docks': {
+    desc:'Salty air, creaking wood, shady dealings. Smugglers and sailors make this their home.',
+    ambient:['Waves slap the pier.','A gull cries overhead.','Rope and fish smell the air.','A drunk sings off-key.','Barrels being rolled somewhere.'],
+    danger:3, wealth:4, type:'docks',
+    color:{ground:'#0e1418',path:'#141e24',accent:'#1a2830'},
+    objects:[
+      {icon:'⛵',x:5,y:16},{icon:'⛵',x:9,y:17},{icon:'🚢',x:15,y:17,name:'The Serpent'},
+      {icon:'🏠',x:4,y:6},{icon:'🏠',x:7,y:5},{icon:'🏠',x:12,y:4},
+      {icon:'🍺',x:9,y:8,name:'Dockside Tavern'},{icon:'📦',x:14,y:10,name:'Warehouse'},
+      {icon:'📦',x:16,y:11},{icon:'🌊',x:4,y:14},{icon:'🌊',x:8,y:15},
+      {icon:'🌊',x:12,y:16},{icon:'🌊',x:18,y:15},
+      {icon:'🔱',x:11,y:12,name:'Smuggler\'s Mark'},
+    ]
+  },
+  'Bandit Camp': {
+    desc:'Hidden in the hills. A rough collection of tents and stolen goods. They don\'t like visitors.',
+    ambient:['Laughter around a fire.','The sound of a sword being sharpened.','Someone playing a bad tune.','A lookout shifts position.','The smell of roasting meat.'],
+    danger:5, wealth:4, type:'camp',
+    color:{ground:'#1a1208',path:'#241a0c',accent:'#301e10'},
+    objects:[
+      {icon:'⛺',x:6,y:7},{icon:'⛺',x:9,y:6},{icon:'⛺',x:13,y:8},{icon:'⛺',x:16,y:6},
+      {icon:'🔥',x:11,y:10,name:'Main Fire'},{icon:'🔥',x:7,y:14},
+      {icon:'📦',x:8,y:12,name:'Loot Pile'},{icon:'📦',x:15,y:13},
+      {icon:'⚔️',x:13,y:12,name:'Weapon Rack'},{icon:'🌲',x:3,y:4},{icon:'🌲',x:20,y:4},
+      {icon:'💀',x:4,y:14},{icon:'🪢',x:17,y:10,name:'Prisoner Post'},
+    ]
+  }
+};
+
+const NPC_TEMPLATES = {
+  'Crossroads Town': [
+    {id:'gorrak',name:'Gorrak',role:'Blacksmith',gender:'m',mood:'neutral',home:'Crossroads Town',
+     stats:{STR:14,DEX:7,INT:6,CON:15,CHA:5,WIS:8},props:['tough','skilled'],x:7,y:8,
+     routine:['works','works','drinks at inn','works','works','sleeps'],
+     dialogue:{neutral:'Need something forged?',friendly:'Best iron in the region, friend.',hostile:'Get out of my shop.',charmed:'Anything for you...'}},
+    {id:'mara',name:'Mara',role:'Innkeeper',gender:'f',mood:'friendly',home:'Crossroads Town',
+     stats:{STR:6,DEX:9,INT:10,CON:8,CHA:14,WIS:12},props:['social','perceptive'],x:11,y:7,
+     routine:['tends bar','tends bar','gossips','tends bar','tends bar','sleeps'],
+     dialogue:{neutral:'Room for the night?',friendly:'Always a warm welcome here!',hostile:'Out. Now.',charmed:'Stay as long as you like...'}},
+    {id:'aldric',name:'Aldric',role:'Town Guard',gender:'m',mood:'suspicious',home:'Crossroads Town',
+     stats:{STR:11,DEX:10,INT:7,CON:12,CHA:6,WIS:9},props:['authority','armed','watchful'],x:16,y:12,
+     routine:['patrols','patrols','patrols','eats','patrols','sleeps'],
+     dialogue:{neutral:'Move along.',friendly:'Stay out of trouble.',hostile:'You\'re under arrest!',afraid:'S-stay back!'}},
+    {id:'syla',name:'Syla',role:'Merchant',gender:'f',mood:'cheerful',home:'Crossroads Town',
+     stats:{STR:4,DEX:11,INT:13,CON:5,CHA:16,WIS:12},props:['wealthy','cunning','social'],x:14,y:8,
+     routine:['sells','sells','counts gold','sells','sells','sleeps'],
+     dialogue:{neutral:'Best prices in the region!',friendly:'For you, a special deal.',hostile:'Guards!',charmed:'Take whatever you want...'}},
+    {id:'tomas',name:'Old Tomas',role:'Beggar',gender:'m',mood:'sad',home:'Crossroads Town',
+     stats:{STR:3,DEX:6,INT:7,CON:4,CHA:3,WIS:15},props:['poor','wise','harmless'],x:8,y:14,
+     routine:['begs','begs','sleeps in alley','begs','drinks','begs'],
+     dialogue:{neutral:'Spare a coin...',friendly:'Bless you, stranger.',hostile:'Please, I mean no harm.',charmed:'You\'re an angel.'}},
+    {id:'pip',name:'Pip',role:'Town Kid',gender:'n',mood:'playful',home:'Crossroads Town',
+     stats:{STR:2,DEX:14,INT:5,CON:4,CHA:11,WIS:3},props:['fast','curious','innocent'],x:13,y:11,
+     routine:['plays','plays','runs errands','plays','eats','sleeps'],
+     dialogue:{neutral:'Watch this!',friendly:'You\'re the best!',hostile:'I\'m telling!',afraid:'Mum!'}},
+  ],
+  'Dark Forest': [
+    {id:'sylvan',name:'Sylvan',role:'Hermit',gender:'m',mood:'neutral',home:'Dark Forest',
+     stats:{STR:8,DEX:12,INT:16,CON:10,CHA:4,WIS:18},props:['wise','mysterious','nature-magic'],x:10,y:10,
+     routine:['meditates','forages','meditates','brews','meditates','sleeps'],
+     dialogue:{neutral:'The forest speaks if you listen.',friendly:'You have potential, traveller.',hostile:'Leave. Now.',charmed:'...I have not felt this way in decades.'}},
+    {id:'lurker1',name:'Bandit Lurker',role:'Bandit',gender:'m',mood:'hostile',home:'Dark Forest',
+     stats:{STR:10,DEX:12,INT:5,CON:9,CHA:3,WIS:5},props:['armed','aggressive','greedy'],x:6,y:6,
+     routine:['patrols','hides','attacks','patrols','eats','sleeps'],
+     dialogue:{neutral:'Your gold or your life.',hostile:'Die!',afraid:'Please don\'t kill me!',charmed:'I... I can\'t fight you.'}},
+    {id:'lurker2',name:'Forest Witch',role:'Witch',gender:'f',mood:'suspicious',home:'Dark Forest',
+     stats:{STR:4,DEX:9,INT:18,CON:6,CHA:8,WIS:17},props:['magic','cursed','knowledgeable'],x:15,y:14,
+     routine:['brews','studies','collects herbs','brews','sleeps','brews'],
+     dialogue:{neutral:'What do you want from me?',friendly:'I may share my secrets.',hostile:'You\'ll regret this.',charmed:'Strange... you make my potions bubble.'}},
+  ],
+  'The Ruins': [
+    {id:'archaeo',name:'Dren',role:'Treasure Hunter',gender:'m',mood:'neutral',home:'The Ruins',
+     stats:{STR:9,DEX:13,INT:12,CON:9,CHA:8,WIS:10},props:['experienced','greedy','armed'],x:9,y:9,
+     routine:['digs','examines','digs','rests','maps','sleeps'],
+     dialogue:{neutral:'This place has secrets.',friendly:'Partner up? Split the finds.',hostile:'Back off. I found this first.',charmed:'Let\'s explore together...'}},
+    {id:'ghost1',name:'Revenant',role:'Undead',gender:'n',mood:'hostile',home:'The Ruins',
+     stats:{STR:13,DEX:6,INT:4,CON:20,CHA:2,WIS:4},props:['undead','cursed','cannot-die','terrifying'],x:13,y:7,
+     routine:['wanders','wanders','attacks intruders','wanders','wanders','wanders'],
+     dialogue:{neutral:'...','hostile':'LEAVE.','afraid':'...','charmed':'...peace...'}},
+  ],
+  'Hilltop Village': [
+    {id:'elder',name:'Elder Wynn',role:'Village Elder',gender:'f',mood:'neutral',home:'Hilltop Village',
+     stats:{STR:3,DEX:5,INT:14,CON:5,CHA:13,WIS:18},props:['authority','wise','connected'],x:11,y:8,
+     routine:['advises','walks','advises','prays','advises','sleeps'],
+     dialogue:{neutral:'What brings you to our village?',friendly:'You are welcome here.',hostile:'I will have you removed.',charmed:'I\'ve never met anyone quite like you.'}},
+    {id:'farmer1',name:'Brunna',role:'Farmer',gender:'f',mood:'friendly',home:'Hilltop Village',
+     stats:{STR:9,DEX:8,INT:7,CON:12,CHA:8,WIS:10},props:['hardworking','kind'],x:7,y:13,
+     routine:['farms','farms','rests','farms','prays','sleeps'],
+     dialogue:{neutral:'Hard work keeps the belly full.',friendly:'Harvest is good this year!',hostile:'Leave my farm alone!',charmed:'Oh my... you\'re wonderful.'}},
+  ],
+  'Docks': [
+    {id:'captain',name:'Captain Voss',role:'Ship Captain',gender:'m',mood:'neutral',home:'Docks',
+     stats:{STR:12,DEX:11,INT:10,CON:13,CHA:10,WIS:11},props:['authority','experienced','armed'],x:12,y:10,
+     routine:['inspects ship','drinks','negotiates','drinks','inspects crew','sleeps'],
+     dialogue:{neutral:'What do you want?',friendly:'Finest ship in the harbor.',hostile:'Off my pier.',charmed:'I\'ve sailed every sea, but none like you.'}},
+    {id:'smuggler',name:'Fenwick',role:'Smuggler',gender:'m',mood:'suspicious',home:'Docks',
+     stats:{STR:8,DEX:15,INT:11,CON:7,CHA:9,WIS:10},props:['sneaky','criminal','armed'],x:16,y:8,
+     routine:['moves cargo','hides','counts gold','moves cargo','watches','sleeps'],
+     dialogue:{neutral:'Eyes forward, stranger.',friendly:'You seem trustworthy enough.',hostile:'I\'ll gut you here.',charmed:'I\'ve never trusted anyone... until now.'}},
+  ],
+  'Bandit Camp': [
+    {id:'bandit_chief',name:'Chief Rorn',role:'Bandit Chief',gender:'m',mood:'hostile',home:'Bandit Camp',
+     stats:{STR:16,DEX:10,INT:9,CON:15,CHA:11,WIS:8},props:['powerful','feared','armed','territorial'],x:11,y:10,
+     routine:['commands','drinks','fights for fun','counts loot','drinks','sleeps'],
+     dialogue:{neutral:'You\'ve got guts coming here.',friendly:'You could join us.',hostile:'Kill them!',afraid:'How are you this strong?!',charmed:'I... bow to you.'}},
+    {id:'bandit1',name:'Scar',role:'Bandit',gender:'m',mood:'hostile',home:'Bandit Camp',
+     stats:{STR:11,DEX:11,INT:4,CON:10,CHA:4,WIS:5},props:['armed','violent'],x:7,y:9,
+     routine:['patrols','drinks','gambles','patrols','fights','sleeps'],
+     dialogue:{neutral:'What you lookin\' at?',hostile:'Get \'im!',afraid:'I don\'t wanna die!',charmed:'I\'d follow you anywhere.'}},
+    {id:'prisoner',name:'Lena',role:'Prisoner',gender:'f',mood:'afraid',home:'Bandit Camp',
+     stats:{STR:4,DEX:8,INT:11,CON:5,CHA:10,WIS:9},props:['helpless','bound'],x:17,y:10,
+     routine:['sits','sits','sits','sits','sits','sits'],
+     dialogue:{neutral:'Please... help me.',friendly:'You\'re here to save me?',afraid:'They\'ll hear you!',charmed:'I won\'t forget this.'}},
+  ]
+};
+
+// ═══════════════════════════════════════════════════════════════════════
+// GAME STATE
+// ═══════════════════════════════════════════════════════════════════════
+let G = null;
+let ccStats = {STR:5,DEX:5,INT:5,CON:5,CHA:5,WIS:5};
+let ptsLeft = 12;
+
+function freshState() {
+  return {
+    player:{
+      name:'Stranger',origin:'wanderer',role:'Wanderer',reputation:'unknown',
+      skinKey:'tan',hairKey:'brown',
+      level:1,xp:0,xpNext:100,
+      hp:100,hpMax:100,mp:60,mpMax:60,
+      gold:50,day:1,hour:8,
+      stats:{STR:5,DEX:5,INT:5,CON:5,CHA:5,WIS:5},
+      skills:['Observe','Basic Strike','Forage'],
+      statuses:[],
+      inventory:[
+        {id:'bread',name:'Stale Bread',icon:'🍞',qty:2,props:['edible','healing'],val:2,desc:'Old but filling. Heals a little HP.'},
+        {id:'knife',name:'Rusty Knife',icon:'🗡️',qty:1,props:['sharp','fragile','weapon'],val:8,desc:'A basic cutting tool. Adds to attack.'},
+        {id:'herb',name:'Wild Herb',icon:'🌿',qty:3,props:['edible','healing','magic'],val:5,desc:'A medicinal plant. Heals HP and restores a little MP.'},
+      ],
+      x:11,y:11,
+      kills:0,crimes:0,gifts:0,crafted:0,
+      relationships:{}, // npcId -> {affection:-100..100, known:bool}
+      knownLocations:['Crossroads Town'],
+      completedEvents:[],
+    },
+    world:{
+      location:'Crossroads Town',
+      events:[],
+      worldFlags:{}, // persistent world state
+      npcStates:{}, // overrides
+    },
+    npcs: buildNPCs('Crossroads Town'),
+    log:[],
+    tick:0,
+  };
+}
+
+function buildNPCs(location) {
+  const templates = NPC_TEMPLATES[location] || [];
+  return templates.map(t => ({...t, relations:{}, memory:[]}));
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// CHAR CREATION
+// ═══════════════════════════════════════════════════════════════════════
+function showChar() {
+  document.getElementById('screen-title').style.display = 'none';
+  const sc = document.getElementById('screen-char');
+  sc.style.display = 'flex';
+  buildStatGrid();
+  document.getElementById('cc-origin').addEventListener('change', ()=>{});
+}
+
+function buildStatGrid() {
+  const g = document.getElementById('stat-grid');
+  g.innerHTML = STATS.map(s => `
+    <div class="stat-box">
+      <div class="sn">${STAT_NAMES[s]}</div>
+      <div class="sv" id="sv-${s}">${ccStats[s]}</div>
+      <div class="sc">
+        <button class="sbtn" onclick="adjStat('${s}',-1)">−</button>
+        <button class="sbtn" onclick="adjStat('${s}',1)">+</button>
+      </div>
+    </div>`).join('');
+}
+
+function adjStat(s,d) {
+  const nv = ccStats[s]+d;
+  if (nv < 1 || nv > 18) return;
+  if (d > 0 && ptsLeft <= 0) { toast('No points left!'); return; }
+  ccStats[s] = nv;
+  ptsLeft -= d;
+  document.getElementById('sv-'+s).textContent = nv;
+  document.getElementById('pts-left').textContent = ptsLeft;
+}
+
+function randChar() {
+  const names = ['Kael','Lyra','Dorn','Sable','Vex','Mira','Rook','Ash','Zenn','Thea','Crix','Nola','Bram','Eska'];
+  const roles = ['Wandering Bum','Street Hustler','Disgraced Knight','Travelling Cook','Unlicensed Merchant','Semi-Retired Thief','Desperate Sellsword','Hopeless Romantic'];
+  document.getElementById('cc-name').value = names[~~(Math.random()*names.length)];
+  document.getElementById('cc-role').value = roles[~~(Math.random()*roles.length)];
+  ccStats = {STR:1,DEX:1,INT:1,CON:1,CHA:1,WIS:1};
+  ptsLeft = 12;
+  for (let i=0;i<ptsLeft+6;i++) {
+    const s = STATS[~~(Math.random()*STATS.length)];
+    if (ccStats[s] < 18) { ccStats[s]++; ptsLeft--; if (ptsLeft<=0) break; }
+  }
+  buildStatGrid();
+  document.getElementById('pts-left').textContent = ptsLeft;
+}
+
+function startGame() {
+  const name = document.getElementById('cc-name').value.trim() || 'Stranger';
+  G = freshState();
+  G.player.name = name;
+  G.player.origin = document.getElementById('cc-origin').value;
+  G.player.role = document.getElementById('cc-role').value.trim() || 'Wanderer';
+  G.player.reputation = document.getElementById('cc-rep').value;
+  G.player.skinKey = document.getElementById('cc-skin').value;
+  G.player.hairKey = document.getElementById('cc-hair').value;
+  G.player.stats = {...ccStats};
+  G.player.hpMax = 80 + G.player.stats.CON * 5;
+  G.player.hp = G.player.hpMax;
+  G.player.mpMax = 40 + G.player.stats.INT * 4;
+  G.player.mp = G.player.mpMax;
+  // Origin bonuses
+  const bonuses = {
+    noble:{gold:150,skills:['Etiquette','Horseback Riding']},
+    streetrat:{stats:{DEX:2},skills:['Pickpocket','Streetwise']},
+    scholar:{stats:{INT:2,WIS:1},skills:['Read Ancient Scripts','Identify']},
+    exile:{stats:{STR:1,CON:1},skills:['Survival','Track']},
+    merchant:{gold:200,skills:['Haggle','Appraise']},
+    soldier:{stats:{STR:2,CON:1},skills:['Combat Training','Rally']},
+    criminal:{stats:{DEX:1,CHA:1},skills:['Intimidate','Lie Convincingly']},
+  };
+  const b = bonuses[G.player.origin];
+  if (b) {
+    if (b.gold) G.player.gold += b.gold;
+    if (b.stats) Object.entries(b.stats).forEach(([k,v])=>G.player.stats[k]+=v);
+    if (b.skills) G.player.skills.push(...b.skills);
+  }
+  saveGame();
+  document.getElementById('screen-char').style.display = 'none';
+  launchGame();
+}
+
+function loadGame() {
+  const s = localStorage.getItem('animus_v2');
+  if (!s) { toast('No save found.'); return; }
+  try { G = JSON.parse(s); } catch(e) { toast('Save corrupted.'); return; }
+  document.getElementById('screen-title').style.display = 'none';
+  launchGame();
+}
+
+function saveGame() {
+  if (G) localStorage.setItem('animus_v2', JSON.stringify(G));
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// LAUNCH
+// ═══════════════════════════════════════════════════════════════════════
+function launchGame() {
+  document.getElementById('game').style.display = 'flex';
+  requestAnimationFrame(() => { initCanvas(); _postLaunch(); });
+}
+function _postLaunch() {
+  initDpad();
+  updateHUD();
+  renderDrawer('char');
+  startLoop();
+  log('You stand in ' + G.world.location + '. The world stretches before you.', 'world');
+  log('Your role: ' + G.player.role + ' · Reputation: ' + G.player.reputation, 'sys');
+  log('Type "help" for commands, or just describe what you want to do.', 'sys');
+  document.getElementById('cmd-in').addEventListener('keydown', e => { if (e.key==='Enter') doCmd(); });
+  window.addEventListener('keydown', handleKey);
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// CANVAS & WORLD RENDERING
+// ═══════════════════════════════════════════════════════════════════════
+let canvas, ctx, W, H, TILE = 36;
+let camX = 0, camY = 0;
+let worldMap = [];
+let worldObjects = [];
+
+function initCanvas() {
+  canvas = document.getElementById('world-canvas');
+  resizeCanvas();
+  // Standard resize
+  window.addEventListener('resize', () => { resizeCanvas(); buildMap(); render(); });
+
+  buildMap();
+}
+
+function resizeCanvas() {
+  // canvas lives in #world-zone — measure that directly
+  const zone = document.getElementById('world-zone') || canvas.parentElement;
+  W = canvas.width = zone.clientWidth || window.innerWidth;
+  H = canvas.height = zone.clientHeight || window.innerHeight;
+}
+
+
+function buildMap() {
+  const loc = LOCATION_DATA[G.world.location] || LOCATION_DATA['Crossroads Town'];
+  const seed = hashStr(G.world.location);
+  const rng = mkRng(seed);
+  worldMap = [];
+  for (let y=0;y<32;y++) {
+    worldMap[y] = [];
+    for (let x=0;x<32;x++) {
+      const r = rng();
+      let t = 0;
+      if (r < 0.04) t = 2; // water/void
+      else if (r < 0.18) t = 1; // path
+      worldMap[y][x] = t;
+    }
+  }
+  // Roads
+  for (let x=0;x<32;x++) { worldMap[11][x] = 1; worldMap[12][x] = 1; }
+  for (let y=0;y<32;y++) { worldMap[y][11] = 1; worldMap[y][12] = 1; }
+  worldObjects = [...(loc.objects || [])];
+}
+
+function render() {
+  if (!ctx) { ctx = canvas.getContext('2d'); }
+  const loc = LOCATION_DATA[G.world.location] || LOCATION_DATA['Crossroads Town'];
+  const p = G.player;
+
+  camX = p.x * TILE - W/2;
+  camY = p.y * TILE - H/2;
+
+  // Background
+  ctx.fillStyle = loc.color.ground;
+  ctx.fillRect(0, 0, W, H);
+
+  // Tiles
+  const tx0 = Math.max(0, ~~(camX/TILE));
+  const ty0 = Math.max(0, ~~(camY/TILE));
+  const tx1 = Math.min(31, tx0 + ~~(W/TILE)+2);
+  const ty1 = Math.min(31, ty0 + ~~(H/TILE)+2);
+
+  for (let ty=ty0; ty<=ty1; ty++) {
+    for (let tx=tx0; tx<=tx1; tx++) {
+      const t = worldMap[ty]?.[tx] ?? 0;
+      const sx = tx*TILE - camX;
+      const sy = ty*TILE - camY;
+      if (t === 1) {
+        ctx.fillStyle = loc.color.path;
+        ctx.fillRect(sx, sy, TILE, TILE);
+        ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+        ctx.lineWidth = 0.5;
+        ctx.strokeRect(sx+0.5, sy+0.5, TILE-1, TILE-1);
+      } else if (t === 2) {
+        ctx.fillStyle = 'rgba(0,0,0,0.4)';
+        ctx.fillRect(sx, sy, TILE, TILE);
+      } else {
+        // Subtle texture
+        ctx.fillStyle = loc.color.accent;
+        if ((tx+ty)%3===0) ctx.fillRect(sx, sy, TILE, TILE);
+      }
+    }
+  }
+
+  // World objects
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  worldObjects.forEach(obj => {
+    const sx = obj.x*TILE - camX + TILE/2;
+    const sy = obj.y*TILE - camY + TILE/2;
+    if (sx < -TILE || sx > W+TILE || sy < -TILE || sy > H+TILE) return;
+    ctx.font = `${TILE-6}px serif`;
+    ctx.fillText(obj.icon, sx, sy);
+    if (obj.name) {
+      ctx.font = `9px 'JetBrains Mono', monospace`;
+      ctx.fillStyle = 'rgba(200,184,150,0.7)';
+      ctx.fillText(obj.name, sx, sy + TILE/2);
+    }
+  });
+
+  // NPCs
+  G.npcs.forEach(npc => {
+    const sx = npc.x*TILE - camX;
+    const sy = npc.y*TILE - camY;
+    if (sx < -TILE || sx > W+TILE || sy < -TILE || sy > H+TILE) return;
+    drawNPCSprite(ctx, npc, sx, sy);
+  });
+
+  // Player
+  drawPlayerSprite(ctx, p.x*TILE - camX, p.y*TILE - camY);
+
+  // Vignette
+  const vig = ctx.createRadialGradient(W/2,H/2,H*0.25,W/2,H/2,H*0.85);
+  vig.addColorStop(0,'transparent');
+  vig.addColorStop(1,'rgba(12,10,8,0.65)');
+  ctx.fillStyle = vig;
+  ctx.fillRect(0,0,W,H);
+
+  // Time-of-day overlay
+  const hr = G.player.hour;
+  if (hr < 6 || hr >= 22) {
+    ctx.fillStyle = 'rgba(5,5,20,0.55)';
+    ctx.fillRect(0,0,W,H);
+  } else if (hr < 8 || hr >= 20) {
+    ctx.fillStyle = 'rgba(20,10,5,0.3)';
+    ctx.fillRect(0,0,W,H);
+  }
+}
+
+// ── PLAYER SPRITE ──
+function drawPlayerSprite(ctx, px, py) {
+  const skin = SKIN_COLORS[G.player.skinKey] || SKIN_COLORS.tan;
+  const hairCol = HAIR_COLORS[G.player.hairKey] || '#5a3018';
+  const s = TILE/16;
+
+  ctx.save();
+  ctx.translate(px, py);
+
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  ctx.beginPath();
+  ctx.ellipse(8*s, 30*s, 6*s, 3*s, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  // Boots
+  ctx.fillStyle = '#2a1a08';
+  roundRect(ctx, 3*s, 26*s, 5*s, 5*s, s);
+  roundRect(ctx, 10*s, 26*s, 5*s, 5*s, s);
+
+  // Legs / pants
+  ctx.fillStyle = '#3a3060';
+  ctx.fillRect(3*s, 19*s, 5*s, 8*s);
+  ctx.fillRect(10*s, 19*s, 5*s, 8*s);
+  // inner leg shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.2)';
+  ctx.fillRect(7*s, 19*s, 2*s, 8*s);
+
+  // Belt
+  ctx.fillStyle = '#8B5A2B';
+  ctx.fillRect(3*s, 18*s, 12*s, 2*s);
+  ctx.fillStyle = '#d4a84b';
+  ctx.fillRect(7*s, 17.5*s, 2.5*s, 3*s);
+
+  // Body/shirt
+  ctx.fillStyle = '#5a6a8a';
+  roundRect(ctx, 2*s, 10*s, 14*s, 9*s, 1.5*s);
+  // Shirt shading
+  ctx.fillStyle = 'rgba(255,255,255,0.08)';
+  roundRect(ctx, 2*s, 10*s, 14*s, 4*s, 1.5*s);
+  ctx.fillStyle = 'rgba(0,0,0,0.15)';
+  ctx.fillRect(2*s, 16*s, 14*s, 3*s);
+
+  // Arms
+  ctx.fillStyle = '#5a6a8a';
+  roundRect(ctx, -2*s, 10*s, 5*s, 8*s, 1.5*s);
+  roundRect(ctx, 15*s, 10*s, 5*s, 8*s, 1.5*s);
+
+  // Hands
+  ctx.fillStyle = skin.skin;
+  ctx.beginPath();
+  ctx.ellipse(-0.5*s, 18*s, 3*s, 3*s, -0.2, 0, Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(18.5*s, 18*s, 3*s, 3*s, 0.2, 0, Math.PI*2);
+  ctx.fill();
+
+  // Neck
+  ctx.fillStyle = skin.skin;
+  ctx.fillRect(6*s, 6*s, 6*s, 5*s);
+
+  // Head
+  ctx.fillStyle = skin.skin;
+  ctx.beginPath();
+  ctx.ellipse(9*s, 5*s, 7.5*s, 7*s, 0, 0, Math.PI*2);
+  ctx.fill();
+  // Head shading
+  ctx.fillStyle = skin.shadow;
+  ctx.beginPath();
+  ctx.ellipse(9*s, 7*s, 7.5*s, 4*s, 0, 0, Math.PI);
+  ctx.fill();
+  // Reset head highlight
+  ctx.fillStyle = skin.skin;
+  ctx.beginPath();
+  ctx.ellipse(9*s, 4.5*s, 6.5*s, 5*s, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  // Ear
+  ctx.fillStyle = skin.shadow;
+  ctx.beginPath();
+  ctx.ellipse(1.8*s, 5*s, 1.5*s, 2*s, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(16.2*s, 5*s, 1.5*s, 2*s, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  // Hair
+  if (hairCol) {
+    ctx.fillStyle = hairCol;
+    ctx.beginPath();
+    ctx.ellipse(9*s, 2*s, 7.5*s, 5*s, 0, 0, Math.PI);
+    ctx.fill();
+    // Hair sides
+    ctx.fillRect(1.5*s, 2*s, 3*s, 4*s);
+    ctx.fillRect(13.5*s, 2*s, 3*s, 4*s);
+  }
+
+  // Eyes
+  ctx.fillStyle = '#1a1010';
+  ctx.beginPath();
+  ctx.ellipse(5.5*s, 5.5*s, 2*s, 1.8*s, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(12.5*s, 5.5*s, 2*s, 1.8*s, 0, 0, Math.PI*2);
+  ctx.fill();
+  // Eye whites
+  ctx.fillStyle = 'rgba(255,255,255,0.9)';
+  ctx.beginPath();
+  ctx.ellipse(5.5*s, 5.5*s, 1.5*s, 1.2*s, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(12.5*s, 5.5*s, 1.5*s, 1.2*s, 0, 0, Math.PI*2);
+  ctx.fill();
+  // Pupils
+  ctx.fillStyle = '#1a1010';
+  ctx.beginPath();
+  ctx.arc(5.5*s, 5.5*s, 0.8*s, 0, Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(12.5*s, 5.5*s, 0.8*s, 0, Math.PI*2);
+  ctx.fill();
+  // Eye shine
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  ctx.beginPath();
+  ctx.arc(5.8*s, 5.2*s, 0.35*s, 0, Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(12.8*s, 5.2*s, 0.35*s, 0, Math.PI*2);
+  ctx.fill();
+
+  // Nose
+  ctx.fillStyle = skin.shadow;
+  ctx.beginPath();
+  ctx.arc(9*s, 7*s, 1.2*s, 0, Math.PI);
+  ctx.fill();
+
+  // Mouth
+  ctx.strokeStyle = skin.lip;
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.arc(9*s, 8.5*s, 2.5*s, 0.15, Math.PI-0.15);
+  ctx.stroke();
+
+  // Player marker above head
+  ctx.fillStyle = 'rgba(212,168,75,0.9)';
+  ctx.beginPath();
+  ctx.arc(9*s, -3*s, 3.5*s, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(12,10,8,0.8)';
+  ctx.font = `${4*s}px serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('✦', 9*s, -3*s);
+
+  // Status glow effects
+  if (hasStatus('On Fire')) {
+    ctx.strokeStyle = '#ff6030';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(0, 0, 18*s, 32*s);
+  }
+  if (hasStatus('Charmed')) {
+    ctx.strokeStyle = '#d080a0';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([3,3]);
+    ctx.strokeRect(0, 0, 18*s, 32*s);
+    ctx.setLineDash([]);
+  }
+  if (hasStatus('Poisoned')) {
+    ctx.strokeStyle = '#80a060';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(0, 0, 18*s, 32*s);
+  }
+
+  ctx.restore();
+}
+
+function drawNPCSprite(ctx, npc, sx, sy) {
+  const moodColors = {
+    friendly:'#6a9870',hostile:'#c84030',suspicious:'#d0a840',
+    neutral:'#8a7a60',afraid:'#7080a8',charmed:'#d080a0',
+    sad:'#6070a0',cheerful:'#d0b840',infatuated:'#e06090',playful:'#80c070'
+  };
+  const col = moodColors[npc.mood] || '#8a7a60';
+
+  ctx.save();
+  ctx.translate(sx, sy);
+
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.beginPath();
+  ctx.ellipse(TILE/2, TILE-2, 8, 3, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  // Body silhouette
+  ctx.fillStyle = col+'44';
+  ctx.fillRect(TILE/2-6, 4, 12, 22);
+
+  // NPC role icon
+  const roleIcons = {
+    Blacksmith:'🧔',Innkeeper:'👩',Guard:'💂','Town Guard':'💂',
+    Merchant:'🧕',Beggar:'🧓','Town Kid':'🧒',Hermit:'🧙',
+    Bandit:'🗡️','Bandit Chief':'👑',Witch:'🔮','Treasure Hunter':'🏺',
+    Undead:'💀',Farmer:'👨‍🌾',Elder:'👵','Village Elder':'👵',
+    'Ship Captain':'⚓',Smuggler:'🐱',Prisoner:'⛓️',
+  };
+  ctx.font = `${TILE-10}px serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(roleIcons[npc.role] || '🧑', TILE/2, TILE/2 - 2);
+
+  // Mood bubble
+  const moodIcons = {hostile:'💢',afraid:'💦',infatuated:'💕',charmed:'💫',friendly:'💬',sad:'💧'};
+  if (moodIcons[npc.mood]) {
+    ctx.font = '10px serif';
+    ctx.fillText(moodIcons[npc.mood], TILE-4, 4);
+  }
+
+  // Name tag
+  ctx.font = `8px 'JetBrains Mono', monospace`;
+  ctx.fillStyle = col + 'cc';
+  ctx.fillText(npc.name, TILE/2, TILE - 1);
+
+  ctx.restore();
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y);
+  ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+  ctx.lineTo(x+w, y+h-r);
+  ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+  ctx.lineTo(x+r, y+h);
+  ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+  ctx.lineTo(x, y+r);
+  ctx.quadraticCurveTo(x, y, x+r, y);
+  ctx.closePath();
+  ctx.fill();
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// HUD
+// ═══════════════════════════════════════════════════════════════════════
+function updateHUD() {
+  if (!G) return;
+  const p = G.player;
+  document.getElementById('h-name').textContent = p.name + ' Lv.' + p.level;
+  document.getElementById('h-role').textContent = p.role;
+  document.getElementById('b-hp').style.width = (p.hp/p.hpMax*100)+'%';
+  document.getElementById('b-mp').style.width = (p.mp/p.mpMax*100)+'%';
+  document.getElementById('b-xp').style.width = (p.xp/p.xpNext*100)+'%';
+  document.getElementById('h-gold').textContent = '⬡ ' + p.gold;
+  const hrs = p.hour;
+  const tnames = ['Midnight','Deep Night','Before Dawn','Dawn','Morning','Late Morning',
+    'Midday','Afternoon','Late Afternoon','Evening','Dusk','Night'];
+  document.getElementById('h-time').textContent = 'Day ' + p.day + ' · ' + tnames[~~(hrs/2)%12];
+  document.getElementById('h-loc').textContent = G.world.location;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// DRAWER
+// ═══════════════════════════════════════════════════════════════════════
+let drawerOpen = false;
+let currentTab = 'char';
+
+function toggleDrawer() {
+  if (window.innerWidth <= 768) { closeMobileDrawer(); return; }
+  drawerOpen = !drawerOpen;
+  document.getElementById('drawer').classList.toggle('open', drawerOpen);
+  document.getElementById('drawer-toggle').classList.toggle('hidden', drawerOpen);
+}
+
+function openDrawerTo(tab) {
+  if (window.innerWidth <= 768) { openMobileDrawer(tab); return; }
+  drawerOpen = true;
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawer-toggle').classList.add('hidden');
+  drawerTab(tab);
+}
+
+function drawerTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.dtab').forEach(t => t.classList.remove('on'));
+  const tabs = document.querySelectorAll('.dtab');
+  const map = {char:0,inv:1,create:2,world:3,npcs:4};
+  if (tabs[map[tab]]) tabs[map[tab]].classList.add('on');
+  renderDrawer(tab);
+}
+
+function renderDrawer(tab) {
+  const body = document.getElementById('drawer-body');
+  if (!G) return;
+  const p = G.player;
+
+  if (tab === 'char') {
+    const statRows = STATS.map(s => `<div class="prow"><span class="k">${STAT_NAMES[s]}</span><span class="v">${p.stats[s]}</span></div>`).join('');
+    const chips = (p.statuses.length ? p.statuses : ['Healthy']).map(st => {
+      const cls = st==='Healthy'?'good':st.includes('Cursed')||st.includes('Poison')||st.includes('Fire')?'bad':'magic';
+      return `<span class="schip ${cls}">${st}</span>`;
+    }).join('');
+    const skills = p.skills.map(sk=>`<div class="skill-row"><span class="sk">⚡ ${sk}</span></div>`).join('');
+    body.innerHTML = `
+      <div class="psec">
+        <span class="plabel">Identity</span>
+        <div class="prow"><span class="k">Origin</span><span class="v">${p.origin}</span></div>
+        <div class="prow"><span class="k">Role</span><span class="v" style="color:var(--text)">${p.role}</span></div>
+        <div class="prow"><span class="k">Reputation</span><span class="v" style="color:var(--frost2)">${p.reputation}</span></div>
+        <div class="prow"><span class="k">Gold</span><span class="v">⬡ ${p.gold}</span></div>
+        <div class="prow"><span class="k">Kills</span><span class="v" style="color:var(--ember2)">${p.kills}</span></div>
+        <div class="prow"><span class="k">Crimes</span><span class="v" style="color:var(--ember)">${p.crimes}</span></div>
+        <div class="prow"><span class="k">Gifts Given</span><span class="v" style="color:var(--sage2)">${p.gifts}</span></div>
+      </div>
+      <div class="psec">
+        <span class="plabel">Stats</span>
+        ${statRows}
+      </div>
+      <div class="psec">
+        <span class="plabel">Status</span>
+        <div class="status-chips">${chips}</div>
+      </div>
+      <div class="psec">
+        <span class="plabel">Skills (${p.skills.length})</span>
+        ${skills}
+      </div>`;
+  }
+
+  else if (tab === 'inv') {
+    const inv = p.inventory;
+    const cards = inv.length ? inv.map((it,i) => {
+      const propchips = it.props.map(pr => `<span class="prop-chip ${pr}">${pr}</span>`).join('');
+      return `<div class="item-card" onclick="itemAction(${i})">
+        <div>
+          <div class="in">${it.icon||'📦'} ${it.name}</div>
+          <div class="ip">${propchips}</div>
+        </div>
+        <div class="iq">x${it.qty}<br>⬡${it.val}</div>
+      </div>`;
+    }).join('') : '<div style="color:var(--text3);font-style:italic;padding:0.5rem;">Empty.</div>';
+    body.innerHTML = `<span class="plabel">Carrying ${inv.reduce((a,i)=>a+i.qty,0)} items</span>${cards}`;
+  }
+
+  else if (tab === 'create') {
+    const propTagsHtml = ALL_PROPS.map(pr => {
+      const col = PROP_COLORS[pr] || '';
+      return `<span class="ptag" data-p="${pr}" onclick="toggleProp(this,'${pr}')" style="${col?'--pc:'+col:''}">${pr}</span>`;
+    }).join('');
+    body.innerHTML = `
+      <span class="plabel">Creation Skill</span>
+      <input class="cinput" id="cr-name" placeholder="Name your creation...">
+      <select class="cinput" id="cr-type">
+        <option value="item">Item / Object</option>
+        <option value="weapon">Weapon</option>
+        <option value="potion">Potion / Consumable</option>
+        <option value="spell">Spell (cast from inventory)</option>
+        <option value="skill">Skill — permanent ability</option>
+        <option value="trap">Trap / Device</option>
+        <option value="food">Food / Recipe</option>
+        <option value="curse">Curse / Affliction</option>
+        <option value="buff">Enchantment / Buff</option>
+        <option value="key">Key / Token</option>
+      </select>
+      <span class="plabel" style="margin-top:0.3rem;">Target (optional — for world-affecting things)</span>
+      <input class="cinput" id="cr-target" placeholder="npc name, location, object...">
+      <span class="plabel" style="margin-top:0.3rem;">Properties</span>
+      <div class="prop-grid">${propTagsHtml}</div>
+      <span class="plabel">Effect description</span>
+      <textarea class="cinput" id="cr-desc" rows="2" placeholder="What exactly does it do? Be specific."></textarea>
+      <div style="font-size:0.7rem;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:0.3rem;">
+        MP cost: <span id="cr-cost">10</span> · Remaining: <span id="cr-mp">${p.mp}/${p.mpMax}</span>
+      </div>
+      <button class="forge-btn" onclick="forgeThing()">✦ Forge</button>`;
+    document.querySelectorAll('.ptag').forEach(t => {
+      t.addEventListener('click', () => updateCost());
+    });
+  }
+
+  else if (tab === 'world') {
+    const loc = LOCATION_DATA[G.world.location] || {};
+    const locs = Object.keys(LOCATION_DATA).filter(l => l !== G.world.location);
+    const known = locs.filter(l => G.player.knownLocations.includes(l));
+    const unknown = locs.filter(l => !G.player.knownLocations.includes(l));
+    const travelBtns = known.map(l => {
+      const ld = LOCATION_DATA[l];
+      const danger = '⚠'.repeat(ld.danger);
+      return `<div class="wtrav" onclick="travelTo('${l}')">
+        <span>${l}</span>
+        <span class="wdist">${danger}</span>
+      </div>`;
+    }).join('');
+    const unkBtns = unknown.map(l =>
+      `<div class="wtrav" style="opacity:0.4;cursor:default;">
+        <span>??? (Undiscovered)</span>
+        <span class="wdist">?</span>
+      </div>`).join('');
+    const events = G.world.events.slice(-6).reverse().map(e =>
+      `<div class="wevent">${e}</div>`).join('') || '<div class="wevent" style="color:var(--text3);">Nothing notable.</div>';
+    body.innerHTML = `
+      <div class="psec">
+        <div class="wloc">${G.world.location}</div>
+        <div style="font-size:0.8rem;color:var(--text2);line-height:1.6;">${loc.desc||''}</div>
+        <div style="margin-top:0.4rem;font-size:0.72rem;color:var(--text3);">Danger: ${'⚠'.repeat(loc.danger||1)} · Wealth: ${'💰'.repeat(loc.wealth||1)}</div>
+      </div>
+      <div class="psec">
+        <span class="plabel">Travel To</span>
+        ${travelBtns}${unkBtns}
+      </div>
+      <div class="psec">
+        <span class="plabel">Recent Events</span>
+        ${events}
+      </div>`;
+  }
+
+  else if (tab === 'npcs') {
+    const moodEmoji = {friendly:'😊',neutral:'😐',suspicious:'🤨',hostile:'😠',
+      sad:'😔',cheerful:'😄',playful:'😁',afraid:'😨',infatuated:'😍',charmed:'😇'};
+    const cards = G.npcs.map(npc => {
+      const rel = p.relationships[npc.id];
+      const aff = rel ? rel.affection : 0;
+      const affStr = aff > 30 ? `<span style="color:var(--sage2)">Friendly (${aff})</span>` :
+        aff < -30 ? `<span style="color:var(--ember2)">Hostile (${aff})</span>` :
+        `<span style="color:var(--text3)">Neutral</span>`;
+      const statSum = `STR:${npc.stats.STR} DEX:${npc.stats.DEX} INT:${npc.stats.INT} CHA:${npc.stats.CHA}`;
+      return `<div class="npc-card" onclick="npcMenu('${npc.id}')">
+        <span class="nm">${moodEmoji[npc.mood]||'😐'}</span>
+        <div class="nn">${npc.name}</div>
+        <div class="nr">${npc.role} · ${npc.gender==='m'?'M':npc.gender==='f'?'F':'?'} · ${affStr}</div>
+        <div class="nstats">${statSum}</div>
+      </div>`;
+    }).join('') || '<div style="color:var(--text3);font-style:italic;padding:0.5rem;">Nobody nearby.</div>';
+    body.innerHTML = `<span class="plabel">Nearby (${G.npcs.length})</span>${cards}`;
+  }
+}
+
+// ── CREATION PROP TOGGLE ──
+let selProps = [];
+function toggleProp(el, pr) {
+  el.classList.toggle('sel');
+  if (selProps.includes(pr)) selProps = selProps.filter(p=>p!==pr);
+  else selProps.push(pr);
+  updateCost();
+}
+function updateCost() {
+  const base = 10;
+  const cost = base + selProps.length * 4;
+  const el = document.getElementById('cr-cost');
+  const mpe = document.getElementById('cr-mp');
+  if (el) el.textContent = cost;
+  if (mpe && G) mpe.textContent = G.player.mp+'/'+G.player.mpMax;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// ITEM ACTIONS
+// ═══════════════════════════════════════════════════════════════════════
+function itemAction(idx) {
+  const it = G.player.inventory[idx];
+  if (!it) return;
+  const propchips = it.props.map(pr=>`<span class="prop-chip ${pr}" style="margin:2px;">${pr}</span>`).join('');
+  const acts = [];
+  if (it.props.some(p=>['edible','healing','potion'].includes(p))) acts.push({label:'Consume',fn:()=>consumeItem(idx),cls:'ok'});
+  if (it.props.some(p=>['weapon','sharp','blunt'].includes(p))) acts.push({label:'Equip',fn:()=>equipItem(idx),cls:'ok'});
+  acts.push({label:'Give to NPC',fn:()=>giveItemFlow(idx)});
+  acts.push({label:'Force-feed',fn:()=>forceFeedFlow(idx),cls:'bad'});
+  acts.push({label:'Drop',fn:()=>{G.player.inventory.splice(idx,1);closeModal();log('You drop '+it.name+'.','act');updateHUD();renderDrawer('inv');saveGame();}});
+  acts.push({label:'Close',fn:closeModal});
+  openModal(it.icon+' '+it.name,
+    `<div style="margin-bottom:0.5rem;color:var(--text2);font-size:0.82rem;">${it.desc||''}</div>
+     <div style="margin-bottom:0.4rem;">${propchips}</div>
+     <div style="font-size:0.78rem;color:var(--text3);">Value: ⬡${it.val} · Qty: ${it.qty}</div>`,
+    acts);
+}
+
+function consumeItem(idx) {
+  const it = G.player.inventory[idx];
+  const p = G.player;
+  let fx = [];
+  if (it.props.includes('healing')) { const h=15+p.stats.CON*2; p.hp=Math.min(p.hpMax,p.hp+h); fx.push('+'+h+' HP'); }
+  if (it.props.includes('magic')) { const m=12; p.mp=Math.min(p.mpMax,p.mp+m); fx.push('+'+m+' MP'); }
+  if (it.props.includes('poison')) { const d=12; p.hp=Math.max(1,p.hp-d); addStatus('Poisoned'); fx.push('-'+d+' HP (poison!)'); }
+  if (it.props.includes('fire')) { p.hp=Math.max(1,p.hp-8); fx.push('-8 HP (burning!)'); }
+  if (it.props.includes('cursed')) { addStatus('Cursed'); fx.push('You feel cursed...'); }
+  if (it.props.includes('charming')) { addStatus('Charmed'); fx.push('You feel strangely pleasant.'); }
+  if (it.props.includes('stat-boost')) {
+    const s = STATS[~~(Math.random()*STATS.length)];
+    p.stats[s]++; fx.push(s+'+1 permanently!');
+  }
+  if (it.props.includes('stat-drain')) {
+    const s = STATS[~~(Math.random()*STATS.length)];
+    p.stats[s] = Math.max(1,p.stats[s]-1); fx.push(s+'-1 (drained)');
+  }
+  it.qty--;
+  if (it.qty<=0) G.player.inventory.splice(idx,1);
+  closeModal();
+  log('You consume '+it.name+'. '+( fx.join(', ')||'Nothing notable happens.'),'act');
+  gainXP(5); updateHUD(); renderDrawer('inv'); saveGame();
+}
+
+function equipItem(idx) {
+  const it = G.player.inventory[idx];
+  closeModal();
+  if (!G.player.statuses.includes('Armed')) G.player.statuses.push('Armed');
+  log('You equip '+it.name+'. It feels '+( it.props.includes('heavy')?'heavy':'ready')+'.','act');
+  renderDrawer('char');
+}
+
+function giveItemFlow(idx) {
+  const it = G.player.inventory[idx];
+  openModal('Give: '+it.name, 'Choose who to give <strong>'+it.name+'</strong> to:',
+    G.npcs.map(npc => ({label:npc.name+' ('+npc.role+')',fn:()=>giveItem(idx,npc.id)}))
+    .concat([{label:'Cancel',fn:closeModal}]));
+}
+
+function giveItem(itemIdx, npcId) {
+  const it = G.player.inventory[itemIdx];
+  const npc = G.npcs.find(n=>n.id===npcId);
+  if (!npc) return;
+  let reaction = '', moodShift = 0;
+
+  if (it.props.includes('poison') || it.props.includes('cursed') || it.props.includes('toxic')) {
+    const detect = npc.stats.WIS > G.player.stats.INT;
+    if (detect) { reaction = 'looks at it with suspicion and refuses.'; }
+    else { reaction = 'accepts it, unaware of its true nature...'; applyItemToNPC(npc, it); moodShift = -20; }
+  } else if (it.props.includes('charming') || it.props.includes('arousing')) {
+    reaction = 'eyes go wide and glassy. They seem enchanted.'; npc.mood='infatuated'; moodShift = 40;
+  } else if (it.props.includes('healing') || it.props.includes('edible')) {
+    reaction = 'accepts it gratefully.'; moodShift = 15;
+  } else if (it.props.includes('terrifying')) {
+    reaction = 'recoils in fear!'; npc.mood='afraid'; moodShift = -25;
+  } else {
+    reaction = 'takes it with a nod.'; moodShift = 8;
+  }
+
+  if (!reaction.includes('refuses')) {
+    it.qty--; if (it.qty<=0) G.player.inventory.splice(itemIdx,1);
+    G.player.gifts++;
+  }
+  nudgeRelation(npc, moodShift);
+  closeModal();
+  log(npc.name + ' ' + reaction, 'social');
+  gainXP(10); updateHUD(); renderDrawer('inv'); saveGame();
+}
+
+function forceFeedFlow(idx) {
+  const it = G.player.inventory[idx];
+  openModal('Force Feed: '+it.name,
+    'You need STR+DEX > target to overpower them. Who is your target?',
+    G.npcs.map(npc => ({
+      label: npc.name+' (STR:'+npc.stats.STR+' DEX:'+npc.stats.DEX+')',
+      fn: ()=>forceFeed(idx, npc.id), cls:'bad'
+    })).concat([{label:'Cancel',fn:closeModal}]));
+}
+
+function forceFeed(itemIdx, npcId) {
+  const it = G.player.inventory[itemIdx];
+  const npc = G.npcs.find(n=>n.id===npcId);
+  const p = G.player;
+  const myPow = p.stats.STR + p.stats.DEX + p.level*2;
+  const theirPow = npc.stats.STR + npc.stats.DEX;
+  closeModal();
+  if (myPow <= theirPow) {
+    const dmg = ~~(theirPow/3)+2;
+    p.hp = Math.max(1, p.hp-dmg);
+    npc.mood = 'hostile'; nudgeRelation(npc,-30);
+    log(npc.name+' overpowers you. -'+dmg+' HP.','combat');
+    p.crimes++;
+  } else {
+    applyItemToNPC(npc, it);
+    it.qty--; if (it.qty<=0) p.inventory.splice(itemIdx,1);
+    p.crimes++;
+    log('You force '+it.name+' into '+npc.name+'\'s mouth.','danger');
+    gainXP(15);
+  }
+  updateHUD(); renderDrawer('inv'); saveGame();
+}
+
+function applyItemToNPC(npc, it) {
+  const fx = [];
+  if (it.props.includes('poison')||it.props.includes('toxic')) { npc.mood='sad'; fx.push('convulses'); nudgeRelation(npc,-40); }
+  if (it.props.includes('healing')) { npc.mood='neutral'; fx.push('seems healthier'); nudgeRelation(npc,10); }
+  if (it.props.includes('charming')) { npc.mood='charmed'; fx.push('falls under your charm'); nudgeRelation(npc,30); }
+  if (it.props.includes('fire')) { npc.mood='hostile'; fx.push('screams and flails'); nudgeRelation(npc,-50); }
+  if (it.props.includes('cursed')) { addNPCStatus(npc,'Cursed'); fx.push('twitches oddly'); }
+  if (it.props.includes('stat-drain')) { const s=STATS[~~(Math.random()*STATS.length)]; npc.stats[s]=Math.max(1,npc.stats[s]-2); fx.push(s+' drained'); }
+  if (it.props.includes('stat-boost')) { const s=STATS[~~(Math.random()*STATS.length)]; npc.stats[s]+=2; fx.push(s+' boosted'); }
+  if (it.props.includes('terrifying')) { npc.mood='afraid'; nudgeRelation(npc,-20); fx.push('trembles'); }
+  if (it.props.includes('maddening')) { npc.mood='hostile'; nudgeRelation(npc,-30); fx.push('goes berserk'); }
+  if (fx.length) log(npc.name+' '+fx.join(' and ')+'.','social');
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// NPC SYSTEM
+// ═══════════════════════════════════════════════════════════════════════
+function nudgeRelation(npc, amt) {
+  if (!G.player.relationships[npc.id]) G.player.relationships[npc.id] = {affection:0, known:true};
+  G.player.relationships[npc.id].affection = Math.max(-100, Math.min(100, G.player.relationships[npc.id].affection + amt));
+  const aff = G.player.relationships[npc.id].affection;
+  if (aff > 60) npc.mood = 'infatuated';
+  else if (aff > 30) npc.mood = 'friendly';
+  else if (aff > 10) npc.mood = 'neutral';
+  else if (aff < -60) npc.mood = 'hostile';
+  else if (aff < -30) npc.mood = 'suspicious';
+}
+
+function npcMenu(id) {
+  const npc = G.npcs.find(n=>n.id===id);
+  if (!npc) return;
+  const p = G.player;
+  const rel = p.relationships[id];
+  const aff = rel ? rel.affection : 0;
+  const moodTxt = {friendly:'friendly',neutral:'indifferent',suspicious:'wary of you',
+    hostile:'hostile',charmed:'enchanted by you',afraid:'afraid of you',
+    infatuated:'infatuated with you',sad:'sad',cheerful:'cheerful',playful:'playful'};
+  const propchips = (npc.props||[]).map(pr=>`<span class="prop-chip ${pr}">${pr}</span>`).join(' ');
+  const statStr = STATS.map(s=>`${s}:${npc.stats[s]}`).join(' ');
+
+  const acts = [];
+  acts.push({label:'Talk',fn:()=>talkNPC(npc),cls:'ok'});
+  if (npc.role==='Merchant'||npc.role==='Innkeeper'||npc.role==='Blacksmith'||npc.role==='Smuggler') {
+    acts.push({label:'Trade',fn:()=>tradeNPC(npc)});
+  }
+  acts.push({label:'Observe',fn:()=>observeNPC(npc)});
+  if (p.stats.CHA > npc.stats.CHA-3) acts.push({label:'Persuade',fn:()=>persuadeNPC(npc),cls:'ok'});
+  if (p.stats.STR > npc.stats.STR || p.level > npc.stats.CON/3) acts.push({label:'Intimidate',fn:()=>intimidateNPC(npc),cls:'bad'});
+  acts.push({label:'Kiss',fn:()=>kissNPC(npc)});
+  if (aff > 20) acts.push({label:'Propose',fn:()=>proposeNPC(npc)});
+  if (p.stats.STR + p.stats.DEX + p.level*2 > npc.stats.STR + npc.stats.DEX) {
+    acts.push({label:'Steal From',fn:()=>stealFromNPC(npc)});
+  }
+  acts.push({label:'Attack',fn:()=>attackNPC(npc),cls:'bad'});
+  acts.push({label:'Close',fn:closeModal});
+
+  openModal(npc.name+' — '+npc.role,
+    `<div style="margin-bottom:0.5rem;">Currently <em>${moodTxt[npc.mood]||npc.mood}</em>. Affection: ${aff}.</div>
+     <div style="margin-bottom:0.4rem;">${propchips}</div>
+     <div style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--text3);">${statStr}</div>`,
+    acts);
+}
+
+function talkNPC(npc) {
+  closeModal();
+  const d = npc.dialogue || {};
+  const line = d[npc.mood] || d['neutral'] || (npc.name+' says nothing.');
+  nudgeRelation(npc, 3);
+  log(npc.name+': "'+line+'"','social');
+  gainXP(3); saveGame();
+}
+
+function observeNPC(npc) {
+  closeModal();
+  const knownProps = (npc.props||[]).slice(0,3).join(', ');
+  const dom = STATS.sort((a,b)=>npc.stats[b]-npc.stats[a])[0];
+  log('You study '+npc.name+'. Properties: ['+knownProps+']. Dominant trait: '+STAT_NAMES[dom]+'.','act');
+  gainXP(5); saveGame();
+}
+
+function tradeNPC(npc) {
+  closeModal();
+  if (npc.mood==='hostile') { log(npc.name+' refuses to trade with you.','social'); return; }
+  const goods = ['Strange Herb','Smuggled Spice','Old Map Fragment','Cracked Gem','Leather Scraps',
+    'Iron Shavings','Pickled Something','Rusty Key','Blank Scroll','Fish Jerky'];
+  const item = goods[~~(Math.random()*goods.length)];
+  let price = 8 + ~~(Math.random()*25);
+  const mood = npc.mood;
+  if (mood==='friendly'||mood==='charmed'||mood==='infatuated') price = ~~(price*0.7);
+  openModal('Trade with '+npc.name,
+    `${npc.name} offers: <strong>${item}</strong> for <strong>⬡${price}</strong>.`,
+    [
+      {label:'Buy (⬡'+price+')', fn:()=>buyFromNPC(npc,item,price), cls:'ok'},
+      {label:'Haggle', fn:()=>haggleNPC(npc,item,price)},
+      {label:'Cancel', fn:closeModal},
+    ]);
+}
+
+function buyFromNPC(npc, itemName, price) {
+  if (G.player.gold < price) { closeModal(); toast('Not enough gold!'); return; }
+  G.player.gold -= price;
+  const props = guessProps(itemName);
+  G.player.inventory.push({id:'bought_'+Date.now(),name:itemName,icon:'📦',qty:1,props,val:price,desc:'Bought from '+npc.name+'.'});
+  closeModal();
+  log('You buy '+itemName+' from '+npc.name+' for ⬡'+price+'.','loot');
+  nudgeRelation(npc, 5);
+  gainXP(5); updateHUD(); renderDrawer('inv'); saveGame();
+}
+
+function guessProps(name) {
+  const n = name.toLowerCase();
+  const props = [];
+  if (n.includes('herb')||n.includes('spice')) props.push('edible','healing');
+  if (n.includes('gem')||n.includes('key')) props.push('valuable');
+  if (n.includes('map')) props.push('knowledge');
+  if (n.includes('scroll')) props.push('magic');
+  if (n.includes('fish')||n.includes('jerky')||n.includes('pickled')) props.push('edible');
+  if (n.includes('iron')||n.includes('leather')) props.push('crafting');
+  return props.length ? props : ['unknown'];
+}
+
+function haggleNPC(npc, item, price) {
+  const p = G.player;
+  const success = p.stats.CHA + ~~(Math.random()*6) > npc.stats.CHA + ~~(Math.random()*6);
+  if (success) {
+    const np = Math.max(1, ~~(price * (0.55 + Math.random()*0.2)));
+    closeModal();
+    log(npc.name+' concedes. New price: ⬡'+np+'.','social');
+    openModal('Trade', npc.name+' accepts ⬡'+np+' for '+item+'.',[
+      {label:'Buy ⬡'+np, fn:()=>buyFromNPC(npc,item,np), cls:'ok'},
+      {label:'Pass', fn:closeModal}
+    ]);
+    gainXP(8);
+  } else {
+    closeModal();
+    log(npc.name+' narrows their eyes. "Full price, or nothing."','social');
+    gainXP(2);
+  }
+}
+
+function persuadeNPC(npc) {
+  closeModal();
+  const p = G.player;
+  const roll = p.stats.CHA + ~~(Math.random()*8) - (npc.stats.WIS + ~~(Math.random()*6));
+  if (roll > 0) {
+    nudgeRelation(npc, 15+roll);
+    log('Your words land well. '+npc.name+' warms to you.','social');
+    gainXP(10);
+  } else {
+    log(npc.name+' is unmoved. "Don\'t try that on me."','social');
+    gainXP(3);
+  }
+  saveGame();
+}
+
+function intimidateNPC(npc) {
+  closeModal();
+  const p = G.player;
+  npc.mood = 'afraid';
+  nudgeRelation(npc, -20);
+  p.crimes++;
+  log('You loom over '+npc.name+'. They pale. "...Fine."','danger');
+  gainXP(8);
+  if (!p.statuses.includes('Feared')) p.statuses.push('Feared');
+  renderDrawer('char'); saveGame();
+}
+
+function kissNPC(npc) {
+  closeModal();
+  const p = G.player;
+  const enchKiss = p.inventory.find(it => it.props.includes('charming')||it.props.includes('arousing'));
+  let msg = '';
+  if (enchKiss) {
+    npc.mood = 'infatuated'; nudgeRelation(npc, 50);
+    msg = 'You kiss '+npc.name+' with an enchanted touch. Their eyes glaze over with devotion.';
+    gainXP(20);
+  } else if (npc.mood === 'hostile' || npc.mood === 'afraid') {
+    const dmg = 6;
+    p.hp = Math.max(1, p.hp-dmg);
+    nudgeRelation(npc, -15);
+    msg = npc.name+' shoves you away. Hard. -'+dmg+' HP.';
+    gainXP(3);
+  } else if (p.stats.CHA >= npc.stats.WIS) {
+    npc.mood = 'friendly'; nudgeRelation(npc, 25);
+    msg = 'You kiss '+npc.name+'. They blush deeply and look away with a smile.';
+    gainXP(12);
+  } else {
+    nudgeRelation(npc, -5);
+    msg = npc.name+' pulls back. "Excuse me?!"';
+    gainXP(3);
+  }
+  log(msg,'social'); updateHUD(); saveGame();
+}
+
+function proposeNPC(npc) {
+  closeModal();
+  const p = G.player;
+  const aff = p.relationships[npc.id]?.affection || 0;
+  if (aff > 40 && p.stats.CHA >= 10) {
+    nudgeRelation(npc, 50);
+    if (!p.statuses.includes('Betrothed to '+npc.name)) p.statuses.push('Betrothed to '+npc.name);
+    log('You propose to '+npc.name+'. Tears in their eyes, they whisper: "Yes."','success');
+    toast('💍 Betrothed to '+npc.name+'!');
+    gainXP(30);
+  } else if (aff > 20) {
+    log(npc.name+' hesitates. "I... care for you, but not like that. Not yet."','social');
+    gainXP(5);
+  } else {
+    nudgeRelation(npc, -10);
+    log(npc.name+' looks embarrassed. "We barely know each other."','social');
+    gainXP(2);
+  }
+  renderDrawer('char'); saveGame();
+}
+
+function attackNPC(npc) {
+  closeModal();
+  const p = G.player;
+  const myAtk = p.stats.STR + p.stats.DEX + p.level*3 + ~~(Math.random()*10);
+  const theirDef = npc.stats.STR + npc.stats.CON + ~~(Math.random()*8);
+  nudgeRelation(npc, -50);
+  npc.mood = 'hostile';
+  p.crimes++;
+
+  if (myAtk > theirDef) {
+    const dmg = Math.max(3, myAtk - theirDef + ~~(Math.random()*8));
+    log('You strike '+npc.name+' for '+dmg+' damage. They reel.','combat');
+    gainXP(20 + ~~(dmg/2));
+    p.kills++;
+    // Counter
+    const cdmg = Math.max(2, ~~(theirDef/4)+~~(Math.random()*5));
+    p.hp = Math.max(0, p.hp-cdmg);
+    log(npc.name+' retaliates: -'+cdmg+' HP to you.','combat');
+  } else {
+    const cdmg = Math.max(5, ~~(theirDef/2)+~~(Math.random()*8));
+    p.hp = Math.max(0, p.hp-cdmg);
+    log(npc.name+' overpowers you: -'+cdmg+' HP.','combat');
+    gainXP(5);
+  }
+  if (p.hp <= 0) handleDeath();
+  updateHUD(); renderDrawer('char'); saveGame();
+}
+
+function stealFromNPC(npc) {
+  closeModal();
+  const p = G.player;
+  const myRoll = p.stats.DEX + ~~(Math.random()*10);
+  const theirRoll = npc.stats.WIS + ~~(Math.random()*8);
+  p.crimes++;
+  if (myRoll > theirRoll) {
+    const gold = 5 + ~~(Math.random()*(npc.stats.CHA*3));
+    p.gold += gold;
+    log('Nimble fingers. You lift ⬡'+gold+' from '+npc.name+' unnoticed.','loot');
+    gainXP(15);
+  } else {
+    npc.mood = 'hostile'; nudgeRelation(npc,-35);
+    const dmg = 4 + ~~(Math.random()*6);
+    p.hp = Math.max(1, p.hp-dmg);
+    log(npc.name+' catches your hand. They shove you away. -'+dmg+' HP.','combat');
+    gainXP(5);
+  }
+  updateHUD(); saveGame();
+}
+
+function addNPCStatus(npc, st) {
+  if (!npc.statuses) npc.statuses = [];
+  if (!npc.statuses.includes(st)) npc.statuses.push(st);
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// DEATH & CONSEQUENCES
+// ═══════════════════════════════════════════════════════════════════════
+function handleDeath() {
+  const p = G.player;
+  log('Everything goes black...','danger');
+  setTimeout(()=>{
+    p.hp = Math.floor(p.hpMax * 0.25);
+    const lost = Math.min(p.gold, 15 + ~~(Math.random()*20));
+    p.gold = Math.max(0, p.gold - lost);
+    // Remove a random item
+    if (p.inventory.length > 0) {
+      const ri = ~~(Math.random()*p.inventory.length);
+      log('You wake in the gutter. Lost ⬡'+lost+' and your '+p.inventory[ri].name+'.','danger');
+      p.inventory.splice(ri,1);
+    } else {
+      log('You wake in the gutter, stripped of ⬡'+lost+'. Survival is cruel.','danger');
+    }
+    // Advance time by several hours
+    p.hour = (p.hour + 6) % 24;
+    if (p.hour < 6) p.day++;
+    updateHUD(); renderDrawer('char');
+  }, 1500);
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// TRAVEL
+// ═══════════════════════════════════════════════════════════════════════
+function travelTo(loc) {
+  const p = G.player;
+  const ld = LOCATION_DATA[loc];
+  if (!ld) return;
+  // Travel time cost
+  const hours = 2 + ~~(Math.random()*3);
+  p.hour = (p.hour + hours) % 24;
+  if (p.hour < hours) p.day++;
+  // Small HP cost for dangerous travel
+  if (ld.danger >= 3) {
+    const dmg = ~~(ld.danger * (2 + Math.random()*4));
+    p.hp = Math.max(1, p.hp - dmg);
+    log('The journey was rough. -'+dmg+' HP.','world');
+  }
+  // Discover location
+  if (!p.knownLocations.includes(loc)) p.knownLocations.push(loc);
+
+  G.world.location = loc;
+  G.npcs = buildNPCs(loc);
+  // Restore npc states if saved
+  Object.entries(G.world.npcStates || {}).forEach(([id, state]) => {
+    const npc = G.npcs.find(n=>n.id===id);
+    if (npc) Object.assign(npc, state);
+  });
+  // Apply known relationships
+  G.npcs.forEach(npc => {
+    const rel = p.relationships[npc.id];
+    if (rel) {
+      const aff = rel.affection;
+      if (aff > 60) npc.mood = 'infatuated';
+      else if (aff > 30) npc.mood = 'friendly';
+      else if (aff < -60) npc.mood = 'hostile';
+      else if (aff < -30) npc.mood = 'suspicious';
+    }
+  });
+
+  buildMap();
+  p.x = 11; p.y = 11;
+  log('You arrive at '+loc+'. '+( ld.ambient[~~(Math.random()*ld.ambient.length)] ), 'world');
+
+  // World event on arrival
+  generateWorldEvent(loc);
+
+  if (G.world.location === 'Bandit Camp') {
+    const chief = G.npcs.find(n=>n.id==='bandit_chief');
+    if (chief && chief.mood === 'hostile') {
+      log('The bandits spot you. Chief Rorn steps forward, hand on his blade.','danger');
+    }
+  }
+
+  updateHUD(); renderDrawer('world'); closeModal(); saveGame();
+}
+
+function generateWorldEvent(loc) {
+  const events = {
+    'Crossroads Town':[
+      'A wanted poster with an unfamiliar face has appeared on the notice board.',
+      'Two merchants are arguing loudly outside the inn.',
+      'A new caravan has arrived from the north.',
+      'Guards are searching travelers at the gate.',
+    ],
+    'Dark Forest':[
+      'Fresh tracks in the mud — something large passed through recently.',
+      'The trees here seem older and stranger than before.',
+      'You find the remains of a campfire, still warm.',
+      'A distant scream, then silence.',
+    ],
+    'The Ruins':[
+      'Something has shifted in the rubble. New passages may have opened.',
+      'You find a carved inscription you cannot fully read.',
+      'A faint glow emanates from deep within the ruins at night.',
+    ],
+    'Hilltop Village':[
+      'The village seems quieter than usual. Doors are closed.',
+      'Children play in the square, watched by nervous parents.',
+      'Fresh flowers have been laid at the chapel.',
+    ],
+    'Docks':[
+      'A new ship arrived last night with unusual cargo.',
+      'Someone drowned. Nobody is asking questions.',
+      'Prices are up. Someone cornered the supply.',
+    ],
+    'Bandit Camp':[
+      'The camp is on edge. Something spooked them.',
+      'New loot is piled near the main fire.',
+      'A guard is sleeping at his post.',
+    ],
+  };
+  const pool = events[loc] || ['You take in your surroundings.'];
+  const ev = pool[~~(Math.random()*pool.length)];
+  G.world.events.push(ev);
+  if (G.world.events.length > 20) G.world.events.shift();
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// FORGING / CREATION
+// ═══════════════════════════════════════════════════════════════════════
+const FORGE_ICONS = {item:'📦',weapon:'⚔️',potion:'⚗️',spell:'✨',skill:'💡',trap:'⚙️',food:'🍲',curse:'☠️',buff:'✦',key:'🗝️'};
+
+function forgeThing() {
+  const name = document.getElementById('cr-name')?.value.trim();
+  const type = document.getElementById('cr-type')?.value || 'item';
+  const desc = document.getElementById('cr-desc')?.value.trim();
+  const target = document.getElementById('cr-target')?.value.trim();
+  if (!name) { toast('Name your creation first.'); return; }
+  const cost = 10 + selProps.length * 4;
+  if (G.player.mp < cost) { toast('Not enough MP! Need '+cost+'.'); return; }
+  G.player.mp -= cost;
+  G.player.crafted++;
+
+  const creation = {
+    id: name.toLowerCase().replace(/\s+/g,'_')+'_'+Date.now(),
+    name, type,
+    icon: FORGE_ICONS[type]||'✦',
+    props: [...selProps],
+    desc: desc || autoDesc(name,type,selProps),
+    qty: 1,
+    val: 10 + selProps.length * 12,
+    created: true,
+    target: target||null,
+  };
+
+  // Immediate world effects for world-edit and time-alter
+  if (selProps.includes('world-edit') || selProps.includes('time-alter')) {
+    applyWorldEdit(creation, desc, target);
+  }
+
+  if (type === 'skill') {
+    if (!G.player.skills.includes(name)) G.player.skills.push(name);
+    log('✦ Skill forged: "'+name+'". It is now part of you. MP -'+cost+'.','creation');
+    toast('Skill "'+name+'" learned!');
+    renderDrawer('char');
+  } else if (type === 'curse') {
+    // Apply curse to target NPC if specified
+    const tNPC = target ? G.npcs.find(n=>n.name.toLowerCase().includes(target.toLowerCase())) : null;
+    if (tNPC) {
+      applyItemToNPC(tNPC, creation);
+      log('✦ You forge and direct a curse at '+tNPC.name+'. They shudder.','creation');
+    } else {
+      G.player.inventory.push(creation);
+      log('✦ Forged: '+name+' ['+selProps.join(', ')+']. MP -'+cost+'.','creation');
+    }
+    renderDrawer('npcs');
+  } else if (type === 'buff') {
+    // Apply buff to self if no target, or to NPC
+    if (selProps.includes('stat-boost')) {
+      const s = STATS[~~(Math.random()*STATS.length)];
+      G.player.stats[s]++;
+      log('✦ You imbue yourself with '+name+'. '+STAT_NAMES[s]+' permanently +1! MP -'+cost+'.','creation');
+      toast(STAT_NAMES[s]+' +1!');
+      renderDrawer('char');
+    } else {
+      G.player.inventory.push(creation);
+      log('✦ Enchantment forged: '+name+'. MP -'+cost+'.','creation');
+    }
+  } else {
+    G.player.inventory.push(creation);
+    log('✦ Forged: '+name+' ['+selProps.join(', ')+']. MP -'+cost+'.','creation');
+    renderDrawer('inv');
+  }
+
+  gainXP(20 + selProps.length * 5);
+  selProps = [];
+  document.querySelectorAll('.ptag.sel').forEach(t=>t.classList.remove('sel'));
+  if (document.getElementById('cr-name')) document.getElementById('cr-name').value='';
+  if (document.getElementById('cr-desc')) document.getElementById('cr-desc').value='';
+  if (document.getElementById('cr-target')) document.getElementById('cr-target').value='';
+  updateCost();
+  updateHUD(); saveGame();
+}
+
+function applyWorldEdit(creation, desc, target) {
+  const d = (desc||'').toLowerCase();
+  // Time manipulation
+  if (creation.props.includes('time-alter')) {
+    if (d.includes('dawn')||d.includes('morning')) { G.player.hour = 7; log('✦ Time warps. It is now dawn.','creation'); }
+    else if (d.includes('night')) { G.player.hour = 22; log('✦ Darkness falls suddenly.','creation'); }
+    else if (d.includes('skip')||d.includes('advance')) {
+      G.player.hour = (G.player.hour+6)%24;
+      log('✦ Time lurches forward. Hours pass in an instant.','creation');
+    }
+  }
+  // World changes
+  if (creation.props.includes('world-edit')) {
+    if (target) {
+      const tNPC = G.npcs.find(n=>n.name.toLowerCase().includes(target.toLowerCase()));
+      if (tNPC && d.includes('remove')||d.includes('vanish')||d.includes('disappear')) {
+        G.npcs = G.npcs.filter(n=>n.id!==tNPC.id);
+        log('✦ '+tNPC.name+' ceases to exist in this location.','creation');
+      } else if (tNPC && d.includes('stat')) {
+        STATS.forEach(s => { if (d.includes(s.toLowerCase())) { tNPC.stats[s] = Math.max(1, tNPC.stats[s] + (d.includes('+') ? 5 : -5)); } });
+        log('✦ The fabric of '+tNPC.name+' shifts.','creation');
+      } else if (tNPC && (d.includes('friendly')||d.includes('like')||d.includes('love'))) {
+        tNPC.mood = 'friendly'; nudgeRelation(tNPC, 40);
+        log('✦ '+tNPC.name+' feels an inexplicable warmth toward you.','creation');
+      } else if (tNPC && (d.includes('hostile')||d.includes('angry')||d.includes('hate'))) {
+        tNPC.mood = 'hostile'; nudgeRelation(tNPC, -40);
+        log('✦ A dark cloud settles over '+tNPC.name+'.','creation');
+      }
+    }
+    // Gold manipulation
+    if (d.includes('gold')||d.includes('wealth')||d.includes('money')) {
+      const gained = 20 + ~~(Math.random()*50) + G.player.stats.INT*3;
+      G.player.gold += gained;
+      log('✦ Reality bends. ⬡'+gained+' materializes.','loot');
+    }
+  }
+}
+
+function autoDesc(name, type, props) {
+  const d = {
+    weapon:`A ${props.includes('fire')?'blazing':props.includes('shadow')?'dark':'crude'} ${name}. Hums with ${props[0]||'unknown'} energy.`,
+    potion:`A ${props.includes('healing')?'glowing':props.includes('poison')?'murky':'swirling'} concoction.`,
+    spell:`The formula for ${name}. Requires concentration to cast.`,
+    food:`${name}. Combines: ${props.slice(0,3).join(', ')}.`,
+    curse:`${name}. A dark working. Handle with intent.`,
+    buff:`${name}. An empowerment of ${props.join(', ')}.`,
+    skill:`The art of ${name}. Now permanently yours.`,
+    item:`${name}. Properties: ${props.join(', ')}.`,
+    trap:`${name}. Triggers on contact.`,
+    key:`${name}. Opens something.`,
+  };
+  return d[type]||`${name}.`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// FREE COMMAND RESOLUTION
+// ═══════════════════════════════════════════════════════════════════════
+function doCmd() {
+  const inp = document.getElementById('cmd-in');
+  const cmd = inp.value.trim();
+  if (!cmd) return;
+  inp.value = '';
+  resolveCmd(cmd);
+}
+function doCmd2(cmd) { resolveCmd(cmd); }
+
+function resolveCmd(raw) {
+  const c = raw.toLowerCase().trim();
+  const p = G.player;
+  let handled = false;
+
+  // HELP
+  if (c==='help'||c==='?'||c==='commands') {
+    openModal('✦ ANIMUS Commands',`
+      <div style="font-size:0.82rem;line-height:1.9;color:var(--text);">
+        <div style="color:var(--gold);font-family:'JetBrains Mono',monospace;font-size:0.65rem;text-transform:uppercase;margin-bottom:0.3rem;">Movement</div>
+        WASD / Arrow keys (desktop) · D-pad (mobile)<br>
+        Walk into an NPC to open their menu<br><br>
+        <div style="color:var(--gold);font-family:'JetBrains Mono',monospace;font-size:0.65rem;text-transform:uppercase;margin-bottom:0.3rem;">Survival</div>
+        <span style="color:var(--gold2);">rest / sleep</span> — Recover HP+MP, advance time<br>
+        <span style="color:var(--gold2);">forage</span> — Search for herbs, food, materials<br>
+        <span style="color:var(--gold2);">cook / brew</span> — Combine 2+ edibles into a dish<br>
+        <span style="color:var(--gold2);">look / observe</span> — Describe surroundings<br><br>
+        <div style="color:var(--gold);font-family:'JetBrains Mono',monospace;font-size:0.65rem;text-transform:uppercase;margin-bottom:0.3rem;">Combat & Crime</div>
+        <span style="color:var(--ember2);">attack [name]</span> — Fight someone<br>
+        <span style="color:var(--ember2);">steal from [name]</span> — Pickpocket<br>
+        <span style="color:var(--ember2);">intimidate [name]</span> — Force compliance<br>
+        <span style="color:var(--frost2);">kiss [name]</span> — Romantic/magical interaction<br><br>
+        <div style="color:var(--gold);font-family:'JetBrains Mono',monospace;font-size:0.65rem;text-transform:uppercase;margin-bottom:0.3rem;">Economy</div>
+        <span style="color:var(--gold2);">open stall / sell</span> — Sell goods for gold<br>
+        <span style="color:var(--gold2);">browse market / trade</span> — Buy from merchants<br><br>
+        <div style="color:var(--gold);font-family:'JetBrains Mono',monospace;font-size:0.65rem;text-transform:uppercase;margin-bottom:0.3rem;">Travel</div>
+        <span style="color:var(--sage2);">travel to [place]</span> — Move to another location<br>
+        Places: Crossroads Town, Dark Forest, The Ruins,<br>
+        Hilltop Village, Docks, Bandit Camp<br><br>
+        <div style="color:var(--gold);font-family:'JetBrains Mono',monospace;font-size:0.65rem;text-transform:uppercase;margin-bottom:0.3rem;">Creation (Forge tab)</div>
+        Name + type + properties + description → Forge<br>
+        Properties like <em>world-edit</em> or <em>time-alter</em> affect reality<br>
+        <em>stat-boost</em> on a buff = permanent stat gain<br><br>
+        <div style="color:var(--text3);font-style:italic;font-size:0.78rem;">Type anything. The world tries to resolve it.</div>
+      </div>`,
+      [{label:'Close',fn:closeModal}]);
+    return;
+  }
+
+  // KISS
+  if (c.includes('kiss')) {
+    const t = c.replace(/kiss\s*/i,'').trim();
+    const npc = findNPC(t);
+    if (npc) { kissNPC(npc); handled=true; }
+    else if (c.includes('tree')||c.includes('wood')) { log('You kiss a tree. It tastes of bark. It is unmoved.','act'); handled=true; }
+    else if (c.includes('rock')||c.includes('stone')) { log('The rock grows slightly warmer from your lips. Still a rock.','act'); handled=true; }
+    else if (c.includes('fire')||c.includes('flame')) { p.hp=Math.max(1,p.hp-12); log('You kiss the fire. Deeply unwise. -12 HP.','combat'); handled=true; }
+    else if (c.includes('water')||c.includes('sea')) { log('Cold. Wet. Nothing else.','act'); handled=true; }
+  }
+
+  // ATTACK
+  if (!handled && (c.includes('attack')||c.includes('fight')||c.includes('punch')||c.includes('hit ')||c.includes('stab'))) {
+    const t = c.replace(/attack|fight|punch|hit|stab/g,'').trim();
+    const npc = findNPC(t) || G.npcs[~~(Math.random()*G.npcs.length)];
+    if (npc) { attackNPC(npc); handled=true; }
+  }
+
+  // STEAL
+  if (!handled && (c.includes('steal')||c.includes('pickpocket')||c.includes('rob'))) {
+    const t = c.replace(/steal|from|pickpocket|rob/g,'').trim();
+    const npc = findNPC(t) || G.npcs[~~(Math.random()*G.npcs.length)];
+    if (npc) { stealFromNPC(npc); handled=true; }
+  }
+
+  // INTIMIDATE
+  if (!handled && c.includes('intimidate')) {
+    const t = c.replace('intimidate','').trim();
+    const npc = findNPC(t);
+    if (npc) { intimidateNPC(npc); handled=true; }
+  }
+
+  // REST/SLEEP
+  if (!handled && (c.includes('rest')||c.includes('sleep')||c==='recover')) {
+    const hpg = ~~(p.hpMax*0.35), mpg = ~~(p.mpMax*0.45);
+    p.hp = Math.min(p.hpMax, p.hp+hpg);
+    p.mp = Math.min(p.mpMax, p.mp+mpg);
+    p.hour = (p.hour+7)%24;
+    if (p.hour<7) p.day++;
+    // Tick world while sleeping
+    tickNPCs(7);
+    log('You rest. +'+hpg+' HP, +'+mpg+' MP. Time passes.','success');
+    handled=true;
+    gainXP(4);
+  }
+
+  // FORAGE
+  if (!handled && (c.includes('forage')||c.includes('gather')||c.includes('scavenge'))) {
+    const loc = LOCATION_DATA[G.world.location];
+    const bonus = (loc&&loc.type==='wilderness') ? 0.3 : 0;
+    if (Math.random() < 0.55 + bonus + p.stats.WIS*0.02) {
+      const pool = loc&&loc.type==='ruins'
+        ? [{n:'Cracked Gem',i:'💎',pr:['valuable'],v:15},{n:'Ancient Shard',i:'🪬',pr:['magic','ancient'],v:20}]
+        : [{n:'Wild Herb',i:'🌿',pr:['edible','healing'],v:4},{n:'Mushroom',i:'🍄',pr:['edible','poison'],v:3},
+           {n:'Berries',i:'🫐',pr:['edible'],v:2},{n:'Strange Root',i:'🌱',pr:['edible','magic'],v:7}];
+      const found = pool[~~(Math.random()*pool.length)];
+      p.inventory.push({id:'foraged_'+Date.now(),name:found.n,icon:found.i,qty:1,props:found.pr,val:found.v,desc:'Foraged.'});
+      log('You search and find: '+found.n+'.','loot');
+      gainXP(8); updateHUD(); renderDrawer('inv');
+    } else {
+      log('You search but find nothing useful here.','act');
+      gainXP(2);
+    }
+    handled=true;
+  }
+
+  // COOK / BREW
+  if (!handled && (c.includes('cook')||c.includes('brew')||c.includes('bake')||c.includes('prepare food'))) {
+    const edibles = p.inventory.filter(i=>i.props.includes('edible'));
+    if (edibles.length >= 2) {
+      const combined = [...new Set([...edibles[0].props,...edibles[1].props])];
+      const dish = 'Mystery '+ ['Stew','Brew','Cake','Tonic','Concoction'][~~(Math.random()*5)];
+      edibles[0].qty--; if (edibles[0].qty<=0) p.inventory.splice(p.inventory.indexOf(edibles[0]),1);
+      edibles[1].qty--; if (edibles[1].qty<=0) p.inventory.splice(p.inventory.indexOf(edibles[1]),1);
+      p.inventory.push({id:'cooked_'+Date.now(),name:dish,icon:'🍲',qty:1,props:combined,val:14,desc:'Cooked by hand.'});
+      log('You cook a '+dish+'. Properties: ['+combined.join(', ')+'].','creation');
+      gainXP(12); updateHUD(); renderDrawer('inv');
+    } else {
+      log('You need at least 2 edible ingredients to cook.','act');
+    }
+    handled=true;
+  }
+
+  // LOOK / OBSERVE
+  if (!handled && (c.includes('look')||c.includes('observe')||c.includes('examine')||c.includes('survey'))) {
+    const loc = LOCATION_DATA[G.world.location];
+    const nearby = G.npcs.slice(0,3).map(n=>n.name+' ('+n.role+')').join(', ') || 'nobody';
+    const ambient = loc?.ambient[~~(Math.random()*loc.ambient.length)] || 'The area is quiet.';
+    log('You survey '+G.world.location+'. Nearby: '+nearby+'. '+ambient,'act');
+    gainXP(3); handled=true;
+  }
+
+  // SELL / OPEN STALL
+  if (!handled && (c.includes('sell')||c.includes('stall')||c.includes('open shop')||c.includes('market'))) {
+    const item = p.inventory.find(i=>i.val>0);
+    if (item) {
+      const demand = LOCATION_DATA[G.world.location]?.wealth || 2;
+      const mult = 0.6 + demand*0.15 + Math.random()*0.3 + p.stats.CHA*0.02;
+      const earned = Math.max(1, ~~(item.val * mult));
+      p.gold += earned;
+      item.qty--; if (item.qty<=0) p.inventory.splice(p.inventory.indexOf(item),1);
+      log('You sell '+item.name+' for ⬡'+earned+'. '+( earned > item.val ? 'Good price!' : 'Modest sale.'),'loot');
+      gainXP(10); updateHUD(); renderDrawer('inv');
+    } else { log('Nothing to sell.','act'); }
+    handled=true;
+  }
+
+  // TRADE / BROWSE
+  if (!handled && (c.includes('trade')||c.includes('browse')||c.includes('shop'))) {
+    const merchant = G.npcs.find(n=>['Merchant','Smuggler','Innkeeper'].includes(n.role));
+    if (merchant) { tradeNPC(merchant); handled=true; }
+    else { log('No merchant nearby.','act'); handled=true; }
+  }
+
+  // TRAVEL
+  if (!handled && (c.includes('travel')||c.includes('go to')||c.includes('head to')||c.includes('walk to'))) {
+    const locs = Object.keys(LOCATION_DATA).filter(l=>c.includes(l.toLowerCase()));
+    if (locs.length) { travelTo(locs[0]); handled=true; }
+    else { log('Where? Try "travel to Dark Forest" etc.','sys'); handled=true; }
+  }
+
+  // PICK FIGHT / RANDOM FIGHT
+  if (!handled && c.includes('pick a fight')) {
+    const npc = G.npcs[~~(Math.random()*G.npcs.length)];
+    if (npc) { attackNPC(npc); handled=true; }
+  }
+
+  // GIVE
+  if (!handled && c.includes('give')) {
+    const item = p.inventory[0];
+    if (!item) { log('Nothing to give.','act'); handled=true; }
+    else { giveItemFlow(0); handled=true; }
+  }
+
+  // TALK
+  if (!handled && (c.includes('talk')||c.includes('speak'))) {
+    const t = c.replace(/talk to|talk|speak to|speak with|speak/g,'').trim();
+    const npc = findNPC(t);
+    if (npc) { talkNPC(npc); handled=true; }
+  }
+
+  // Property-based object interaction
+  if (!handled) {
+    let result = propResolve(c);
+    log(result,'act');
+    gainXP(4);
+    handled=true;
+  }
+
+  updateHUD(); saveGame();
+}
+
+function propResolve(cmd) {
+  const c = cmd.toLowerCase();
+  for (const [mat, props] of Object.entries({
+    wood:['flammable'],stone:['durable'],water:['cold','slippery'],
+    fire:['hot','dangerous'],metal:['hard','conductive'],flesh:['living','fragile'],
+  })) {
+    if (c.includes(mat)) {
+      if (props.includes('flammable') && (c.includes('fire')||c.includes('burn'))) return 'The '+mat+' catches fire.';
+      if (props.includes('cold') && c.includes('drink')) return 'Cold and refreshing.';
+      if (props.includes('hot')) return 'You get too close. It\'s painfully hot.';
+    }
+  }
+  const generics = [
+    'You '+cmd+'. The world takes note.',
+    'You attempt to '+cmd+'. Something shifts.',
+    cmd.charAt(0).toUpperCase()+cmd.slice(1)+'. An interesting choice.',
+    'You '+cmd+'. Life continues around you.',
+    'You '+cmd+'. Nearby folk glance your way.',
+  ];
+  return generics[~~(Math.random()*generics.length)];
+}
+
+function findNPC(text) {
+  if (!text || text.length < 2) return null;
+  const t = text.toLowerCase().trim();
+  return G.npcs.find(n=>
+    n.name.toLowerCase().includes(t)||
+    n.role.toLowerCase().includes(t)||
+    n.id.includes(t.replace(' ','_'))
+  )||null;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// STATUS HELPERS
+// ═══════════════════════════════════════════════════════════════════════
+function hasStatus(s) { return G.player.statuses.includes(s); }
+function addStatus(s) { if (!G.player.statuses.includes(s)) G.player.statuses.push(s); }
+function removeStatus(s) { G.player.statuses = G.player.statuses.filter(x=>x!==s); }
+
+// ═══════════════════════════════════════════════════════════════════════
+// XP & LEVELING
+// ═══════════════════════════════════════════════════════════════════════
+function gainXP(amt) {
+  G.player.xp += amt;
+  while (G.player.xp >= G.player.xpNext) {
+    G.player.xp -= G.player.xpNext;
+    G.player.level++;
+    G.player.xpNext = ~~(G.player.xpNext * 1.45);
+    G.player.hpMax += 12;
+    G.player.hp = Math.min(G.player.hpMax, G.player.hp + 25);
+    G.player.mpMax += 6;
+    G.player.mp = Math.min(G.player.mpMax, G.player.mp + 12);
+    const keys = [...STATS];
+    const top = keys.sort((a,b)=>G.player.stats[b]-G.player.stats[a])[0];
+    G.player.stats[top]++;
+    const rnd = STATS[~~(Math.random()*STATS.length)];
+    G.player.stats[rnd]++;
+    if (G.player.level % 3 === 0) {
+      const r2 = STATS[~~(Math.random()*STATS.length)];
+      G.player.stats[r2]++;
+    }
+    log('✦ LEVEL UP! Now '+G.player.level+'. '+STAT_NAMES[top]+' +1, '+STAT_NAMES[rnd]+' +1.','success');
+    toast('Level Up! Lv.'+G.player.level);
+    updateHUD(); renderDrawer('char');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// NPC AI TICK
+// ═══════════════════════════════════════════════════════════════════════
+function tickNPCs(hours) {
+  G.npcs.forEach(npc => {
+    if (!npc.routine) return;
+    const action = npc.routine[G.player.hour % npc.routine.length];
+    // Move slightly based on routine
+    if (action === 'patrols') {
+      npc.x += ~~(Math.random()*3)-1;
+      npc.y += ~~(Math.random()*3)-1;
+    } else if (action === 'works') {
+      // Stay near their work spot
+      const base = NPC_TEMPLATES[G.world.location]?.find(t=>t.id===npc.id);
+      if (base) { npc.x = base.x + ~~(Math.random()*2); npc.y = base.y + ~~(Math.random()*2); }
+    }
+    npc.x = Math.max(2, Math.min(28, npc.x));
+    npc.y = Math.max(2, Math.min(28, npc.y));
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// GAME LOOP
+// ═══════════════════════════════════════════════════════════════════════
+let loopInterval = null;
+function startLoop() {
+  if (loopInterval) clearInterval(loopInterval);
+  loopInterval = setInterval(gameTick, 1000);
+}
+
+function gameTick() {
+  if (!G) return;
+  G.tick++;
+  const p = G.player;
+
+  // Passive regen
+  if (G.tick % 8 === 0) {
+    if (p.hp < p.hpMax) p.hp = Math.min(p.hpMax, p.hp+1);
+    if (p.mp < p.mpMax) p.mp = Math.min(p.mpMax, p.mp+1);
+    updateHUD();
+  }
+
+  // Time advance
+  if (G.tick % 90 === 0) {
+    p.hour = (p.hour+1)%24;
+    if (p.hour===0) p.day++;
+    // NPC movement tick
+    tickNPCs(1);
+    updateHUD();
+  }
+
+  // Status ticks
+  if (G.tick % 15 === 0) {
+    if (hasStatus('Poisoned')) {
+      p.hp = Math.max(1, p.hp-3);
+      if (Math.random()<0.15) { removeStatus('Poisoned'); log('The poison passes.','world'); }
+    }
+    if (hasStatus('On Fire')) {
+      p.hp = Math.max(1, p.hp-5);
+      if (Math.random()<0.3) removeStatus('On Fire');
+    }
+    if (hasStatus('Cursed') && Math.random()<0.05) {
+      const s = STATS[~~(Math.random()*STATS.length)];
+      p.stats[s] = Math.max(1, p.stats[s]-1);
+      log('The curse bites. '+STAT_NAMES[s]+' -1.','danger');
+    }
+  }
+
+  // Ambient events
+  if (G.tick % 120 === 0) {
+    const loc = LOCATION_DATA[G.world.location];
+    if (loc?.ambient) {
+      const amb = loc.ambient[~~(Math.random()*loc.ambient.length)];
+      log(amb,'world');
+    }
+  }
+
+  // NPC random actions
+  if (G.tick % 45 === 0) {
+    const npc = G.npcs[~~(Math.random()*G.npcs.length)];
+    if (npc) {
+      const base = NPC_TEMPLATES[G.world.location]?.find(t=>t.id===npc.id);
+      const action = base?.routine?.[p.hour % (base.routine.length||6)] || 'wanders';
+      if (action==='patrols'||action==='wanders') {
+        npc.x = Math.max(2, Math.min(28, npc.x + ~~(Math.random()*3)-1));
+        npc.y = Math.max(2, Math.min(28, npc.y + ~~(Math.random()*3)-1));
+      }
+      // Hostile NPCs may approach player
+      if (npc.mood==='hostile' && Math.random()<0.3) {
+        const dx = Math.sign(p.x - npc.x), dy = Math.sign(p.y - npc.y);
+        npc.x += dx; npc.y += dy;
+        if (Math.abs(p.x-npc.x)<=1 && Math.abs(p.y-npc.y)<=1) {
+          const dmg = 3+~~(Math.random()*(npc.stats.STR/2));
+          p.hp = Math.max(0, p.hp-dmg);
+          log(npc.name+' attacks you! -'+dmg+' HP.','combat');
+          if (p.hp<=0) handleDeath();
+          updateHUD();
+        }
+      }
+    }
+  }
+
+  // Reputation consequences
+  if (G.tick % 200 === 0 && p.crimes > 5) {
+    const guard = G.npcs.find(n=>n.role.includes('Guard'));
+    if (guard && guard.mood!=='hostile') {
+      guard.mood = 'suspicious';
+      log('A guard eyes you with suspicion.','world');
+    }
+  }
+  if (G.tick % 300 === 0 && p.reputation==='wanted') {
+    const guard = G.npcs.find(n=>n.role.includes('Guard'));
+    if (guard) {
+      guard.mood = 'hostile';
+      log('A guard recognizes you. "That\'s them! Get them!"','danger');
+    }
+  }
+
+  render();
+  if (G.tick % 30 === 0) saveGame();
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// MOVEMENT
+// ═══════════════════════════════════════════════════════════════════════
+function handleKey(e) {
+  const moves = {
+    ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0],
+    w:[0,-1],s:[0,1],a:[-1,0],d:[1,0],
+    W:[0,-1],S:[0,1],A:[-1,0],D:[1,0],
+  };
+  const m = moves[e.key];
+  if (!m) return;
+  e.preventDefault();
+  movePlayer(m[0],m[1]);
+}
+
+function movePlayer(dx,dy) {
+  if (!G) return;
+  const p = G.player;
+  const nx = p.x+dx, ny = p.y+dy;
+  if (nx<0||ny<0||nx>31||ny>31) return;
+  // Check NPC collision
+  const npc = G.npcs.find(n=>n.x===nx&&n.y===ny);
+  if (npc) { npcMenu(npc.id); return; }
+  p.x = nx; p.y = ny;
+  // Object interaction hint
+  const obj = worldObjects.find(o=>o.x===nx&&o.y===ny);
+  if (obj && obj.name) log('You stand at '+obj.name+'.','sys');
+  render();
+}
+
+// ── DPAD ──
+function initDpad() {
+  const dpad = document.getElementById('dpad');
+  let rep = null, repI = null;
+  function startMove(btn) {
+    const dx = parseInt(btn.dataset.dx), dy = parseInt(btn.dataset.dy);
+    if (isNaN(dx)) return;
+    btn.classList.add('pressed');
+    movePlayer(dx,dy);
+    rep = setTimeout(()=>{ repI = setInterval(()=>movePlayer(dx,dy),130); },300);
+  }
+  function stopMove(btn) {
+    if (btn) btn.classList.remove('pressed');
+    clearTimeout(rep); clearInterval(repI); rep=repI=null;
+  }
+  dpad.querySelectorAll('button[data-dx]').forEach(btn=>{
+    btn.addEventListener('touchstart',e=>{e.preventDefault();startMove(btn);},{passive:false});
+    btn.addEventListener('touchend',  e=>{e.preventDefault();stopMove(btn);},{passive:false});
+    btn.addEventListener('touchcancel',e=>{e.preventDefault();stopMove(btn);},{passive:false});
+    btn.addEventListener('mousedown', ()=>startMove(btn));
+    btn.addEventListener('mouseup',   ()=>stopMove(btn));
+    btn.addEventListener('mouseleave',()=>stopMove(btn));
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// MODAL
+// ═══════════════════════════════════════════════════════════════════════
+function openModal(title, body, acts=[]) {
+  document.getElementById('m-title').innerHTML = title;
+  document.getElementById('m-body').innerHTML = body;
+  const aa = document.getElementById('m-acts');
+  aa.innerHTML = '';
+  acts.forEach(a=>{
+    const b = document.createElement('button');
+    b.className = 'mbtn '+(a.cls||'');
+    b.textContent = a.label;
+    b.onclick = a.fn;
+    aa.appendChild(b);
+  });
+  document.getElementById('modal').classList.add('on');
+}
+function closeModal() { document.getElementById('modal').classList.remove('on'); }
+document.getElementById('modal').addEventListener('click', e=>{ if (e.target===document.getElementById('modal')) closeModal(); });
+
+// ── BNAV (mobile bottom nav) ──
+let drawerMobileOpen = false;
+const BNAV_ID = {char:'self',inv:'inv',create:'forge',world:'world',npcs:'npcs'};
+
+function bnav(tab) {
+  document.querySelectorAll('.bnbtn').forEach(b=>b.classList.remove('on'));
+  const btnId = 'bn-'+(BNAV_ID[tab]||tab);
+  document.getElementById(btnId)?.classList.add('on');
+
+  if (tab === 'map') {
+    closeMobileDrawer();
+    return;
+  }
+  openMobileDrawer(tab);
+}
+
+function openMobileDrawer(tab) {
+  drawerTab(tab);
+  document.getElementById('drawer').classList.add('open');
+  document.body.classList.add('drawer-open');
+  drawerMobileOpen = true;
+}
+
+function closeMobileDrawer() {
+  document.getElementById('drawer').classList.remove('open');
+  document.body.classList.remove('drawer-open');
+  drawerMobileOpen = false;
+  document.querySelectorAll('.bnbtn').forEach(b=>b.classList.remove('on'));
+  document.getElementById('bn-map')?.classList.add('on');
+}
+
+function doMcmd() {
+  const inp = document.getElementById('mcmd-in');
+  if (!inp) return;
+  const cmd = inp.value.trim();
+  if (!cmd) return;
+  inp.value = '';
+  resolveCmd(cmd);
+}
+document.getElementById('mcmd-in')?.addEventListener('keydown', e => {
+  if (e.key === 'Enter') doMcmd();
+});
+
+// ═══════════════════════════════════════════════════════════════════════
+// LOG + EVENT FLASH SYSTEM
+// ═══════════════════════════════════════════════════════════════════════
+const TYPE_COLOR = {
+  act:'var(--text)', sys:'var(--text2)', world:'var(--text2)',
+  combat:'var(--ember2)', loot:'var(--gold2)', social:'var(--frost2)',
+  creation:'var(--violet2)', success:'var(--sage2)', danger:'var(--ember)',
+};
+const TYPE_BORDER = {
+  act:'var(--border2)', sys:'var(--border)', world:'var(--border)',
+  combat:'var(--ember)', loot:'var(--gold)', social:'var(--frost)',
+  creation:'var(--violet)', success:'var(--sage)', danger:'var(--ember2)',
+};
+
+let flashQ = [], flashBusy = false;
+
+function log(msg, type='act') {
+  if (!G) return;
+  G.log.push({msg, type, tick: G.tick || 0});
+  if (G.log.length > 500) G.log.shift();
+
+  // Desktop feed
+  const el = document.getElementById('log-entries');
+  if (el) {
+    const d = document.createElement('div');
+    d.className = 'log-line ' + type;
+    d.textContent = msg;
+    el.appendChild(d);
+    while (el.children.length > 14) el.removeChild(el.firstChild);
+  }
+
+  // Mobile: queue flash
+  if (window.innerWidth <= 768) {
+    flashQ.push({msg, type});
+    if (!flashBusy) nextFlash();
+  }
+}
+
+function nextFlash() {
+  if (!flashQ.length) { flashBusy = false; return; }
+  flashBusy = true;
+  const {msg, type} = flashQ.shift();
+  const el = document.getElementById('event-flash');
+  if (!el) { flashBusy = false; return; }
+  el.textContent = msg;
+  el.style.color = TYPE_COLOR[type] || 'var(--text)';
+  el.style.borderColor = TYPE_BORDER[type] || 'var(--border2)';
+  el.style.opacity = '1';
+  el.style.display = 'block';
+  clearTimeout(el._t1); clearTimeout(el._t2);
+  // Linger time: combat/danger shorter, world/sys longer
+  const linger = (type==='sys'||type==='world') ? 2000 : 3000;
+  el._t1 = setTimeout(() => {
+    el.style.transition = 'opacity 0.6s';
+    el.style.opacity = '0';
+    el._t2 = setTimeout(() => {
+      el.style.display = 'none';
+      el.style.transition = '';
+      nextFlash();
+    }, 620);
+  }, linger);
+}
+
+// Tap flash to open log history
+document.getElementById('event-flash')?.addEventListener('click', openLogModal);
+document.getElementById('event-flash')?.addEventListener('touchend', e => { e.preventDefault(); openLogModal(); });
+
+// Log history modal
+function openLogModal() {
+  const modal = document.getElementById('log-modal');
+  const entries = document.getElementById('log-modal-entries');
+  if (!modal || !entries || !G) return;
+  entries.innerHTML = '';
+  G.log.slice().reverse().forEach(e => {
+    const d = document.createElement('div');
+    d.style.cssText = 'font-size:0.82rem;line-height:1.5;padding:4px 0;border-bottom:1px solid rgba(58,46,30,0.35);';
+    d.style.color = TYPE_COLOR[e.type] || 'var(--text)';
+    d.style.fontFamily = "'EB Garamond', serif";
+    d.textContent = e.msg;
+    entries.appendChild(d);
+  });
+  modal.style.display = 'flex';
+  document.body.classList.add('modal-open');
+}
+function closeLogModal() {
+  document.getElementById('log-modal').style.display = 'none';
+  document.body.classList.remove('modal-open');
+}
+document.getElementById('log-modal')?.addEventListener('click', e => {
+  if (e.target === document.getElementById('log-modal')) closeLogModal();
+});
+
+// ═══════════════════════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════════════════════
+let toastTimer = null;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.style.display = 'block';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>el.style.display='none', 2800);
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════════════════════
+function hashStr(s) {
+  let h=0; for (let i=0;i<s.length;i++) h=(Math.imul(31,h)+s.charCodeAt(i))|0;
+  return Math.abs(h);
+}
+function mkRng(seed) {
+  let s=seed;
+  return ()=>{ s=(s*1664525+1013904223)&0xffffffff; return (s>>>0)/0xffffffff; };
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════════════
+window.addEventListener('load', ()=>{
+  if (localStorage.getItem('animus_v2')) {
+    document.getElementById('btn-continue').style.borderColor = 'var(--gold2)';
+    document.getElementById('btn-continue').style.color = 'var(--gold2)';
+  }
+});
+</script>
+</body>
+</html>
