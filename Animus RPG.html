@@ -160,6 +160,7 @@ body{font-family:'EB Garamond',serif;font-size:15px;color:var(--text);cursor:def
 .fill-hp{background:linear-gradient(90deg,#a03030,#e05050);}
 .fill-mp{background:linear-gradient(90deg,#305080,#5090d0);}
 .fill-xp{background:linear-gradient(90deg,#806020,#d0a040);}
+.fill-food{background:linear-gradient(90deg,#805020,#c08040);}
 .hud-meta{display:flex;gap:10px;align-items:center;flex-shrink:0;}
 .hud-gold{font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--gold);}
 .hud-time{font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--text2);}
@@ -654,6 +655,7 @@ body.drawer-open #qring { display:none !important; }
         <div class="hbar"><span class="hbar-lbl">HP</span><div class="hbar-track"><div class="hbar-fill fill-hp" id="b-hp"></div></div></div>
         <div class="hbar"><span class="hbar-lbl">MP</span><div class="hbar-track"><div class="hbar-fill fill-mp" id="b-mp"></div></div></div>
         <div class="hbar"><span class="hbar-lbl">XP</span><div class="hbar-track"><div class="hbar-fill fill-xp" id="b-xp"></div></div></div>
+        <div class="hbar" id="food-bar-wrap"><span class="hbar-lbl" style="color:#a07840;">FD</span><div class="hbar-track"><div class="hbar-fill fill-food" id="b-food"></div></div></div>
       </div>
       <div class="hud-meta">
         <span class="hud-gold" id="h-gold">⬡ 0</span>
@@ -690,6 +692,9 @@ body.drawer-open #qring { display:none !important; }
         <div class="dtab" onclick="drawerTab('create')">Forge</div>
         <div class="dtab" onclick="drawerTab('world')">World</div>
         <div class="dtab" onclick="drawerTab('npcs')">Folk</div>
+        <div class="dtab" onclick="drawerTab('quests')">📋</div>
+        <div class="dtab" onclick="drawerTab('ach')">🏆</div>
+        <div class="dtab" onclick="drawerTab('settings')">⚙️</div>
       </div>
       <div id="drawer-body"></div>
       <div id="mobile-cmd-row" style="display:none;flex-shrink:0;padding:6px 8px;background:var(--parchment);border-top:1px solid var(--border);gap:6px;align-items:center;">
@@ -724,6 +729,8 @@ body.drawer-open #qring { display:none !important; }
     <button class="bnbtn"    id="bn-world"  onclick="bnav('world')"><span class="bi">🌍</span>World</button>
     <button class="bnbtn"    id="bn-self"   onclick="bnav('char')"><span class="bi">🧍</span>Self</button>
     <button class="bnbtn"    id="bn-log"    onclick="openLogModal()"><span class="bi">📜</span>Log</button>
+    <button class="bnbtn"    id="bn-quests" onclick="bnav('quests')"><span class="bi">📋</span>Quest</button>
+    <button class="bnbtn"    id="bn-settings" onclick="bnav('settings')"><span class="bi">⚙️</span>Settings</button>
   </div>
 
 </div>
@@ -932,6 +939,34 @@ const LOCATION_DATA = {
       {icon:'🏊',x:8,y:14,name:'Pool'},{icon:'🍾',x:13,y:12,name:'Bar'},
       {icon:'🔒',x:6,y:12,name:'Locked Wing'},{icon:'📷',x:9,y:5,name:'Security Camera'},
     ]
+  },
+
+  'Town Jail': {
+    desc:'Stone walls. Iron bars. The smell of regret and damp straw.',
+    ambient:[
+      'Someone in the next cell is crying quietly.',
+      'A guard taps his baton against the bars.',
+      'The night shift guard is dozing. An opportunity?',
+      'You hear the city beyond the walls, going on without you.',
+      'A rat skitters across the floor.',
+    ],
+    danger:2, wealth:0, type:'prison',
+    color:{ground:'#0e0c0a',path:'#1a1614',accent:'#141210'},
+    objects:[
+      {icon:'🪨',x:3,y:3},{icon:'🪨',x:4,y:3},{icon:'🪨',x:5,y:3},{icon:'🪨',x:6,y:3},{icon:'🪨',x:7,y:3},
+      {icon:'🪨',x:3,y:4},{icon:'🛏️',x:5,y:4,name:'Cell Bunk'},{icon:'🪨',x:7,y:4},
+      {icon:'🪨',x:3,y:5},{icon:'🪤',x:4,y:5,name:'Loose Stone'},{icon:'🪨',x:7,y:5},
+      {icon:'🪨',x:3,y:6},{icon:'🚪',x:5,y:6,name:'Cell Door (locked)'},{icon:'🪨',x:7,y:6},
+      {icon:'🪨',x:3,y:7},{icon:'🪨',x:4,y:7},{icon:'🪨',x:5,y:7},{icon:'🪨',x:6,y:7},{icon:'🪨',x:7,y:7},
+      {icon:'🪨',x:13,y:3},{icon:'🪨',x:14,y:3},{icon:'🪨',x:15,y:3},{icon:'🪨',x:16,y:3},{icon:'🪨',x:17,y:3},
+      {icon:'🪨',x:13,y:4},{icon:'🛏️',x:15,y:4,name:'Cell Bunk'},{icon:'🪨',x:17,y:4},
+      {icon:'🪨',x:13,y:5},{icon:'🪨',x:17,y:5},
+      {icon:'🪨',x:13,y:6},{icon:'🚪',x:15,y:6,name:'Cell Door (locked)'},{icon:'🪨',x:17,y:6},
+      {icon:'🪨',x:13,y:7},{icon:'🪨',x:14,y:7},{icon:'🪨',x:15,y:7},{icon:'🪨',x:16,y:7},{icon:'🪨',x:17,y:7},
+      {icon:'⚖️',x:11,y:12,name:'Bail Office'},{icon:'🗝️',x:14,y:12,name:'Guard Station'},
+      {icon:'🔒',x:5,y:12,name:'Evidence Locker'},{icon:'📋',x:8,y:12,name:'Crime Records'},
+      {icon:'🚪',x:11,y:17,name:'Exit (guarded)'},
+    ]
   }
 };
 
@@ -1048,6 +1083,49 @@ const NPC_TEMPLATES = {
      stats:{STR:5,DEX:12,INT:11,CON:7,CHA:13,WIS:14},props:['silent','binding','perceptive'],x:13,y:10,
      routine:['serves','serves','cleans','serves','serves','stands watch'],
      dialogue:{neutral:'Can I get you something?',friendly:'Be careful here. That is all I will say.',suspicious:'I noticed you looking at the locked wing.',afraid:'I signed a very specific contract.'}},
+  ],
+
+  'Town Jail': [
+    {id:'jailer_gruff',name:'Warden Gruff',role:'Warden',gender:'m',mood:'neutral',home:'Town Jail',
+     stats:{STR:14,DEX:9,INT:10,CON:13,CHA:5,WIS:11},
+     props:['armed','lawful','powerful'],x:11,y:12,
+     routine:['patrols','patrols','works','works','patrols','sleeps'],
+     dialogue:{
+       neutral:'You will serve your time. No exceptions.',
+       friendly:'Model prisoner. That counts for something.',
+       hostile:'Do not make this harder than it needs to be.',
+       afraid:'Back! I will call the others!',
+     }},
+    {id:'guard_bolt',name:'Guard Bolt',role:'Guard',gender:'m',mood:'neutral',home:'Town Jail',
+     stats:{STR:12,DEX:11,INT:7,CON:11,CHA:6,WIS:8},
+     props:['armed','lawful'],x:14,y:12,
+     routine:['patrols','patrols','patrols','sleeps','patrols','patrols'],
+     dialogue:{
+       neutral:'Eyes forward.',
+       friendly:'You are not the worst I have had in here.',
+       hostile:'Try anything and I will add three days.',
+       afraid:'Stay back!',
+     }},
+    {id:'prisoner_cobb',name:'Old Cobb',role:'Prisoner',gender:'m',mood:'sad',home:'Town Jail',
+     stats:{STR:6,DEX:7,INT:12,CON:8,CHA:9,WIS:15},
+     props:['wise','imprisoned'],x:6,y:5,
+     routine:['sleeps','sleeps','wanders','talks','wanders','sleeps'],
+     dialogue:{
+       neutral:'First time? You never forget the smell.',
+       friendly:'I have been here eleven years. I know every stone.',
+       sad:'My family stopped visiting in year three.',
+       hostile:'Leave me alone.',
+     }},
+    {id:'prisoner_fox',name:'Mira the Fox',role:'Prisoner',gender:'f',mood:'neutral',home:'Town Jail',
+     stats:{STR:8,DEX:16,INT:14,CON:9,CHA:13,WIS:11},
+     props:['cunning','imprisoned','clever'],x:15,y:5,
+     routine:['wanders','talks','plans','sleeps','plans','wanders'],
+     dialogue:{
+       neutral:'I know three ways out of here. None easy.',
+       friendly:'You seem capable. Maybe we help each other.',
+       hostile:'I work alone.',
+       charmed:'Alright. I will show you the weak spot in the north wall.',
+     }},
   ]
 };
 
@@ -1161,6 +1239,615 @@ function renderAchievementsPanel() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════
+// QUEST SYSTEM
+// ═══════════════════════════════════════════════════════════════════════
+const QUEST_TYPES = ['fetch','kill','escort','deliver','talk','explore','craft','sell'];
+
+function createQuest(title, desc, giver, type, reward, steps) {
+  return {
+    id: 'q_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),
+    title, desc, giver: giver||'World',
+    type: type||'fetch',
+    reward: reward||{gold:50,xp:100},
+    steps: steps||[{text:'Complete the task.',done:false}],
+    status:'active', created:G?G.tick:0,
+  };
+}
+
+function addQuest(q) {
+  if (!G) return;
+  G.world.quests.push(q);
+  G.player.activeQuests.push(q.id);
+  log('New quest: '+q.title,'loot');
+  toast('Quest: '+q.title);
+}
+
+function completeQuest(qid) {
+  const q = G.world.quests.find(x=>x.id===qid);
+  if (!q || q.status==='done') return;
+  q.status='done';
+  G.player.activeQuests = G.player.activeQuests.filter(x=>x!==qid);
+  G.player.completedQuests.push(qid);
+  if (q.reward.gold) { G.player.gold += q.reward.gold; log('Quest complete: '+q.title+'. +'+q.reward.gold+' gold!','success'); }
+  if (q.reward.xp) gainXP(q.reward.xp);
+  if (q.reward.item) G.player.inventory.push(q.reward.item);
+  toast('Quest complete: '+q.title+' !');
+  checkAchievements();
+}
+
+function generateNPCQuest(npc) {
+  const templates = [
+    {title:'Gather Supplies', desc:npc.name+' needs basic supplies from the wilds.', type:'fetch',
+     steps:[{text:'Forage 3 items.',done:false}], reward:{gold:30+npc.stats.CHA*3,xp:80}},
+    {title:'Clear the Road', desc:'Something dangerous is blocking the path near '+npc.name+'.', type:'kill',
+     steps:[{text:'Kill a hostile NPC.',done:false}], reward:{gold:50+npc.stats.CHA*4,xp:120}},
+    {title:'Deliver a Message', desc:npc.name+' needs a message delivered in town.', type:'deliver',
+     steps:[{text:'Talk to another NPC.',done:false}], reward:{gold:20,xp:60}},
+    {title:'Find Lost Item', desc:npc.name+' lost something precious.', type:'fetch',
+     steps:[{text:'Forage or explore to find it.',done:false}], reward:{gold:40,xp:90,item:{id:'lost_ring',name:'Lost Ring',icon:'💍',qty:1,props:['valuable'],val:80,desc:'An old ring.'}}},
+  ];
+  const t = templates[~~(Math.random()*templates.length)];
+  return createQuest(t.title, t.desc, npc.name, t.type, t.reward, t.steps);
+}
+
+function renderQuestsPanel() {
+  const active = G.world.quests.filter(q=>G.player.activeQuests.includes(q.id));
+  const done = G.world.quests.filter(q=>q.status==='done').slice(-5);
+  let html = '<span class="plabel">Active Quests ('+active.length+')</span>';
+  if (!active.length) html += '<div style="color:var(--text3);font-style:italic;padding:4px 0;">No active quests.</div>';
+  active.forEach(q => {
+    const prog = q.steps.filter(s=>s.done).length+'/'+q.steps.length;
+    html += '<div style="background:var(--parchment2);border:1px solid var(--border);padding:8px;margin-bottom:6px;cursor:pointer;" onclick="showQuestDetail(\'' + q.id + '\')">';
+    html += '<div style="color:var(--gold);font-size:0.85rem;">'+q.title+'</div>';
+    html += '<div style="font-size:0.72rem;color:var(--text2);margin:2px 0;">'+q.desc+'</div>';
+    html += '<div style="font-size:0.68rem;color:var(--text3);">Progress: '+prog+' · Reward: '+q.reward.gold+' gold</div>';
+    html += '</div>';
+  });
+  if (done.length) {
+    html += '<span class="plabel" style="margin-top:0.5rem;">Completed</span>';
+    done.reverse().forEach(q => {
+      html += '<div style="opacity:0.5;padding:3px 0;font-size:0.78rem;color:var(--sage2);">✓ '+q.title+'</div>';
+    });
+  }
+  return html;
+}
+
+function showQuestDetail(qid) {
+  const q = G.world.quests.find(x=>x.id===qid);
+  if (!q) return;
+  const steps = q.steps.map(s=>'<div style="padding:3px 0;color:'+(s.done?'var(--sage2)':'var(--text)')+';">'+(s.done?'✓ ':'○ ')+s.text+'</div>').join('');
+  const acts = [{label:'Abandon', cls:'bad', fn:()=>{abandonQuest(qid);closeModal();}}];
+  if (q.steps.every(s=>s.done)) acts.unshift({label:'Turn In!', cls:'ok', fn:()=>{completeQuest(qid);closeModal();}});
+  openModal(q.title, '<div style="font-size:0.82rem;color:var(--text2);margin-bottom:8px;">'+q.desc+'</div>'+steps, acts);
+}
+
+function abandonQuest(qid) {
+  const q = G.world.quests.find(x=>x.id===qid);
+  if (q) { q.status='abandoned'; G.player.activeQuests = G.player.activeQuests.filter(x=>x!==qid); }
+  log('Quest abandoned.','danger');
+}
+
+// Auto-progress quest steps based on actions
+function questProgress(action, data) {
+  if (!G) return;
+  if (!G.player.activeQuests) return;
+  G.player.activeQuests.forEach(qid => {
+    const q = G.world.quests.find(x=>x.id===qid);
+    if (!q) return;
+    q.steps.forEach(step => {
+      if (step.done) return;
+      if (action==='kill' && q.type==='kill') { step.done=true; toast('Quest step done!'); }
+      if (action==='forage' && q.type==='fetch') { step.done=true; toast('Quest step done!'); }
+      if (action==='talk' && (q.type==='deliver'||q.type==='talk')) { step.done=true; toast('Quest step done!'); }
+      if (action==='explore') { step.done=true; toast('Quest step done!'); }
+    });
+    if (q.steps.every(s=>s.done)) { log('Quest ready to turn in: '+q.title,'success'); }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// FOOD / HUNGER SYSTEM
+// ═══════════════════════════════════════════════════════════════════════
+function tickFood() {
+  if (!G || !G.settings || G.settings.foodEnabled === false) return;
+  const p = G.player;
+  if (!p.food) p.food = 100;
+  if (!p.foodMax) p.foodMax = 100;
+  p.food = Math.max(0, p.food - 1);
+  if (p.food <= 0) {
+    p.hp = Math.max(1, p.hp - 2);
+    if (G.tick % 30 === 0) log('You are starving. HP draining.','danger');
+  } else if (p.food < 20) {
+    if (G.tick % 60 === 0) log('You are very hungry.','danger');
+  }
+  updateHUD();
+}
+
+function eatItem(item) {
+  const p = G.player;
+  const isDangerous = item.props.some(pr=>['poison','toxic','cursed','fire','acid'].includes(pr));
+  if (!isDangerous && item.props.some(pr=>['edible','water','food','healing'].includes(pr))) {
+    const gain = item.props.includes('healing') ? 30 : item.props.includes('water') ? 20 : 25;
+    p.food = Math.min(p.foodMax, (p.food||0) + gain);
+    log('You eat '+item.name+'. Food +'+gain+'.','success');
+    return true;
+  }
+  return false;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// STALL / MARKET SYSTEM
+// ═══════════════════════════════════════════════════════════════════════
+function openStallManager() {
+  if (!G) return;
+  const p = G.player;
+  if (!p.stall) p.stall = {items:[], markup:1.2, open:false, earnings:0, customers:0};
+  const stall = p.stall;
+  const invOptions = p.inventory.map((it,i) =>
+    '<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid rgba(58,46,30,0.3);">'+
+    '<span style="flex:1;font-size:0.82rem;color:var(--white);">'+it.icon+' '+it.name+' (x'+it.qty+') — ⬡'+it.val+'</span>'+
+    '<button class="mbtn" style="padding:0.2em 0.6em;font-size:0.7rem;" onclick="addToStall('+i+')">Sell</button>'+
+    '</div>'
+  ).join('') || '<div style="color:var(--text3);font-style:italic;">Inventory empty.</div>';
+
+  const stallItems = stall.items.map((it,i) =>
+    '<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid rgba(58,46,30,0.3);">'+
+    '<span style="flex:1;font-size:0.82rem;color:var(--gold);">'+it.icon+' '+it.name+' — ⬡'+Math.round(it.val*stall.markup)+'</span>'+
+    '<button class="mbtn bad" style="padding:0.2em 0.6em;font-size:0.7rem;" onclick="removeFromStall('+i+')">Remove</button>'+
+    '</div>'
+  ).join('') || '<div style="color:var(--text3);font-style:italic;">No items listed.</div>';
+
+  const body =
+    '<div style="margin-bottom:8px;font-size:0.8rem;color:var(--text2);">Earnings today: <span style="color:var(--gold);">⬡'+stall.earnings+'</span> · Customers: '+stall.customers+'</div>'+
+    '<div style="margin-bottom:6px;display:flex;align-items:center;gap:8px;">'+
+    '<span style="font-size:0.75rem;color:var(--text3);">Markup: x</span>'+
+    '<input id="stall-markup" type="number" step="0.1" min="0.5" max="5" value="'+stall.markup+'" style="width:60px;background:var(--parchment2);border:1px solid var(--border2);color:var(--white);padding:2px 6px;font-size:0.8rem;">'+
+    '<button class="mbtn ok" style="padding:0.2em 0.6em;font-size:0.7rem;" onclick="setStallMarkup()">Set</button>'+
+    '</div>'+
+    '<span class="plabel">On Sale ('+stall.items.length+' items)</span>'+
+    stallItems+
+    '<span class="plabel" style="margin-top:8px;">From Inventory</span>'+
+    invOptions+
+    '<div style="display:flex;gap:6px;margin-top:10px;">'+
+    '<button class="mbtn ok" onclick="toggleStall(true);closeModal()">Open Stall</button>'+
+    '<button class="mbtn bad" onclick="toggleStall(false);closeModal()">Close Stall</button>'+
+    '</div>';
+
+  openModal('Your Market Stall', body, []);
+}
+
+function addToStall(invIdx) {
+  const p = G.player;
+  if (!p.stall) return;
+  const item = p.inventory[invIdx];
+  if (!item) return;
+  p.stall.items.push({...item, qty:1});
+  item.qty--;
+  if (item.qty <= 0) p.inventory.splice(invIdx, 1);
+  openStallManager();
+}
+
+function removeFromStall(idx) {
+  const p = G.player;
+  if (!p.stall) return;
+  const item = p.stall.items.splice(idx,1)[0];
+  if (item) {
+    const existing = p.inventory.find(i=>i.id===item.id);
+    if (existing) existing.qty++;
+    else p.inventory.push(item);
+  }
+  openStallManager();
+}
+
+function setStallMarkup() {
+  const v = parseFloat(document.getElementById('stall-markup')?.value);
+  if (!isNaN(v) && v >= 0.5 && v <= 5) { G.player.stall.markup = v; toast('Markup set to x'+v); }
+}
+
+function toggleStall(open) {
+  if (!G.player.stall) G.player.stall = {items:[],markup:1.2,open:false,earnings:0,customers:0};
+  G.player.stall.open = open;
+  log(open ? 'You open your market stall. Customers gather.' : 'You close your stall.', 'act');
+  saveGame();
+}
+
+function tickStall() {
+  if (!G || !G.player.stall?.open || !G.player.stall.items.length) return;
+  if (G.tick % 60 !== 0) return; // Every ~60 ticks
+  const stall = G.player.stall;
+  const loc = LOCATION_DATA[G.world.location];
+  const demand = Math.min(0.9, (loc?.wealth||2)/3 + 0.2);
+  if (Math.random() < demand * 0.6) {
+    const sidx = ~~(Math.random()*stall.items.length);
+    const item = stall.items[sidx];
+    if (!item) return;
+    const price = Math.round(item.val * stall.markup);
+    G.player.gold += price;
+    stall.earnings += price;
+    stall.customers++;
+    stall.items.splice(sidx,1);
+    const custNames = ['Passing Merchant','Local Farmer','Traveller','Town Elder','Young Apprentice'];
+    const custName = custNames[~~(Math.random()*custNames.length)];
+    G.npcs.push({
+      id:'cust_'+G.tick, name:custName, role:'Customer', gender:Math.random()<0.5?'m':'f',
+      mood:'friendly', home:G.world.location,
+      stats:{STR:6,DEX:7,INT:8,CON:6,CHA:9,WIS:7}, props:['social'],
+      x:Math.min(30,G.player.x+1), y:Math.max(1,G.player.y-1),
+      dialogue:{neutral:'Just browsing.',friendly:'I will take it!'}, relations:{}, memory:[],
+      temporary:true, despawnAt:G.tick+60,
+    });
+    log(custName+' stops at your stall and buys '+item.name+' for '+price+' gold.','loot');
+    updateHUD();
+  }
+  G.npcs = G.npcs.filter(n=>!n.despawnAt||n.despawnAt>G.tick);
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// INTERIORS SYSTEM
+// ═══════════════════════════════════════════════════════════════════════
+const INTERIOR_TEMPLATES = {
+  inn: {
+    name:'The Leaky Flagon', bg:'#120e08',
+    rooms:[
+      {id:'main_hall',name:'Main Hall',desc:'Warm firelight, smell of ale and old wood.',
+       objects:[{icon:'🍺',x:8,y:8,name:'Bar'},{icon:'🔥',x:5,y:6,name:'Hearth'},{icon:'🎵',x:12,y:10,name:'Stage'}]},
+      {id:'bedroom',name:'Private Room',desc:'A simple bed. Privacy, at last.',
+       objects:[{icon:'🛏️',x:8,y:8,name:'Bed'},{icon:'🪟',x:12,y:5,name:'Window'},{icon:'🚪',x:8,y:14,name:'Door'}]},
+    ]
+  },
+  mansion: {
+    name:'The Mansion', bg:'#0a0e12',
+    rooms:[
+      {id:'foyer',name:'Grand Foyer',desc:'Marble floors. Portraits of people who do not smile.',
+       objects:[{icon:'🎭',x:8,y:5,name:'Portrait'},{icon:'🕯️',x:5,y:8},{icon:'🕯️',x:13,y:8}]},
+      {id:'study',name:'Private Study',desc:'Books you are not meant to read. Files you are not meant to see.',
+       objects:[{icon:'📚',x:5,y:6,name:'Bookshelf'},{icon:'🗂️',x:11,y:8,name:'Files'},{icon:'🔒',x:14,y:10,name:'Safe'}]},
+      {id:'vault',name:'Hidden Vault',desc:'You should not be here.',
+       objects:[{icon:'💰',x:8,y:8,name:'Vault Contents'},{icon:'📜',x:11,y:10,name:'Documents'}]},
+    ]
+  },
+  guild: {
+    name:'Adventurers Guild', bg:'#100c08',
+    rooms:[
+      {id:'hall',name:'Guild Hall',desc:'Notice boards. The smell of ambition and failure.',
+       objects:[{icon:'📋',x:8,y:6,name:'Quest Board'},{icon:'🏆',x:12,y:8,name:'Trophy Wall'},{icon:'🗺️',x:5,y:10,name:'Maps'}]},
+      {id:'vault',name:'Guild Vault',desc:'Members only.',
+       objects:[{icon:'🎒',x:8,y:8,name:'Equipment'},{icon:'💰',x:12,y:8,name:'Reward Chest'}]},
+    ]
+  },
+  blacksmith: {name:'Blacksmith',bg:'#120808',
+    rooms:[{id:'forge',name:'The Forge',desc:'Heat. Iron. Purpose.',
+      objects:[{icon:'🔥',x:8,y:6,name:'Furnace'},{icon:'⚒️',x:11,y:9,name:'Anvil'},{icon:'🗡️',x:5,y:10,name:'Weapon Rack'}]}]},
+  dimension: {name:'Dimensional Space',bg:'#080010',
+    rooms:[{id:'pocket',name:'Pocket Dimension',desc:'A space that exists between spaces. You built this.',
+      objects:[{icon:'✦',x:8,y:8,name:'Anchor Point'},{icon:'🌀',x:5,y:5},{icon:'🌀',x:13,y:5}]}]},
+};
+
+let currentInterior = null; // {templateKey, roomIdx, sourceLocation}
+
+function enterInterior(templateKey, roomIdx) {
+  if (!INTERIOR_TEMPLATES[templateKey]) return;
+  currentInterior = {templateKey, roomIdx:roomIdx||0, sourceLocation:G.world.location};
+  G.player.currentInterior = currentInterior;
+  const tmpl = INTERIOR_TEMPLATES[templateKey];
+  const room = tmpl.rooms[roomIdx||0];
+  log('You enter '+tmpl.name+' — '+room.name+'.','world');
+  log(room.desc,'sys');
+  // Bring clan members
+  G.player.clan.forEach(npcId => {
+    const npc = G.npcs.find(n=>n.id===npcId);
+    if (npc) { npc.x=10; npc.y=10; log(npc.name+' follows you inside.','sys'); }
+  });
+  buildInteriorMap(templateKey, roomIdx||0);
+  render();
+}
+
+function exitInterior() {
+  if (!currentInterior) return;
+  currentInterior = null;
+  G.player.currentInterior = null;
+  buildMap();
+  log('You step back outside.','world');
+  render();
+}
+
+function buildInteriorMap(templateKey, roomIdx) {
+  const tmpl = INTERIOR_TEMPLATES[templateKey];
+  if (!tmpl) return;
+  const room = tmpl.rooms[roomIdx];
+  // Override world objects for interior render
+  worldObjects = room.objects.map(o=>({...o}));
+  // Interior is a small 16x16 space centered in the map
+}
+
+function enterDimension(dimKey) {
+  if (!G.player.dimensionMemory[dimKey]) {
+    G.player.dimensionMemory[dimKey] = {
+      objects:[{icon:'✦',x:8,y:8,name:'Anchor'}],
+      npcs:[],
+      created:G.tick,
+    };
+    log('You tear open a rift. A new dimensional space unfolds.','creation');
+  } else {
+    log('You return to your dimensional space. It remembers you.','world');
+  }
+  currentInterior = {templateKey:'dimension', roomIdx:0, sourceLocation:G.world.location, dimKey};
+  G.player.currentInterior = currentInterior;
+  buildInteriorMap('dimension', 0);
+  render();
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// JAIL SYSTEM
+// ═══════════════════════════════════════════════════════════════════════
+let jailPursuit = false;
+
+function triggerArrest(reason) {
+  if (!G) return;
+  const p = G.player;
+  jailPursuit = true;
+  openModal('GUARDS!', '"'+reason+'"<br><br>Guards are closing in!<br><br>Type <b>surrender</b> to give up, or run!',
+    [{label:'Surrender now', cls:'bad', fn:()=>{closeModal();setTimeout(surrenderToGuards,50);}},
+     {label:'Run!', cls:'ok', fn:closeModal}]
+  );
+  // Make existing guards hostile
+  G.npcs.filter(n=>n.role.toLowerCase().includes('guard')||n.role.toLowerCase().includes('security'))
+    .forEach(g => { g.mood='hostile'; });
+  // Always spawn fresh pursuit guards near player
+  G.npcs = G.npcs.filter(n=>!n.temporary); // clear old ones first
+  for (let i=0;i<3;i++) {
+    const angle = (i/3)*Math.PI*2;
+    const dist = 4+i;
+    const gx = Math.max(1,Math.min(30, p.x+Math.round(Math.cos(angle)*dist)));
+    const gy = Math.max(1,Math.min(30, p.y+Math.round(Math.sin(angle)*dist)));
+    G.npcs.push({
+      id:'pursuit_guard_'+i+'_'+G.tick, name:'City Guard', role:'Guard',
+      gender:'m', mood:'hostile', home:G.world.location,
+      stats:{STR:13,DEX:11,INT:8,CON:12,CHA:6,WIS:9},
+      props:['armed','lawful'], x:gx, y:gy,
+      routine:['patrols','patrols','patrols','patrols','patrols','patrols'],
+      dialogue:{hostile:'You are under arrest!',neutral:'Move along.',afraid:'I do not want trouble.'},
+      relations:{},memory:[],temporary:true,
+    });
+  }
+  log('GUARDS! "'+reason+' — STOP RIGHT THERE!"','danger');
+  log('Surrender (type "surrender"), fight your way out, or run!','danger');
+}
+
+function surrenderToGuards() {
+  if (!G) return;
+  jailPursuit = false;
+  G.npcs = G.npcs.filter(n=>!n.temporary);
+  log('You raise your hands. "I surrender."','act');
+  sendToJail(G.player.crimes);
+}
+
+function sendToJail(crimes) {
+  const p = G.player;
+  const c = Math.max(1, crimes); // always at least 1 crime
+  const sentence = Math.max(3, c * 2);
+  p.jailTime = sentence;
+  p.totalJailTime = (p.totalJailTime||0) + sentence;
+  const bail = Math.max(50, c * 80);
+  jailPursuit = false;
+  addStatus('Jailed');
+  G.npcs = G.npcs.filter(n=>!n.temporary);
+  G.world.location = 'Town Jail';
+  G.npcs = buildNPCs('Town Jail');
+  buildMap();
+  p.x = 6; p.y = 5;
+  log('Guards drag you to the town jail. Sentence: '+sentence+' hrs. Bail: ⬡'+bail+'. ('+c+' crimes on record)','danger');
+  openModal('Jailed',
+    'You have been sentenced to '+sentence+' hours.<br>Bail: <b>⬡'+bail+'</b><br><br>Options:<br>• Pay bail<br>• Ask a betrothed to pay<br>• Wait out the sentence<br>• Attempt to escape',
+    [
+      {label:'Pay ⬡'+bail, cls:'ok', fn:()=>{payBail(bail);closeModal();}},
+      {label:'Ask Betrothed', cls:'', fn:()=>{askBetrothForBail(bail);closeModal();}},
+      {label:'Wait it out', cls:'', fn:()=>closeModal()},
+      {label:'Escape!', cls:'bad', fn:()=>{attemptJailBreak();closeModal();}},
+    ]
+  );
+}
+
+function payBail(amount) {
+  const p = G.player;
+  if (p.gold < amount) { toast('Not enough gold! Need ⬡'+amount+'.'); sendToJail(p.crimes); return; }
+  p.gold -= amount;
+  releaseFromJail();
+  log('You pay bail. ⬡'+amount+' gone. Freedom restored.','success');
+  updateHUD(); saveGame();
+}
+
+function askBetrothForBail(amount) {
+  const betrotheds = (G.player.statuses||[])
+    .filter(s=>s.startsWith('Betrothed to '))
+    .map(s=>s.replace('Betrothed to ',''));
+  if (!betrotheds.length) { toast('No one to call.'); return; }
+  // Pick one with highest affection
+  let best = null, bestAff = -999;
+  betrotheds.forEach(name => {
+    const npc = G.npcs.find(n=>n.name===name);
+    if (!npc) return;
+    const rel = G.player.relationships[npc.id];
+    if (rel && rel.affection > bestAff) { bestAff=rel.affection; best=npc; }
+  });
+  if (!best) { toast('None of them are here.'); return; }
+  if (bestAff >= 60) {
+    if (G.player.gold + amount <= 0) { G.player.gold = 0; } // they pay
+    releaseFromJail();
+    log(best.name+' pays your bail. "Anything for you, my love."','social');
+    nudgeRelation(best, -10); // even love has limits
+  } else {
+    log(best.name+' says: "You got yourself into this. Figure it out."','social');
+    nudgeRelation(best, -5);
+  }
+}
+
+function attemptJailBreak() {
+  const p = G.player;
+  // Mira the Fox gives hints if friendly
+  const mira = G.npcs.find(n=>n.id==='prisoner_fox');
+  const miraBonus = (mira && mira.mood==='charmed') ? 8 : 0;
+  const roll = Math.random() * (p.stats.DEX + p.stats.STR + miraBonus);
+  if (roll > 15) {
+    removeStatus('Jailed');
+    p.crimes += 2; // escaping is a crime
+    // Flee to Crossroads but now wanted
+    G.world.location = 'Crossroads Town';
+    G.npcs = buildNPCs('Crossroads Town');
+    buildMap();
+    p.x = 11; p.y = 11;
+    p.reputation = 'wanted';
+    log('You slip through the gap in the north wall and vanish into the night.','success');
+    log('You are now WANTED. Guards will recognize you on sight.','danger');
+    jailPursuit = false;
+    updateHUD(); renderDrawer('world'); saveGame();
+  } else {
+    p.jailTime += 4;
+    p.hp = Math.max(1, p.hp - 15);
+    log('The escape attempt fails. Guards beat you. +4 hours added to your sentence.','danger');
+    updateHUD();
+  }
+}
+
+function releaseFromJail() {
+  const p = G.player;
+  p.jailTime = 0;
+  removeStatus('Jailed');
+  p.crimes = Math.max(0, p.crimes - 3); // served time wipes some crimes
+  // Travel back to Crossroads Town
+  G.world.location = 'Crossroads Town';
+  G.npcs = buildNPCs('Crossroads Town');
+  buildMap();
+  G.player.x = 11; G.player.y = 11;
+  log('The cell door opens. You walk free into the sunlight.','world');
+  jailPursuit = false;
+  updateHUD(); renderDrawer('world'); saveGame();
+}
+
+function tickJail() {
+  if (!G || !hasStatus('Jailed')) return;
+  // Jail time burns on rest
+}
+
+// Check for crimes against minors
+function checkMinorCrimeConsequence(npc) {
+  const isMinor = (npc.props||[]).includes('child') || (npc.age && npc.age < 18) || npc.name==='Pip';
+  if (!isMinor) return false;
+  // Any romantic act against a minor triggers arrest regardless of prior crimes
+  G.player.crimes++;
+  setTimeout(()=>triggerArrest('Criminal act against a minor'), 100);
+  return true;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// SETTINGS PANEL
+// ═══════════════════════════════════════════════════════════════════════
+function renderSettingsPanel() {
+  if (!G) return '';
+  if (!G.settings) G.settings = {npcPermaDeath:false,foodEnabled:true,combatDifficulty:'normal'};
+  const s = G.settings;
+  const tog = (key, label, val) =>
+    '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(58,46,30,0.3);">'+
+    '<span style="font-size:0.82rem;color:var(--text);">'+label+'</span>'+
+    '<button class="mbtn '+(val?'ok':'')+'" style="padding:0.2em 0.8em;font-size:0.7rem;min-width:50px;" onclick="toggleSetting(\'' + key + '\')">'+
+    (val?'ON':'OFF')+'</button></div>';
+
+  return '<span class="plabel">Game Settings</span>'+
+    tog('npcPermaDeath','NPC Permanent Death',s.npcPermaDeath)+
+    tog('foodEnabled','Hunger System',s.foodEnabled)+
+    '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(58,46,30,0.3);">'+
+    '<span style="font-size:0.82rem;color:var(--text);">Combat Difficulty</span>'+
+    '<select onchange="G.settings.combatDifficulty=this.value;saveGame();" style="background:var(--parchment2);border:1px solid var(--border2);color:var(--white);padding:2px 6px;font-size:0.75rem;">'+
+    ['easy','normal','hard'].map(d=>'<option value="'+d+'"'+(s.combatDifficulty===d?' selected':'')+'>'+d+'</option>').join('')+
+    '</select></div>';
+}
+
+function toggleSetting(key) {
+  if (!G) return;
+  G.settings[key] = !G.settings[key];
+  saveGame();
+  renderDrawer('settings');
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// NPC SELLING
+// ═══════════════════════════════════════════════════════════════════════
+function getQuestFromNPC(npc) {
+  const rel = G.player.relationships[npc.id] || {affection:0};
+  if (rel.affection < -20) { log(npc.name+' refuses. They do not trust you.','social'); return; }
+  const existing = G.world.quests.find(q=>q.giver===npc.name&&q.status==='active');
+  if (existing) { showQuestDetail(existing.id); return; }
+  const q = generateNPCQuest(npc);
+  addQuest(q);
+  log(npc.name+': "'+q.desc+'"','social');
+  nudgeRelation(npc, 5);
+  renderDrawer('quests');
+}
+
+function sellNPC(npcId) {
+  const sidx = G.npcs.findIndex(n=>n.id===npcId);
+  if (sidx<0) return;
+  const npc = G.npcs[sidx];
+  if (!npc.forged) { toast('You can only sell NPCs you created.'); return; }
+  // Dynamic price based on stats, mood, affection, rarity
+  const statTotal = Object.values(npc.stats).reduce((a,b)=>a+b,0);
+  const rel = G.player.relationships[npc.id];
+  const aff = rel ? Math.max(0, rel.affection) : 0;
+  const moodMult = {infatuated:2.5,charmed:2,friendly:1.5,neutral:1,afraid:0.8,hostile:0.5}[npc.mood]||1;
+  const propBonus = (npc.props||[]).length * 15;
+  const price = Math.round((30 + statTotal * 3 + aff * 0.5 + propBonus) * moodMult);
+  openModal('Sell '+npc.name,
+    'Sell '+npc.name+' ('+npc.role+') for <b>⬡'+price+'</b>?<br><br>They will... find a new purpose.',
+    [
+      {label:'Sell ⬡'+price, cls:'ok', fn:()=>{confirmSellNPC(npcId, price); closeModal();}},
+      {label:'Keep', cls:'', fn:closeModal},
+    ]
+  );
+}
+
+function confirmSellNPC(npcId, price) {
+  const idx = G.npcs.findIndex(n=>n.id===npcId);
+  if (idx<0) return;
+  const npc = G.npcs[idx];
+  G.player.gold += price;
+  G.npcs.splice(idx,1);
+  // Remove betrothed status
+  G.player.statuses = G.player.statuses.filter(s=>!s.includes(npc.name));
+  G.player.clan = G.player.clan.filter(id=>id!==npcId);
+  log('You sell '+npc.name+' for ⬡'+price+'. They are led away.','loot');
+  updateHUD(); saveGame(); renderDrawer('npcs');
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// CLAN / FOLLOWERS SYSTEM
+// ═══════════════════════════════════════════════════════════════════════
+function addToClan(npcId) {
+  const clan = G.player.clan = G.player.clan || [];
+  if (clan.includes(npcId)) { toast('Already in your clan.'); return; }
+  const npc = G.npcs.find(n=>n.id===npcId);
+  if (!npc) return;
+  const rel = G.player.relationships[npcId];
+  const aff = rel ? rel.affection : 0;
+  if (npc.mood === 'hostile' || aff < -10) {
+    log(npc.name+' refuses. They do not trust you enough.','social'); return;
+  }
+  clan.push(npcId);
+  npc.mood = 'friendly';
+  // Save NPC data so it survives location changes
+  G.world.clanNPCs = G.world.clanNPCs || {};
+  G.world.clanNPCs[npcId] = {...npc};
+  log(npc.name+' joins your clan. They will follow you everywhere.','social');
+  saveGame();
+}
+
+function removeFromClan(npcId) {
+  G.player.clan = G.player.clan.filter(id=>id!==npcId);
+  const npc = G.npcs.find(n=>n.id===npcId);
+  if (npc) log(npc.name+' leaves your clan.','social');
+  saveGame();
+}
+
+// ═══════════════════════════════════════════════════════════════════════
 // GAME STATE
 // ═══════════════════════════════════════════════════════════════════════
 let G = null;
@@ -1174,30 +1861,50 @@ function freshState() {
       skinKey:'tan',hairKey:'brown',
       level:1,xp:0,xpNext:100,
       hp:100,hpMax:100,mp:60,mpMax:60,
+      food:100,foodMax:100,          // food/hunger bar
       gold:50,day:1,hour:8,
       stats:{STR:5,DEX:5,INT:5,CON:5,CHA:5,WIS:5},
       skills:['Observe','Basic Strike','Forage'],
       statuses:[],
       inventory:[
-        {id:'bread',name:'Stale Bread',icon:'🍞',qty:2,props:['edible','healing'],val:2,desc:'Old but filling. Heals a little HP.'},
-        {id:'knife',name:'Rusty Knife',icon:'🗡️',qty:1,props:['sharp','fragile','weapon'],val:8,desc:'A basic cutting tool. Adds to attack.'},
-        {id:'herb',name:'Wild Herb',icon:'🌿',qty:3,props:['edible','healing','magic'],val:5,desc:'A medicinal plant. Heals HP and restores a little MP.'},
+        {id:'bread',name:'Stale Bread',icon:'🍞',qty:2,props:['edible','healing'],val:2,desc:'Old but filling.'},
+        {id:'knife',name:'Rusty Knife',icon:'🗡️',qty:1,props:['sharp','fragile','weapon'],val:8,desc:'A basic cutting tool.'},
+        {id:'herb',name:'Wild Herb',icon:'🌿',qty:3,props:['edible','healing','magic'],val:5,desc:'Medicinal plant.'},
+        {id:'water',name:'Water Flask',icon:'💧',qty:1,props:['edible','water'],val:1,desc:'Clean water. Fills food bar.'},
       ],
       x:11,y:11,
-      kills:0,crimes:0,gifts:0,crafted:0,
-      relationships:{}, // npcId -> {affection:-100..100, known:bool}
+      kills:0,crimes:0,gifts:0,crafted:0,jailTime:0,totalJailTime:0,
+      relationships:{},
       knownLocations:['Crossroads Town'],
       completedEvents:[],
+      activeQuests:[],
+      completedQuests:[],
+      clan:[],           // npc ids that follow player
+      stall:null,        // active market stall {items:[], markup:1.0, open:bool}
+      currentInterior:null, // {locationKey, interiorId} or null
+      dimensionMemory:{}, // dimensionKey -> {objects, npcs, layout}
     },
     world:{
       location:'Crossroads Town',
       events:[],
-      worldFlags:{}, // persistent world state
-      npcStates:{}, // overrides
+      worldFlags:{},
+      npcStates:{},
+      quests:[],         // all world quests
+      deadNPCs:[],       // permanent death list
+    },
+    settings:{
+      npcPermaDeath: false,
+      foodEnabled: true,
+      combatDifficulty: 'normal', // easy/normal/hard
     },
     npcs: buildNPCs('Crossroads Town'),
     log:[],
     tick:0,
+    worldEditCount:0,
+    timeAlterCount:0,
+    deathCount:0,
+    triedToLeaveIsle:false,
+    achievements:[],
   };
 }
 
@@ -1290,10 +1997,51 @@ function startGame() {
   launchGame();
 }
 
+function migrateSave(G) {
+  // Ensure all new fields exist on old saves
+  const p = G.player;
+  if (p.food === undefined) p.food = 80;
+  if (p.foodMax === undefined) p.foodMax = 100;
+  if (p.jailTime === undefined) p.jailTime = 0;
+  if (p.pursuitsHit === undefined) p.pursuitsHit = 0;
+  if (p.totalJailTime === undefined) p.totalJailTime = 0;
+  if (!p.activeQuests) p.activeQuests = [];
+  if (!p.completedQuests) p.completedQuests = [];
+  if (!p.clan) p.clan = [];
+  if (p.stall === undefined) p.stall = null;
+  if (p.currentInterior === undefined) p.currentInterior = null;
+  if (!p.dimensionMemory) p.dimensionMemory = {};
+  if (!G.world) G.world = {};
+  if (!G.world.quests) G.world.quests = [];
+  if (!G.world.deadNPCs) G.world.deadNPCs = [];
+  if (!G.world.clanNPCs) G.world.clanNPCs = {};
+  if (!G.world.worldFlags) G.world.worldFlags = {};
+  if (!G.world.npcStates) G.world.npcStates = {};
+  if (!G.settings) G.settings = {npcPermaDeath:false, foodEnabled:true, combatDifficulty:'normal'};
+  if (G.settings.npcPermaDeath === undefined) G.settings.npcPermaDeath = false;
+  if (G.settings.foodEnabled === undefined) G.settings.foodEnabled = true;
+  if (G.settings.combatDifficulty === undefined) G.settings.combatDifficulty = 'normal';
+  if (G.worldEditCount === undefined) G.worldEditCount = 0;
+  if (G.timeAlterCount === undefined) G.timeAlterCount = 0;
+  if (G.deathCount === undefined) G.deathCount = 0;
+  if (G.triedToLeaveIsle === undefined) G.triedToLeaveIsle = false;
+  if (!G.achievements) G.achievements = [];
+  // Fix NPCs missing fields
+  if (G.npcs) G.npcs.forEach(n => {
+    if (!n.props) n.props = [];
+    if (!n.stats) n.stats = {STR:10,DEX:10,INT:10,CON:10,CHA:10,WIS:10};
+    if (!n.dialogue) n.dialogue = {neutral:'...'};
+    if (!n.routine) n.routine = ['wanders','wanders','wanders','wanders','wanders','sleeps'];
+    if (!n.relations) n.relations = {};
+    if (!n.memory) n.memory = [];
+  });
+  return G;
+}
+
 function loadGame() {
   const s = localStorage.getItem('animus_v2');
   if (!s) { toast('No save found.'); return; }
-  try { G = JSON.parse(s); } catch(e) { toast('Save corrupted.'); return; }
+  try { G = JSON.parse(s); G = migrateSave(G); } catch(e) { toast('Save corrupted.'); return; }
   document.getElementById('screen-title').style.display = 'none';
   launchGame();
   setTimeout(() => loadAchievements(), 200);
@@ -1408,10 +2156,14 @@ function render() {
     }
   }
 
-  // World objects
+  // World objects (+ dynamic stall)
+  const dynObjects = [...worldObjects];
+  if (G.player?.stall?.open) {
+    dynObjects.push({icon:'🛒', x:Math.min(30,p.x+1), y:p.y, name:'[Your Stall]'});
+  }
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  worldObjects.forEach(obj => {
+  dynObjects.forEach(obj => {
     const sx = obj.x*TILE - camX + TILE/2;
     const sy = obj.y*TILE - camY + TILE/2;
     if (sx < -TILE || sx > W+TILE || sy < -TILE || sy > H+TILE) return;
@@ -1702,6 +2454,9 @@ function updateHUD() {
   document.getElementById('h-name').textContent = p.name + ' Lv.' + p.level;
   document.getElementById('h-role').textContent = p.role;
   document.getElementById('b-hp').style.width = (p.hp/p.hpMax*100)+'%';
+  const _food=p.food||0,_fmax=p.foodMax||100;
+  const _fb=document.getElementById('b-food');if(_fb)_fb.style.width=Math.round(_food/_fmax*100)+'%';
+  const _fbw=document.getElementById('food-bar-wrap');if(_fbw)_fbw.style.display=(G.settings&&G.settings.foodEnabled===false)?'none':'flex';
   document.getElementById('b-mp').style.width = (p.mp/p.mpMax*100)+'%';
   document.getElementById('b-xp').style.width = (p.xp/p.xpNext*100)+'%';
   document.getElementById('h-gold').textContent = '⬡ ' + p.gold;
@@ -1737,8 +2492,8 @@ function drawerTab(tab) {
   currentTab = tab;
   document.querySelectorAll('.dtab').forEach(t => t.classList.remove('on'));
   const tabs = document.querySelectorAll('.dtab');
-  const map = {char:0,inv:1,create:2,world:3,npcs:4};
-  if (tabs[map[tab]]) tabs[map[tab]].classList.add('on');
+  const map = {char:0,inv:1,create:2,world:3,npcs:4,quests:5,ach:6,settings:7};
+  if (tabs[map[tab]] !== undefined) tabs[map[tab]].classList.add('on');
   renderDrawer(tab);
 }
 
@@ -1801,8 +2556,11 @@ function renderDrawer(tab) {
     }).join('');
     body.innerHTML = `
       <span class="plabel">Creation Skill</span>
-      <input class="cinput" id="cr-name" placeholder="Name your creation...">
-      <select class="cinput" id="cr-type">
+      <div style="display:flex;gap:6px;align-items:center;">
+        <input id="cr-icon" placeholder="🍞" title="Icon (emoji)" style="width:44px;text-align:center;font-size:1.3rem;background:var(--parchment2);border:1px solid var(--border2);color:var(--white);padding:4px 2px;border-radius:2px;flex-shrink:0;">
+        <input class="cinput" id="cr-name" placeholder="Name your creation..." style="flex:1;margin:0;">
+      </div>
+      <select class="cinput" id="cr-type" onchange="onForgeTypeChange()">
         <option value="item">Item / Object</option>
         <option value="weapon">Weapon</option>
         <option value="potion">Potion / Consumable</option>
@@ -1813,7 +2571,42 @@ function renderDrawer(tab) {
         <option value="curse">Curse / Affliction</option>
         <option value="buff">Enchantment / Buff</option>
         <option value="key">Key / Token</option>
+        <option value="npc">✦ Summon NPC</option>
       </select>
+      <div id="cr-npc-fields" style="display:none;margin-top:0.3rem;">
+        <span class="plabel">NPC Role / Job</span>
+        <input class="cinput" id="cr-npc-role" placeholder="Merchant, Guard, Witch, Bard...">
+        <span class="plabel" style="margin-top:0.3rem;">Gender</span>
+        <select class="cinput" id="cr-npc-gender">
+          <option value="m">Male</option>
+          <option value="f">Female</option>
+        </select>
+        <span class="plabel" style="margin-top:0.3rem;">Starting Mood</span>
+        <select class="cinput" id="cr-npc-mood">
+          <option value="neutral">Neutral</option>
+          <option value="friendly">Friendly</option>
+          <option value="hostile">Hostile</option>
+          <option value="charmed">Charmed</option>
+          <option value="afraid">Afraid</option>
+        </select>
+        <span class="plabel" style="margin-top:0.3rem;">Age (optional)</span>
+        <input class="cinput" id="cr-npc-age" type="number" min="1" max="999" placeholder="Leave blank = adult">
+        <div style="display:flex;align-items:center;gap:8px;padding:4px 0;">
+          <input type="checkbox" id="cr-npc-clan" style="accent-color:var(--gold);">
+          <label for="cr-npc-clan" style="font-size:0.78rem;color:var(--text2);">Add to my clan (follows me everywhere)</label>
+        </div>
+        <span class="plabel" style="margin-top:0.3rem;">Greeting (what they say)</span>
+        <input class="cinput" id="cr-npc-line" placeholder="Leave blank for auto-generated...">
+        <span class="plabel" style="margin-top:0.3rem;">Stats (each 1-20)</span>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-bottom:0.4rem;">
+          <div><span style="font-size:0.65rem;color:var(--text3);font-family:monospace;">STR</span><input class="cinput" id="npc-str" type="number" min="1" max="20" value="10" style="padding:0.25em;text-align:center;"></div>
+          <div><span style="font-size:0.65rem;color:var(--text3);font-family:monospace;">DEX</span><input class="cinput" id="npc-dex" type="number" min="1" max="20" value="10" style="padding:0.25em;text-align:center;"></div>
+          <div><span style="font-size:0.65rem;color:var(--text3);font-family:monospace;">INT</span><input class="cinput" id="npc-int" type="number" min="1" max="20" value="10" style="padding:0.25em;text-align:center;"></div>
+          <div><span style="font-size:0.65rem;color:var(--text3);font-family:monospace;">CON</span><input class="cinput" id="npc-con" type="number" min="1" max="20" value="10" style="padding:0.25em;text-align:center;"></div>
+          <div><span style="font-size:0.65rem;color:var(--text3);font-family:monospace;">CHA</span><input class="cinput" id="npc-cha" type="number" min="1" max="20" value="10" style="padding:0.25em;text-align:center;"></div>
+          <div><span style="font-size:0.65rem;color:var(--text3);font-family:monospace;">WIS</span><input class="cinput" id="npc-wis" type="number" min="1" max="20" value="10" style="padding:0.25em;text-align:center;"></div>
+        </div>
+      </div>
       <span class="plabel" style="margin-top:0.3rem;">Target (optional — for world-affecting things)</span>
       <input class="cinput" id="cr-target" placeholder="npc name, location, object...">
       <span class="plabel" style="margin-top:0.3rem;">Properties</span>
@@ -1823,6 +2616,7 @@ function renderDrawer(tab) {
       <div style="font-size:0.7rem;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:0.3rem;">
         MP cost: <span id="cr-cost">10</span> · Remaining: <span id="cr-mp">${p.mp}/${p.mpMax}</span>
       </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:0.3rem;"><span style="font-size:0.72rem;color:var(--text3);font-family:monospace;">Quantity:</span><input type="number" id="cr-qty" min="1" max="20" value="1" style="width:52px;background:var(--parchment2);border:1px solid var(--border2);color:var(--white);padding:2px 6px;font-size:0.8rem;"></div>
       <button class="forge-btn" onclick="forgeThing()">✦ Forge</button>`;
     document.querySelectorAll('.ptag').forEach(t => {
       t.addEventListener('click', () => updateCost());
@@ -1877,6 +2671,18 @@ function renderDrawer(tab) {
 
   else if (tab === 'ach') {
     body.innerHTML = renderAchievementsPanel();
+  }
+
+  else if (tab === 'quests') {
+    body.innerHTML = renderQuestsPanel();
+  }
+
+  else if (tab === 'settings') {
+    body.innerHTML = renderSettingsPanel();
+  }
+
+  else if (tab === 'stall') {
+    openStallManager();
   }
 
   else if (tab === 'npcs') {
@@ -1942,6 +2748,8 @@ function consumeItem(idx) {
   const it = G.player.inventory[idx];
   const p = G.player;
   let fx = [];
+  const isDangerous = it.props.some(pr=>['poison','toxic','cursed','fire','acid'].includes(pr));
+  if (!isDangerous) eatItem(it);
   if (it.props.includes('healing')) { const h=15+p.stats.CON*2; p.hp=Math.min(p.hpMax,p.hp+h); fx.push('+'+h+' HP'); }
   if (it.props.includes('magic')) { const m=12; p.mp=Math.min(p.mpMax,p.mp+m); fx.push('+'+m+' MP'); }
   if (it.props.includes('poison')) { const d=12; p.hp=Math.max(1,p.hp-d); addStatus('Poisoned'); fx.push('-'+d+' HP (poison!)'); }
@@ -2089,8 +2897,11 @@ function npcMenu(id) {
   acts.push({label:'Observe',fn:()=>observeNPC(npc)});
   if (p.stats.CHA > npc.stats.CHA-3) acts.push({label:'Persuade',fn:()=>persuadeNPC(npc),cls:'ok'});
   if (p.stats.STR > npc.stats.STR || p.level > npc.stats.CON/3) acts.push({label:'Intimidate',fn:()=>intimidateNPC(npc),cls:'bad'});
-  acts.push({label:'Kiss',fn:()=>kissNPC(npc)});
+  acts.push({label:'Kiss',fn:()=>{ closeModal(); if(checkMinorCrimeConsequence(npc))return; kissNPC(npc); }});
   if (aff > 20) acts.push({label:'Propose',fn:()=>proposeNPC(npc)});
+  acts.push({label:'Get Quest',fn:()=>{closeModal();getQuestFromNPC(npc);}});
+  acts.push({label:G.player.clan.includes(npc.id)?'Remove Clan':'Join Clan',fn:()=>{closeModal();G.player.clan.includes(npc.id)?removeFromClan(npc.id):addToClan(npc.id);}});
+  if (npc.forged) acts.push({label:'Sell',fn:()=>sellNPC(npc.id)});
   if (p.stats.STR + p.stats.DEX + p.level*2 > npc.stats.STR + npc.stats.DEX) {
     acts.push({label:'Steal From',fn:()=>stealFromNPC(npc)});
   }
@@ -2280,6 +3091,27 @@ function attackNPC(npc) {
     log(npc.name+' overpowers you: -'+cdmg+' HP.','combat');
     gainXP(5);
   }
+  // NPC death
+  if (myAtk > theirDef) {
+    npc.hp = (npc.hp || npc.stats.CON*5) - Math.max(3, myAtk - theirDef);
+    if (npc.hp <= 0) {
+      if (G.settings?.npcPermaDeath) {
+        G.world.deadNPCs = G.world.deadNPCs || [];
+        G.world.deadNPCs.push(npc.id);
+        G.npcs = G.npcs.filter(n => n.id !== npc.id);
+        G.player.clan = (G.player.clan||[]).filter(id => id !== npc.id);
+        log(npc.name+' is dead. Permanently.','danger');
+      } else {
+        npc.hp = npc.stats.CON * 2;
+        npc.mood = 'afraid';
+        log(npc.name+' falls unconscious.','combat');
+      }
+    }
+  }
+  // Guards react to witnessed crime
+  if (p.crimes > 3 && Math.random() < 0.4) {
+    setTimeout(() => triggerArrest('Assault witnessed!'), 300);
+  }
   if (p.hp <= 0) handleDeath();
   updateHUD(); renderDrawer('char'); saveGame();
 }
@@ -2316,7 +3148,11 @@ function addNPCStatus(npc, st) {
 function handleDeath() {
   const p = G.player;
   G.deathCount = (G.deathCount||0)+1;
+  jailPursuit = false;
+  G.npcs = G.npcs.filter(n=>!n.temporary);
   log('Everything goes black...','danger');
+  // Respawn at infirmary/location spawn
+  p.x=15; p.y=9;
   setTimeout(()=>{
     p.hp = Math.floor(p.hpMax * 0.25);
     const lost = Math.min(p.gold, 15 + ~~(Math.random()*20));
@@ -2343,6 +3179,11 @@ function travelTo(loc) {
   const p = G.player;
   const ld = LOCATION_DATA[loc];
   if (!ld) return;
+  // Cannot travel while jailed
+  if (hasStatus('Jailed')) {
+    log('The guards block the exit. Pay bail, escape, or serve your time.','danger');
+    return;
+  }
   // The Private Isle consequences
   if (G.world.location === 'The Private Isle' && loc !== 'The Private Isle') {
     G.triedToLeaveIsle = true;
@@ -2371,6 +3212,15 @@ function travelTo(loc) {
 
   G.world.location = loc;
   G.npcs = buildNPCs(loc);
+  // Clan members teleport with player
+  (G.player.clan||[]).forEach((cid,i) => {
+    // Check if NPC came from template
+    const template = Object.values(NPC_TEMPLATES).flat().find(t=>t.id===cid);
+    // Or was a forged NPC saved in world state
+    const savedNPC = (G.world.clanNPCs||{})[cid];
+    const base = template ? {...template, relations:{}, memory:[]} : savedNPC ? {...savedNPC} : null;
+    if (base) { base.x = Math.max(1,Math.min(30,p.x+(i%3===0?1:i%3===1?-1:0))); base.y = Math.max(1,Math.min(30,p.y+(i<3?1:-1))); G.npcs.push(base); }
+  });
   // Restore npc states if saved
   Object.entries(G.world.npcStates || {}).forEach(([id, state]) => {
     const npc = G.npcs.find(n=>n.id===id);
@@ -2451,13 +3301,20 @@ function generateWorldEvent(loc) {
 // ═══════════════════════════════════════════════════════════════════════
 const FORGE_ICONS = {item:'📦',weapon:'⚔️',potion:'⚗️',spell:'✨',skill:'💡',trap:'⚙️',food:'🍲',curse:'☠️',buff:'✦',key:'🗝️'};
 
+function onForgeTypeChange() {
+  const t = document.getElementById('cr-type')?.value;
+  const npcFields = document.getElementById('cr-npc-fields');
+  if (!npcFields) return;
+  npcFields.style.display = t === 'npc' ? 'block' : 'none';
+}
+
 function forgeThing() {
   const name = document.getElementById('cr-name')?.value.trim();
   const type = document.getElementById('cr-type')?.value || 'item';
   const desc = document.getElementById('cr-desc')?.value.trim();
   const target = document.getElementById('cr-target')?.value.trim();
   if (!name) { toast('Name your creation first.'); return; }
-  const cost = 10 + selProps.length * 4;
+  let cost = 10 + selProps.length * 4;
   if (G.player.mp < cost) { toast('Not enough MP! Need '+cost+'.'); return; }
   G.player.mp -= cost;
   G.player.crafted++;
@@ -2465,10 +3322,17 @@ function forgeThing() {
   const creation = {
     id: name.toLowerCase().replace(/\s+/g,'_')+'_'+Date.now(),
     name, type,
-    icon: FORGE_ICONS[type]||'✦',
+    icon: (()=>{
+      // Priority: dedicated icon field > emoji in name > type default
+      const iconField = document.getElementById('cr-icon')?.value.trim();
+      if (iconField) return iconField;
+      const emojiMatch = name.match(/\p{Emoji_Presentation}|\p{Extended_Pictographic}/u);
+      return emojiMatch ? emojiMatch[0] : (FORGE_ICONS[type]||'✦');
+    })(),
+    name: name.replace(/^[\p{Emoji_Presentation}\p{Extended_Pictographic}\s]+/u, '').trim() || name,
     props: [...selProps],
     desc: desc || autoDesc(name,type,selProps),
-    qty: 1,
+    qty: Math.max(1,parseInt(document.getElementById('cr-qty')?.value)||1),
     val: 10 + selProps.length * 12,
     created: true,
     target: target||null,
@@ -2479,6 +3343,76 @@ function forgeThing() {
     applyWorldEdit(creation, desc, target);
     if (selProps.includes('world-edit')) G.worldEditCount = (G.worldEditCount||0)+1;
     if (selProps.includes('time-alter')) G.timeAlterCount = (G.timeAlterCount||0)+1;
+  }
+
+  // ── SUMMON NPC ──
+  if (type === 'npc') {
+    const role   = document.getElementById('cr-npc-role')?.value.trim() || 'Wanderer';
+    const gender = document.getElementById('cr-npc-gender')?.value || 'm';
+    const mood   = document.getElementById('cr-npc-mood')?.value || 'neutral';
+    const line   = document.getElementById('cr-npc-line')?.value.trim();
+    const nStat  = id => Math.min(20, Math.max(1, parseInt(document.getElementById('npc-'+id)?.value)||10));
+    const stats  = {STR:nStat('str'),DEX:nStat('dex'),INT:nStat('int'),CON:nStat('con'),CHA:nStat('cha'),WIS:nStat('wis')};
+
+    // Find a free spot near player
+    let nx = G.player.x, ny = G.player.y;
+    const offsets = [[2,0],[-2,0],[0,2],[0,-2],[3,0],[-3,0],[0,3],[0,-3],[1,1],[-1,1],[1,-1],[-1,-1]];
+    for (const [dx,dy] of offsets) {
+      const cx = G.player.x+dx, cy = G.player.y+dy;
+      if (cx>=0&&cy>=0&&cx<=31&&cy<=31&&!G.npcs.find(n=>n.x===cx&&n.y===cy)) {
+        nx=cx; ny=cy; break;
+      }
+    }
+
+    // Auto dialogue based on props + mood
+    const autoLine = line || (
+      selProps.includes('hostile') ? 'Stay back.' :
+      selProps.includes('charming') ? 'Well, hello there...' :
+      selProps.includes('wealthy') ? 'I have coin if you have time.' :
+      selProps.includes('magic') ? 'The threads of fate brought you here.' :
+      mood === 'friendly' ? 'Good to meet you, traveller.' :
+      mood === 'afraid' ? 'Please... do not hurt me.' :
+      mood === 'hostile' ? 'What do you want?' :
+      'Hmm.'
+    );
+
+    const npcAge = parseInt(document.getElementById('cr-npc-age')?.value)||null;
+    const joinClan = document.getElementById('cr-npc-clan')?.checked||false;
+    const isMinor = npcAge && npcAge < 18;
+    const newNPC = {
+      id: name.toLowerCase().replace(/[^a-z0-9]/g,'_')+'_'+Date.now(),
+      name, role, gender, mood,
+      home: G.world.location,
+      stats,
+      props: [...selProps],
+      x: nx, y: ny,
+      routine: ['wanders','socializes','wanders','works','socializes','sleeps'],
+      dialogue: {
+        neutral:   autoLine,
+        friendly:  selProps.includes('charming') ? 'I feel drawn to you...' : 'Always good to see you.',
+        hostile:   'Leave me alone.',
+        afraid:    'I mean no harm!',
+        charmed:   'Anything you need...',
+        infatuated:'I think about you constantly.',
+      },
+      relations: {}, memory: [],
+      age: npcAge,
+      props: isMinor ? [...selProps,'child'] : [...selProps],
+      forged: true,
+    };
+
+    G.npcs.push(newNPC);
+    if (joinClan) { G.player.clan.push(newNPC.id); log(name+' joins your clan.','social'); }
+    log('✦ You breathe life into '+name+'. They appear before you. MP -'+cost+'.','creation');
+    toast('✦ '+name+' summoned!');
+    gainXP(30 + selProps.length * 8);
+    selProps = [];
+    document.querySelectorAll('.ptag.sel').forEach(t=>t.classList.remove('sel'));
+    if (document.getElementById('cr-name')) document.getElementById('cr-name').value='';
+    if (document.getElementById('cr-desc')) document.getElementById('cr-desc').value='';
+    updateCost(); updateHUD(); saveGame();
+    renderDrawer('npcs');
+    return;
   }
 
   if (type === 'skill') {
@@ -2595,6 +3529,13 @@ function resolveCmd(raw) {
   const c = raw.toLowerCase().trim();
   const p = G.player;
   let handled = false;
+  // Block actions while jailed (except bail/escape related)
+  if (hasStatus('Jailed') && !c.match(/bail|escape|bribe|surrender|pay|betrothed|help/)) {
+    if (!c.match(/look|wait|rest|sleep|pray|talk|speak/)) {
+      log('You are in jail. Pay bail, wait, ask for help, or escape.','danger');
+      handled=true;
+    }
+  }
 
   // HELP
   if (c==='help'||c==='?'||c==='commands') {
@@ -2663,7 +3604,21 @@ function resolveCmd(raw) {
   }
 
   // REST/SLEEP
-  if (!handled && (c.includes('rest')||c.includes('sleep')||c==='recover')) {
+  // ── NEW COMMANDS ──
+  if (!handled && (c==='surrender'||c.includes('surrender')||c==='give up'||c==='i surrender')) { surrenderToGuards(); handled=true; }
+  if (!handled && (c.includes('stall')||c.includes('open stall')||c.includes('my stall')||c.includes('manage stall')||c.includes('vend'))) { openStallManager(); handled=true; }
+  if (!handled && c.startsWith('enter ')) {
+    const place = c.replace('enter ','').trim();
+    const keyMap = {inn:'inn',tavern:'inn',guild:'guild',mansion:'mansion',blacksmith:'blacksmith',shop:'blacksmith',forge:'blacksmith',dimension:'dimension',rift:'dimension'};
+    const tmplKey = keyMap[place] || null;
+    if (tmplKey && INTERIOR_TEMPLATES[tmplKey]) { enterInterior(tmplKey,0); handled=true; }
+    else { log('No such place to enter here.','sys'); handled=true; }
+  }
+  if (!handled && (c==='exit'||c==='leave'||c==='go outside'||c==='outside') && currentInterior) { exitInterior(); handled=true; }
+  if (!handled && (c.startsWith('open dimension')||c.startsWith('create dimension')||c.startsWith('enter dimension')||c.startsWith('my dimension'))) { enterDimension('personal'); handled=true; }
+  if (!handled && (c.includes('quest')||c.includes('quests')) && !c.includes('get')) { renderDrawer('quests'); if(document.getElementById('drawer')) document.getElementById('drawer').classList.add('open'); handled=true; }
+
+    if (!handled && (c.includes('rest')||c.includes('sleep')||c==='recover')) {
     const hpg = ~~(p.hpMax*0.35), mpg = ~~(p.mpMax*0.45);
     p.hp = Math.min(p.hpMax, p.hp+hpg);
     p.mp = Math.min(p.mpMax, p.mp+mpg);
@@ -2967,6 +3922,34 @@ function gameTick() {
     }
   }
 
+  if (G.tick % 60 === 0) tickFood();
+  tickStall();
+  if (hasStatus('Jailed') && G.tick % 90 === 0) {
+    G.player.jailTime = Math.max(0, G.player.jailTime-1);
+    if (G.player.jailTime <= 0) { releaseFromJail(); log('You have served your time. Released.','world'); }
+  }
+  // Pursuit guards chase player — move every 10 ticks (aggressive)
+  if (jailPursuit && G.tick % 10 === 0) {
+    const pg = G.npcs.filter(n=>n.temporary);
+    pg.forEach(g => {
+      const dx=Math.sign(G.player.x-g.x),dy=Math.sign(G.player.y-g.y);
+      g.x+=dx;g.y+=dy;
+      if (Math.abs(G.player.x-g.x)<=1&&Math.abs(G.player.y-g.y)<=1) {
+        const diff = (G.settings?.combatDifficulty==='easy')?0.5:(G.settings?.combatDifficulty==='hard')?1.5:1;
+        const dmg = Math.round((6+~~(Math.random()*8))*diff);
+        G.player.hp=Math.max(0,G.player.hp-dmg);
+        G.player.pursuitsHit=(G.player.pursuitsHit||0)+1;
+        log(g.name+' catches you! -'+dmg+' HP. ('+G.player.pursuitsHit+'/4 before capture)','combat');
+        if (G.player.hp<=0||G.player.pursuitsHit>=4) {
+          G.player.pursuitsHit=0; jailPursuit=false;
+          G.player.hp=Math.max(1,~~(G.player.hpMax*0.3));
+          log('You collapse. Guards drag you away.','danger');
+          setTimeout(()=>sendToJail(G.player.crimes),100);
+        }
+        updateHUD();
+      }
+    });
+  }
   render();
   if (G.tick % 15 === 0) checkAchievements();
   if (G.tick % 30 === 0) saveGame();
@@ -2999,6 +3982,33 @@ function movePlayer(dx,dy) {
   // Object interaction hint
   const obj = worldObjects.find(o=>o.x===nx&&o.y===ny);
   if (obj && obj.name) log('You stand at '+obj.name+'.','sys');
+  // Clan members follow
+  (G.player.clan||[]).forEach((cid,i) => {
+    const cn = G.npcs.find(n=>n.id===cid);
+    if (cn) { cn.x = Math.max(1,Math.min(30,p.x+(i%2===0?-(i+1):i+1))); cn.y = Math.max(1,Math.min(30,p.y+(i<2?1:-1))); }
+  });
+  // Pursuit guards step toward player on every player move
+  if (jailPursuit) {
+    G.npcs.filter(n=>n.temporary).forEach(g => {
+      const gdx = Math.sign(p.x-g.x), gdy = Math.sign(p.y-g.y);
+      g.x = Math.max(1,Math.min(30,g.x+gdx));
+      g.y = Math.max(1,Math.min(30,g.y+gdy));
+      if (Math.abs(p.x-g.x)<=1 && Math.abs(p.y-g.y)<=1) {
+        const dmg = 5+~~(Math.random()*8);
+        p.hp = Math.max(0, p.hp-dmg);
+        p.pursuitsHit = (p.pursuitsHit||0)+1;
+        log(g.name+' grabs you! -'+dmg+' HP.','combat');
+        if (p.hp<=0 || p.pursuitsHit >= 4) {
+          p.pursuitsHit=0;
+          jailPursuit=false;
+          p.hp=Math.max(1,~~(p.hpMax*0.3));
+          log('You collapse. Guards drag you away.','danger');
+          setTimeout(()=>sendToJail(p.crimes),100);
+        }
+        updateHUD();
+      }
+    });
+  }
   render();
 }
 
@@ -3049,7 +4059,7 @@ document.getElementById('modal').addEventListener('click', e=>{ if (e.target===d
 
 // ── BNAV (mobile bottom nav) ──
 let drawerMobileOpen = false;
-const BNAV_ID = {char:'self',inv:'inv',create:'forge',world:'world',npcs:'npcs'};
+const BNAV_ID = {char:'self',inv:'inv',create:'forge',world:'world',npcs:'npcs',quests:'quests',settings:'settings'};
 
 function bnav(tab) {
   document.querySelectorAll('.bnbtn').forEach(b=>b.classList.remove('on'));
