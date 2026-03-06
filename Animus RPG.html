@@ -739,6 +739,17 @@ body.drawer-open #qring { display:none !important; }
 </div>
 
 <div id="toast"></div>
+<div id="ach-toast" style="
+  display:none;position:fixed;bottom:70px;right:12px;z-index:300;
+  background:linear-gradient(135deg,rgba(26,22,16,0.97),rgba(34,29,22,0.97));
+  border:1px solid var(--gold);border-left:3px solid var(--gold);
+  color:var(--white);font-family:'EB Garamond',serif;font-size:0.82rem;
+  padding:10px 14px;max-width:240px;line-height:1.4;
+  box-shadow:0 4px 24px rgba(0,0,0,0.7),0 0 40px rgba(212,168,75,0.1);
+  flex-direction:column;gap:2px;
+  transition:opacity 0.6s;
+  pointer-events:none;
+"></div>
 
 <!-- EVENT FLASH — absolute inside #world-zone -->
 <div id="event-flash" style="
@@ -897,6 +908,30 @@ const LOCATION_DATA = {
       {icon:'⚔️',x:13,y:12,name:'Weapon Rack'},{icon:'🌲',x:3,y:4},{icon:'🌲',x:20,y:4},
       {icon:'💀',x:4,y:14},{icon:'🪢',x:17,y:10,name:'Prisoner Post'},
     ]
+  },
+  'The Private Isle': {
+    desc:'A remote island accessible only by private invitation. Manicured gardens, marble fountains, and a sprawling estate. Nobody leaves without permission. Nobody talks about what happens here.',
+    ambient:[
+      'Distant laughter from the main estate.',
+      'The ocean breeze carries something unsettling.',
+      'A guard patrol passes without making eye contact.',
+      'Someone is playing piano inside the mansion.',
+      'The guests all smile. Too much.',
+      'A helicopter circles overhead and disappears.',
+    ],
+    danger:3, wealth:5, type:'estate',
+    secret:true,
+    unlockCondition: p => p.crimes >= 10 || p.statuses.some(s=>s.includes('Betrothed')) || p.gold >= 500,
+    color:{ground:'#0a1208',path:'#1a2a18',accent:'#152010'},
+    objects:[
+      {icon:'🏛️',x:11,y:6,name:'The Mansion'},{icon:'🌴',x:4,y:4},{icon:'🌴',x:18,y:4},
+      {icon:'🌴',x:3,y:14},{icon:'🌴',x:19,y:14},{icon:'🌊',x:2,y:16},
+      {icon:'🌊',x:6,y:18},{icon:'🌊',x:14,y:18},{icon:'🌊',x:20,y:16},
+      {icon:'⛲',x:11,y:11,name:'Marble Fountain'},{icon:'🌹',x:8,y:9},{icon:'🌹',x:14,y:9},
+      {icon:'🚁',x:16,y:4,name:'Helipad'},{icon:'🛥️',x:5,y:17,name:'Private Dock'},
+      {icon:'🏊',x:8,y:14,name:'Pool'},{icon:'🍾',x:13,y:12,name:'Bar'},
+      {icon:'🔒',x:6,y:12,name:'Locked Wing'},{icon:'📷',x:9,y:5,name:'Security Camera'},
+    ]
   }
 };
 
@@ -984,8 +1019,146 @@ const NPC_TEMPLATES = {
      stats:{STR:4,DEX:8,INT:11,CON:5,CHA:10,WIS:9},props:['helpless','bound'],x:17,y:10,
      routine:['sits','sits','sits','sits','sits','sits'],
      dialogue:{neutral:'Please... help me.',friendly:'You\'re here to save me?',afraid:'They\'ll hear you!',charmed:'I won\'t forget this.'}},
+  ],
+  'The Private Isle': [
+    {id:'jeffrey',name:'Jeffrey Ashford',role:'Host',gender:'m',mood:'charmed',home:'The Private Isle',
+     stats:{STR:5,DEX:8,INT:18,CON:7,CHA:20,WIS:6},
+     props:['wealthy','powerful','connected','binding','addictive','charming'],x:11,y:7,
+     routine:['hosts','hosts','conducts business','hosts','hosts','sleeps'],
+     dialogue:{
+       neutral:'Welcome to my island. You look like someone who appreciates... discretion.',
+       friendly:'I have a feeling we will be great friends. Very great friends.',
+       charmed:'Stay as long as you like. In fact — I insist.',
+       hostile:'Nobody leaves this island angry. Nobody leaves at all, really.',
+       infatuated:'You are unlike anyone I have ever brought here. That is saying something.',
+     }},
+    {id:'isle_guard1',name:'Viktor',role:'Security',gender:'m',mood:'suspicious',home:'The Private Isle',
+     stats:{STR:15,DEX:13,INT:8,CON:14,CHA:4,WIS:10},props:['armed','loyal','silent'],x:6,y:11,
+     routine:['patrols','patrols','patrols','patrols','patrols','stands guard'],
+     dialogue:{neutral:'Keep moving.',suspicious:'Mr. Ashford is watching.',hostile:'You were not supposed to see that.',afraid:'...I have a family.'}},
+    {id:'isle_guard2',name:'Dmitri',role:'Security',gender:'m',mood:'neutral',home:'The Private Isle',
+     stats:{STR:14,DEX:12,INT:7,CON:13,CHA:3,WIS:8},props:['armed','loyal'],x:17,y:11,
+     routine:['patrols','stands guard','patrols','stands guard','patrols','sleeps'],
+     dialogue:{neutral:'Move along.',hostile:'This area is restricted.',afraid:'Don\'t make this worse.'}},
+    {id:'isle_guest1',name:'Lady Vanthorpe',role:'Guest',gender:'f',mood:'cheerful',home:'The Private Isle',
+     stats:{STR:3,DEX:9,INT:14,CON:5,CHA:16,WIS:7},props:['wealthy','social','binding'],x:9,y:12,
+     routine:['socializes','drinks','socializes','swims','socializes','sleeps'],
+     dialogue:{neutral:'Darling! Another new arrival?',friendly:'Jeffrey has such interesting taste in guests.',charmed:'I\'ve been here three weeks. Or is it three months?',afraid:'Please. Don\'t ask questions.'}},
+    {id:'isle_staff',name:'Margaux',role:'Attendant',gender:'f',mood:'neutral',home:'The Private Isle',
+     stats:{STR:5,DEX:12,INT:11,CON:7,CHA:13,WIS:14},props:['silent','binding','perceptive'],x:13,y:10,
+     routine:['serves','serves','cleans','serves','serves','stands watch'],
+     dialogue:{neutral:'Can I get you something?',friendly:'Be careful here. That is all I will say.',suspicious:'I noticed you looking at the locked wing.',afraid:'I signed a very specific contract.'}},
   ]
 };
+
+// ═══════════════════════════════════════════════════════════════════════
+// ACHIEVEMENTS
+// ═══════════════════════════════════════════════════════════════════════
+const ACHIEVEMENTS = [
+  // Combat
+  {id:'first_blood',   icon:'🗡️', name:'First Blood',        desc:'Make your first kill.',                    check: G => G.player.kills >= 1},
+  {id:'butcher',       icon:'☠️', name:'Butcher',             desc:'Kill 10 or more beings.',                  check: G => G.player.kills >= 10},
+  {id:'pacifist',      icon:'🕊️', name:'Pacifist',            desc:'Reach level 5 with zero kills.',           check: G => G.player.level >= 5 && G.player.kills === 0},
+  // Crime
+  {id:'petty_thief',   icon:'🤏', name:'Petty Thief',         desc:'Commit your first crime.',                 check: G => G.player.crimes >= 1},
+  {id:'crime_pays',    icon:'💰', name:'Crime Pays',          desc:'Commit 50 crimes.',                        check: G => G.player.crimes >= 50},
+  {id:'wanted',        icon:'🚨', name:'Most Wanted',         desc:'Reach Wanted reputation.',                 check: G => G.player.reputation === 'wanted'},
+  {id:'ghost_rep',     icon:'👻', name:'Ghost',               desc:'Officially dead. Off the records.',        check: G => G.player.reputation === 'ghost'},
+  // Romance
+  {id:'first_kiss',    icon:'💋', name:'First Kiss',          desc:'Kiss someone.',                            check: G => Object.values(G.player.relationships).some(r=>r.affection>=20)},
+  {id:'heartbreaker',  icon:'💔', name:'Heartbreaker',        desc:'Get betrothed to 3 people at once.',       check: G => G.player.statuses.filter(s=>s.startsWith('Betrothed')).length >= 3},
+  {id:'collector',     icon:'💍', name:'The Collector',       desc:'Betrothed to 6 people simultaneously.',    check: G => G.player.statuses.filter(s=>s.startsWith('Betrothed')).length >= 6},
+  {id:'charmer',       icon:'✨', name:'Silver Tongue',       desc:'Max out affection with any NPC.',          check: G => Object.values(G.player.relationships).some(r=>r.affection>=100)},
+  // Wealth
+  {id:'broke',         icon:'😔', name:'Broke Again',         desc:'Hit 0 gold.',                              check: G => G.player.gold === 0},
+  {id:'filthy_rich',   icon:'🤑', name:'Filthy Rich',         desc:'Accumulate 1000 gold.',                    check: G => G.player.gold >= 1000},
+  // Crafting
+  {id:'tinkerer',      icon:'⚗️', name:'Tinkerer',            desc:'Forge your first item.',                   check: G => G.player.crafted >= 1},
+  {id:'alchemist',     icon:'🔮', name:'Alchemist',           desc:'Forge 10 items.',                          check: G => G.player.crafted >= 10},
+  {id:'world_bender',  icon:'🌀', name:'World Bender',        desc:'Use world-edit 5 times.',                  check: G => (G.worldEditCount||0) >= 5},
+  {id:'time_lord',     icon:'⏳', name:'Time Lord',           desc:'Alter time with time-alter.',              check: G => (G.timeAlterCount||0) >= 1},
+  // Survival
+  {id:'survivor',      icon:'🩸', name:'Survivor',            desc:'Come back from 0 HP.',                     check: G => (G.deathCount||0) >= 1},
+  {id:'undying',       icon:'💀', name:'Undying',             desc:'Die 5 times and keep going.',              check: G => (G.deathCount||0) >= 5},
+  // Exploration
+  {id:'traveller',     icon:'🗺️', name:'Traveller',           desc:'Visit 3 different locations.',             check: G => G.player.knownLocations.length >= 3},
+  {id:'explorer',      icon:'🧭', name:'Explorer',            desc:'Visit every location.',                    check: G => G.player.knownLocations.length >= Object.keys(LOCATION_DATA).length},
+  // The Isle
+  {id:'invitation',    icon:'🏝️', name:'Island Invitation',   desc:'Receive an invitation to The Private Isle.',check: G => G.player.knownLocations.includes('The Private Isle')},
+  {id:'jeffrey',       icon:'🤝', name:'Generous Host',       desc:'Reach max affection with Jeffrey Ashford.',check: G => (G.player.relationships['jeffrey']?.affection||0) >= 80},
+  {id:'no_escape',     icon:'🔒', name:'No Escape',           desc:'Try to leave The Private Isle.',           check: G => (G.triedToLeaveIsle||false)},
+  // Meta
+  {id:'feared_status', icon:'😱', name:'Feared',              desc:'Make the world fear you.',                 check: G => G.player.statuses.includes('Feared')},
+  {id:'level10',       icon:'⭐', name:'Seasoned',            desc:'Reach level 10.',                         check: G => G.player.level >= 10},
+  {id:'level20',       icon:'🌟', name:'Legendary',           desc:'Reach level 20.',                         check: G => G.player.level >= 20},
+  {id:'polymath',      icon:'📚', name:'Polymath',            desc:'Learn 10 skills.',                         check: G => G.player.skills.length >= 10},
+  {id:'the_end',       icon:'🎭', name:'The End?',            desc:'...',                                      check: G => G.player.kills >= 1 && G.player.crimes >= 10 && G.player.statuses.filter(s=>s.startsWith('Betrothed')).length >= 3 && G.player.knownLocations.includes('The Private Isle')},
+];
+
+let unlockedAchievements = new Set();
+
+function checkAchievements() {
+  if (!G) return;
+  ACHIEVEMENTS.forEach(ach => {
+    if (unlockedAchievements.has(ach.id)) return;
+    try {
+      if (ach.check(G)) {
+        unlockedAchievements.add(ach.id);
+        if (!G.achievements) G.achievements = [];
+        if (!G.achievements.includes(ach.id)) {
+          G.achievements.push(ach.id);
+          showAchievementToast(ach);
+        }
+      }
+    } catch(e) {}
+  });
+}
+
+function showAchievementToast(ach) {
+  const el = document.getElementById('ach-toast');
+  if (!el) return;
+  el.innerHTML = ach.icon + ' <strong>' + ach.name + '</strong><br><span style="font-size:0.72rem;opacity:0.8;">' + ach.desc + '</span>';
+  el.style.display = 'flex';
+  el.style.opacity = '1';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => {
+    el.style.opacity = '0';
+    setTimeout(() => el.style.display = 'none', 600);
+  }, 3500);
+}
+
+function loadAchievements() {
+  if (!G) return;
+  if (!G.achievements) G.achievements = [];
+  unlockedAchievements = new Set(G.achievements);
+  // Retroactively check all achievements against current save
+  ACHIEVEMENTS.forEach(ach => {
+    try {
+      if (!unlockedAchievements.has(ach.id) && ach.check(G)) {
+        unlockedAchievements.add(ach.id);
+        G.achievements.push(ach.id);
+      }
+    } catch(e) {}
+  });
+}
+
+function renderAchievementsPanel() {
+  const unlocked = unlockedAchievements;
+  const total = ACHIEVEMENTS.length;
+  const done = unlocked.size;
+  return '<span class="plabel">Achievements ' + done + '/' + total + '</span>' +
+    ACHIEVEMENTS.map(ach => {
+      const got = unlocked.has(ach.id);
+      return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(58,46,30,0.3);opacity:' + (got?'1':'0.35') + ';">' +
+        '<span style="font-size:1.1rem;width:24px;text-align:center;">' + ach.icon + '</span>' +
+        '<div style="flex:1;min-width:0;">' +
+          '<div style="font-size:0.82rem;color:' + (got?'var(--gold)':'var(--text2)') + ';">' + ach.name + '</div>' +
+          '<div style="font-size:0.68rem;color:var(--text3);">' + (got ? ach.desc : '???') + '</div>' +
+        '</div>' +
+        (got ? '<span style="color:var(--sage2);font-size:0.7rem;">✓</span>' : '') +
+      '</div>';
+    }).join('');
+}
 
 // ═══════════════════════════════════════════════════════════════════════
 // GAME STATE
@@ -1123,6 +1296,7 @@ function loadGame() {
   try { G = JSON.parse(s); } catch(e) { toast('Save corrupted.'); return; }
   document.getElementById('screen-title').style.display = 'none';
   launchGame();
+  setTimeout(() => loadAchievements(), 200);
 }
 
 function saveGame() {
@@ -1659,20 +1833,30 @@ function renderDrawer(tab) {
     const loc = LOCATION_DATA[G.world.location] || {};
     const locs = Object.keys(LOCATION_DATA).filter(l => l !== G.world.location);
     const known = locs.filter(l => G.player.knownLocations.includes(l));
-    const unknown = locs.filter(l => !G.player.knownLocations.includes(l));
+    const unknown = locs.filter(l => !G.player.knownLocations.includes(l) && !LOCATION_DATA[l]?.secret);
+    const secretLocs = locs.filter(l => !G.player.knownLocations.includes(l) && LOCATION_DATA[l]?.secret && LOCATION_DATA[l]?.unlockCondition?.(G.player));
+    // Auto-unlock secret locations when condition met
+    secretLocs.forEach(l => {
+      if (!G.player.knownLocations.includes(l)) {
+        G.player.knownLocations.push(l);
+        log('A sealed letter appears at your feet. An invitation... to The Private Isle.','loot');
+        toast('🏝️ New Location Unlocked: '+l);
+      }
+    });
     const travelBtns = known.map(l => {
       const ld = LOCATION_DATA[l];
       const danger = '⚠'.repeat(ld.danger);
-      return `<div class="wtrav" onclick="travelTo('${l}')">
-        <span>${l}</span>
-        <span class="wdist">${danger}</span>
-      </div>`;
+      const special = ld.secret ? ' style="border-color:var(--gold);color:var(--gold);"' : '';
+      return '<div class="wtrav" onclick="travelTo(\''+l+'\')">'+
+        '<span>'+(ld.secret?'🏝\uFE0F ':'')+l+'</span>'+
+        '<span class="wdist">'+danger+'</span>'+
+      '</div>';
     }).join('');
     const unkBtns = unknown.map(l =>
-      `<div class="wtrav" style="opacity:0.4;cursor:default;">
-        <span>??? (Undiscovered)</span>
-        <span class="wdist">?</span>
-      </div>`).join('');
+      '<div class="wtrav" style="opacity:0.3;cursor:default;">'+
+        '<span>??? (Undiscovered)</span>'+
+        '<span class="wdist">?</span>'+
+      '</div>').join('');
     const events = G.world.events.slice(-6).reverse().map(e =>
       `<div class="wevent">${e}</div>`).join('') || '<div class="wevent" style="color:var(--text3);">Nothing notable.</div>';
     body.innerHTML = `
@@ -1689,6 +1873,10 @@ function renderDrawer(tab) {
         <span class="plabel">Recent Events</span>
         ${events}
       </div>`;
+  }
+
+  else if (tab === 'ach') {
+    body.innerHTML = renderAchievementsPanel();
   }
 
   else if (tab === 'npcs') {
@@ -2127,6 +2315,7 @@ function addNPCStatus(npc, st) {
 // ═══════════════════════════════════════════════════════════════════════
 function handleDeath() {
   const p = G.player;
+  G.deathCount = (G.deathCount||0)+1;
   log('Everything goes black...','danger');
   setTimeout(()=>{
     p.hp = Math.floor(p.hpMax * 0.25);
@@ -2154,6 +2343,19 @@ function travelTo(loc) {
   const p = G.player;
   const ld = LOCATION_DATA[loc];
   if (!ld) return;
+  // The Private Isle consequences
+  if (G.world.location === 'The Private Isle' && loc !== 'The Private Isle') {
+    G.triedToLeaveIsle = true;
+    if (Math.random() < 0.4) {
+      log('Viktor steps in front of you. "Mr. Ashford would like you to stay a bit longer."','danger');
+      nudgeRelation(G.npcs.find(n=>n.id==='isle_guard1')||{id:'x',mood:'hostile',stats:{STR:15,DEX:13,INT:8,CON:14,CHA:4,WIS:10}}, -20);
+      const dmg = 8+~~(Math.random()*10);
+      p.hp = Math.max(1, p.hp-dmg);
+      log('You are escorted back. -'+dmg+' HP.','combat');
+      updateHUD(); return;
+    }
+    log('You slip away from the island. Nobody acknowledges you left.','world');
+  }
   // Travel time cost
   const hours = 2 + ~~(Math.random()*3);
   p.hour = (p.hour + hours) % 24;
@@ -2275,6 +2477,8 @@ function forgeThing() {
   // Immediate world effects for world-edit and time-alter
   if (selProps.includes('world-edit') || selProps.includes('time-alter')) {
     applyWorldEdit(creation, desc, target);
+    if (selProps.includes('world-edit')) G.worldEditCount = (G.worldEditCount||0)+1;
+    if (selProps.includes('time-alter')) G.timeAlterCount = (G.timeAlterCount||0)+1;
   }
 
   if (type === 'skill') {
@@ -2764,6 +2968,7 @@ function gameTick() {
   }
 
   render();
+  if (G.tick % 15 === 0) checkAchievements();
   if (G.tick % 30 === 0) saveGame();
 }
 
