@@ -1,0 +1,1597 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>AURA OS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+:root {
+  --bg: #0d0f14;
+  --surface: #13161e;
+  --surface2: #1a1e2a;
+  --surface3: #222636;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --accent: #5b8dee;
+  --accent2: #7b6cf6;
+  --accent3: #3ecfb2;
+  --text: #e8eaf2;
+  --text2: #8b90a7;
+  --text3: #555c78;
+  --red: #f06674;
+  --yellow: #f5c542;
+  --green: #3ecfb2;
+  --win-radius: 14px;
+  --taskbar-h: 56px;
+  --font: 'DM Sans', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+  --font-display: 'Sora', sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ─── WALLPAPER ─── */
+#desktop {
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 70% 20%, rgba(91,141,238,0.18) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 20% 80%, rgba(123,108,246,0.14) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 40% at 85% 75%, rgba(62,207,178,0.10) 0%, transparent 50%),
+    var(--bg);
+  overflow: hidden;
+}
+
+/* animated grid */
+#desktop::before {
+  content:'';
+  position:absolute; inset:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
+}
+
+/* ─── WINDOWS ─── */
+.win {
+  position: absolute;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--win-radius);
+  box-shadow: 0 24px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04) inset;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  transition: box-shadow 0.2s, opacity 0.15s, transform 0.15s;
+  min-width: 260px; min-height: 180px;
+  backdrop-filter: blur(24px);
+}
+.win.active {
+  box-shadow: 0 32px 100px rgba(0,0,0,0.7), 0 0 0 1px rgba(91,141,238,0.15) inset;
+}
+.win.minimized { opacity:0; transform:scale(0.85) translateY(20px); pointer-events:none; }
+.win.maximized { border-radius:0 !important; top:0 !important; left:0 !important; right:0 !important; bottom: var(--taskbar-h) !important; width:100% !important; height:calc(100% - var(--taskbar-h)) !important; }
+
+/* titlebar */
+.win-header {
+  display:flex; align-items:center; gap:8px;
+  padding: 10px 14px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  cursor: move;
+  flex-shrink:0;
+}
+.win-title {
+  flex:1; font-size:13px; font-weight:500; color:var(--text2);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  pointer-events:none;
+}
+.win-icon { width:18px; height:18px; font-size:13px; display:flex; align-items:center; justify-content:center; color: var(--accent); }
+.win-controls { display:flex; gap:6px; }
+.win-btn {
+  width:13px; height:13px; border-radius:50%; border:none; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  font-size:7px; transition:filter 0.15s, transform 0.1s;
+}
+.win-btn:hover { filter:brightness(1.3); transform:scale(1.1); }
+.win-btn.close { background:#f06674; }
+.win-btn.min   { background:#f5c542; }
+.win-btn.max   { background:#3ecfb2; }
+.win-btn i { opacity:0; }
+.win-btn:hover i { opacity:1; }
+
+.win-body { flex:1; overflow:hidden; position:relative; }
+.win-resize {
+  position:absolute; bottom:0; right:0; width:18px; height:18px;
+  cursor:se-resize; z-index:10;
+  background: linear-gradient(135deg, transparent 50%, rgba(255,255,255,0.08) 50%);
+  border-radius:0 0 var(--win-radius) 0;
+}
+
+/* ─── TASKBAR ─── */
+#taskbar {
+  position: fixed; bottom:0; left:0; right:0; height:var(--taskbar-h);
+  background: rgba(13,15,20,0.85);
+  backdrop-filter: blur(32px) saturate(1.4);
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 16px;
+  gap: 8px; z-index:9999;
+}
+#tb-start {
+  width:38px; height:38px; border-radius:10px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border:none; cursor:pointer; display:flex; align-items:center; justify-content:center;
+  font-size:16px; color:#fff;
+  transition: transform 0.15s, box-shadow 0.15s;
+  box-shadow: 0 4px 16px rgba(91,141,238,0.3);
+  flex-shrink:0;
+}
+#tb-start:hover { transform:scale(1.08); box-shadow:0 6px 24px rgba(91,141,238,0.45); }
+
+#tb-apps { display:flex; gap:6px; flex:1; overflow:hidden; }
+.tb-app {
+  height:38px; padding:0 12px; border-radius:10px;
+  background: var(--surface2); border:1px solid var(--border);
+  cursor:pointer; display:flex; align-items:center; gap:8px;
+  font-size:12px; font-weight:500; color:var(--text2);
+  transition:background 0.15s, border-color 0.15s, color 0.15s;
+  white-space:nowrap;
+}
+.tb-app:hover { background:var(--surface3); color:var(--text); }
+.tb-app.active { background:rgba(91,141,238,0.15); border-color:rgba(91,141,238,0.3); color:var(--accent); }
+.tb-app i { font-size:13px; }
+
+#tb-right { display:flex; align-items:center; gap:12px; flex-shrink:0; }
+#tb-clock {
+  font-family: var(--font-mono); font-size:13px; color:var(--text2);
+  text-align:right; line-height:1.3;
+}
+#tb-clock span { display:block; }
+#tb-clock .time { font-size:15px; font-weight:500; color:var(--text); }
+
+.tb-icon-btn {
+  width:32px; height:32px; border-radius:8px; border:none;
+  background:transparent; cursor:pointer; color:var(--text2);
+  display:flex; align-items:center; justify-content:center; font-size:14px;
+  transition:background 0.15s, color 0.15s;
+}
+.tb-icon-btn:hover { background:var(--surface2); color:var(--text); }
+
+/* ─── LAUNCHER ─── */
+#launcher {
+  position:fixed; bottom:calc(var(--taskbar-h) + 8px); left:16px;
+  width:340px; background: rgba(19,22,30,0.95);
+  border:1px solid var(--border2); border-radius:16px;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.7);
+  backdrop-filter: blur(40px);
+  z-index:9998; display:none; flex-direction:column; overflow:hidden;
+  transform-origin: bottom left;
+}
+#launcher.open { display:flex; animation:launchIn 0.2s ease; }
+@keyframes launchIn {
+  from { opacity:0; transform:scale(0.94) translateY(8px); }
+  to   { opacity:1; transform:scale(1) translateY(0); }
+}
+#launcher-search {
+  margin:14px; border-radius:10px;
+  background:var(--surface3); border:1px solid var(--border2);
+  display:flex; align-items:center; gap:10px; padding:0 14px;
+}
+#launcher-search i { color:var(--text3); font-size:13px; }
+#launcher-search input {
+  flex:1; background:none; border:none; outline:none;
+  font:400 14px var(--font); color:var(--text); padding:10px 0;
+}
+#launcher-search input::placeholder { color:var(--text3); }
+#launcher-grid {
+  display:grid; grid-template-columns: repeat(4, 1fr);
+  gap:4px; padding:0 10px 14px;
+}
+.launcher-app {
+  display:flex; flex-direction:column; align-items:center; gap:6px;
+  padding:12px 6px; border-radius:12px; cursor:pointer;
+  transition:background 0.15s;
+}
+.launcher-app:hover { background:var(--surface3); }
+.launcher-app-icon {
+  width:46px; height:46px; border-radius:14px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:20px;
+}
+.launcher-app span { font-size:11px; color:var(--text2); text-align:center; line-height:1.2; }
+
+/* ─── NOTIFICATION PANEL ─── */
+#notif-panel {
+  position:fixed; bottom:calc(var(--taskbar-h) + 8px); right:16px;
+  width:320px; background: rgba(19,22,30,0.95);
+  border:1px solid var(--border2); border-radius:16px;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.7);
+  backdrop-filter: blur(40px);
+  z-index:9998; display:none; flex-direction:column; overflow:hidden;
+}
+#notif-panel.open { display:flex; animation:launchIn 0.2s ease; }
+.notif-header { padding:14px 16px 10px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); }
+.notif-header h3 { font-size:13px; font-weight:600; font-family:var(--font-display); }
+.notif-header button { background:none; border:none; color:var(--text3); cursor:pointer; font-size:11px; }
+.notif-header button:hover { color:var(--accent); }
+
+/* Quick toggles */
+.quick-toggles { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; padding:14px; border-bottom:1px solid var(--border); }
+.qtoggle {
+  display:flex; flex-direction:column; align-items:center; gap:5px;
+  padding:10px 6px; border-radius:10px; cursor:pointer;
+  background:var(--surface2); border:1px solid var(--border);
+  transition:all 0.15s;
+}
+.qtoggle.on { background:rgba(91,141,238,0.15); border-color:rgba(91,141,238,0.3); }
+.qtoggle i { font-size:16px; color:var(--text3); }
+.qtoggle.on i { color:var(--accent); }
+.qtoggle span { font-size:10px; color:var(--text3); }
+.qtoggle.on span { color:var(--text2); }
+
+/* Sliders */
+.ctrl-sliders { padding:14px; display:flex; flex-direction:column; gap:10px; border-bottom:1px solid var(--border); }
+.ctrl-row { display:flex; align-items:center; gap:10px; }
+.ctrl-row i { font-size:14px; color:var(--text3); width:18px; text-align:center; }
+.ctrl-slider { flex:1; -webkit-appearance:none; height:4px; border-radius:2px; background:var(--surface3); outline:none; }
+.ctrl-slider::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--accent); cursor:pointer; box-shadow:0 0 0 3px rgba(91,141,238,0.2); }
+
+/* Notifications list */
+.notif-list { max-height:200px; overflow-y:auto; padding:8px; }
+.notif-item { display:flex; gap:10px; padding:10px; border-radius:10px; margin-bottom:4px; background:var(--surface2); }
+.notif-dot { width:8px; height:8px; border-radius:50%; background:var(--accent); margin-top:4px; flex-shrink:0; }
+.notif-item p { font-size:12px; color:var(--text2); line-height:1.4; }
+.notif-item strong { color:var(--text); font-size:12px; display:block; margin-bottom:2px; }
+
+/* ─── DESKTOP ICONS ─── */
+.desk-icon {
+  position:absolute; display:flex; flex-direction:column; align-items:center; gap:5px;
+  padding:8px; border-radius:10px; cursor:pointer; width:72px;
+  transition:background 0.15s;
+}
+.desk-icon:hover { background:rgba(255,255,255,0.06); }
+.desk-icon.selected { background:rgba(91,141,238,0.15); }
+.desk-icon-img { width:46px; height:46px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:22px; }
+.desk-icon span { font-size:11px; color:var(--text2); text-align:center; text-shadow:0 1px 4px rgba(0,0,0,0.8); line-height:1.2; word-break:break-word; }
+
+/* ─── CONTEXT MENU ─── */
+#ctx-menu {
+  position:fixed; z-index:99999;
+  background: rgba(19,22,30,0.97);
+  border:1px solid var(--border2); border-radius:12px;
+  padding:6px; min-width:180px;
+  box-shadow:0 16px 48px rgba(0,0,0,0.6);
+  backdrop-filter:blur(40px);
+  display:none;
+}
+#ctx-menu.open { display:block; animation:launchIn 0.12s ease; }
+.ctx-item {
+  display:flex; align-items:center; gap:10px;
+  padding:8px 12px; border-radius:8px; cursor:pointer;
+  font-size:13px; color:var(--text2);
+  transition:background 0.1s, color 0.1s;
+}
+.ctx-item:hover { background:var(--surface3); color:var(--text); }
+.ctx-item.danger:hover { background:rgba(240,102,116,0.15); color:var(--red); }
+.ctx-item i { width:16px; font-size:12px; text-align:center; }
+.ctx-sep { height:1px; background:var(--border); margin:4px 0; }
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar { width:6px; height:6px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--surface3); border-radius:3px; }
+::-webkit-scrollbar-thumb:hover { background:var(--text3); }
+
+/* ─── APPS ─── */
+
+/* File Manager */
+.fm-container { display:flex; height:100%; }
+.fm-sidebar { width:160px; background:var(--surface2); border-right:1px solid var(--border); padding:12px 8px; flex-shrink:0; overflow-y:auto; }
+.fm-sidebar-section { margin-bottom:16px; }
+.fm-sidebar-section h4 { font-size:10px; font-weight:600; color:var(--text3); letter-spacing:0.08em; text-transform:uppercase; padding:0 8px; margin-bottom:6px; }
+.fm-sidebar-item {
+  display:flex; align-items:center; gap:8px; padding:7px 8px; border-radius:8px;
+  cursor:pointer; font-size:12px; color:var(--text2); transition:background 0.1s, color 0.1s;
+}
+.fm-sidebar-item:hover { background:var(--surface3); color:var(--text); }
+.fm-sidebar-item.active { background:rgba(91,141,238,0.15); color:var(--accent); }
+.fm-sidebar-item i { font-size:13px; width:16px; text-align:center; }
+.fm-main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+.fm-toolbar { display:flex; align-items:center; gap:8px; padding:10px 12px; border-bottom:1px solid var(--border); flex-shrink:0; }
+.fm-toolbar button { width:28px; height:28px; border-radius:7px; background:var(--surface2); border:1px solid var(--border); cursor:pointer; color:var(--text2); font-size:12px; display:flex; align-items:center; justify-content:center; transition:all 0.1s; }
+.fm-toolbar button:hover { background:var(--surface3); color:var(--text); }
+.fm-path { flex:1; background:var(--surface3); border:1px solid var(--border); border-radius:7px; padding:0 10px; height:28px; font-size:12px; color:var(--text2); font-family:var(--font-mono); display:flex; align-items:center; }
+.fm-grid { flex:1; padding:12px; overflow-y:auto; display:grid; grid-template-columns:repeat(auto-fill, minmax(80px,1fr)); gap:4px; align-content:start; }
+.fm-item { display:flex; flex-direction:column; align-items:center; gap:5px; padding:8px 4px; border-radius:8px; cursor:pointer; transition:background 0.1s; }
+.fm-item:hover { background:var(--surface2); }
+.fm-item.selected { background:rgba(91,141,238,0.15); }
+.fm-item-icon { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px; }
+.fm-item span { font-size:10px; color:var(--text2); text-align:center; line-height:1.2; word-break:break-all; }
+.fm-statusbar { padding:6px 14px; border-top:1px solid var(--border); font-size:11px; color:var(--text3); flex-shrink:0; }
+
+/* Text Editor */
+.te-container { display:flex; flex-direction:column; height:100%; }
+.te-menubar { display:flex; align-items:center; gap:4px; padding:6px 10px; border-bottom:1px solid var(--border); background:var(--surface2); flex-shrink:0; }
+.te-menu-btn { padding:4px 10px; border-radius:6px; background:none; border:none; cursor:pointer; font-size:12px; color:var(--text2); transition:background 0.1s, color 0.1s; }
+.te-menu-btn:hover { background:var(--surface3); color:var(--text); }
+.te-toolbar { display:flex; align-items:center; gap:4px; padding:6px 10px; border-bottom:1px solid var(--border); flex-shrink:0; flex-wrap:wrap; }
+.te-tool { width:26px; height:26px; border-radius:6px; background:none; border:none; cursor:pointer; color:var(--text2); font-size:12px; display:flex; align-items:center; justify-content:center; transition:all 0.1s; }
+.te-tool:hover { background:var(--surface2); color:var(--text); }
+.te-tool.active { background:rgba(91,141,238,0.15); color:var(--accent); }
+.te-sep { width:1px; height:20px; background:var(--border); margin:0 4px; }
+.te-select { background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:2px 6px; font-size:11px; color:var(--text2); outline:none; cursor:pointer; }
+.te-body { flex:1; display:flex; overflow:hidden; }
+.te-content { flex:1; padding:24px; font-size:14px; line-height:1.7; color:var(--text); background:var(--surface); border:none; outline:none; resize:none; font-family:var(--font); overflow-y:auto; }
+.te-statusbar { padding:4px 14px; border-top:1px solid var(--border); font-size:11px; color:var(--text3); display:flex; gap:16px; flex-shrink:0; }
+
+/* Terminal */
+.term-container { display:flex; flex-direction:column; height:100%; background:#0a0c10; }
+.term-output { flex:1; overflow-y:auto; padding:14px; font-family:var(--font-mono); font-size:13px; line-height:1.6; }
+.term-line { margin-bottom:2px; }
+.term-line .prompt { color:var(--accent); }
+.term-line .cmd { color:var(--text); }
+.term-line .out { color:var(--text2); display:block; margin-left:0; white-space:pre-wrap; word-break:break-all; }
+.term-line .err { color:var(--red); display:block; }
+.term-input-row { display:flex; align-items:center; gap:8px; padding:8px 14px; border-top:1px solid var(--border); background:#0a0c10; }
+.term-prompt-label { font-family:var(--font-mono); font-size:13px; color:var(--accent); flex-shrink:0; }
+.term-input { flex:1; background:none; border:none; outline:none; font-family:var(--font-mono); font-size:13px; color:var(--text); caret-color:var(--accent); }
+
+/* Browser */
+.browser-container { display:flex; flex-direction:column; height:100%; }
+.browser-bar { display:flex; align-items:center; gap:8px; padding:8px 12px; border-bottom:1px solid var(--border); background:var(--surface2); flex-shrink:0; }
+.browser-navbtn { width:28px; height:28px; border-radius:7px; background:none; border:none; cursor:pointer; color:var(--text2); font-size:13px; display:flex; align-items:center; justify-content:center; transition:all 0.1s; }
+.browser-navbtn:hover { background:var(--surface3); color:var(--text); }
+.browser-url { flex:1; background:var(--surface3); border:1px solid var(--border); border-radius:8px; padding:0 12px; height:30px; font-size:13px; color:var(--text); font-family:var(--font-mono); outline:none; }
+.browser-url:focus { border-color:var(--accent); background:var(--surface); }
+.browser-body { flex:1; background:var(--surface); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; }
+.browser-start { display:flex; flex-direction:column; align-items:center; gap:24px; padding:40px; width:100%; max-width:500px; }
+.browser-start h2 { font-family:var(--font-display); font-size:28px; font-weight:600; background:linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.browser-search-box { width:100%; display:flex; background:var(--surface2); border:1px solid var(--border2); border-radius:12px; overflow:hidden; }
+.browser-search-box input { flex:1; background:none; border:none; outline:none; padding:12px 16px; font-size:14px; color:var(--text); font-family:var(--font); }
+.browser-search-box button { padding:0 16px; background:var(--accent); border:none; cursor:pointer; color:#fff; font-size:14px; transition:background 0.15s; }
+.browser-search-box button:hover { background:var(--accent2); }
+.browser-shortcuts { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; width:100%; }
+.browser-shortcut { display:flex; flex-direction:column; align-items:center; gap:8px; padding:16px 8px; border-radius:12px; cursor:pointer; background:var(--surface2); border:1px solid var(--border); transition:all 0.15s; }
+.browser-shortcut:hover { background:var(--surface3); border-color:var(--border2); }
+.browser-shortcut i { font-size:22px; color:var(--accent); }
+.browser-shortcut span { font-size:11px; color:var(--text2); }
+
+/* Settings */
+.settings-container { display:flex; height:100%; }
+.settings-nav { width:180px; background:var(--surface2); border-right:1px solid var(--border); padding:12px 8px; flex-shrink:0; overflow-y:auto; }
+.settings-nav-item { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:9px; cursor:pointer; font-size:13px; color:var(--text2); transition:all 0.1s; margin-bottom:2px; }
+.settings-nav-item:hover { background:var(--surface3); color:var(--text); }
+.settings-nav-item.active { background:rgba(91,141,238,0.15); color:var(--accent); }
+.settings-nav-item i { font-size:14px; width:18px; text-align:center; }
+.settings-body { flex:1; overflow-y:auto; padding:24px; }
+.settings-section h3 { font-family:var(--font-display); font-size:18px; font-weight:600; margin-bottom:20px; color:var(--text); }
+.settings-card { background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:12px; }
+.settings-row { display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border); }
+.settings-row:last-child { border-bottom:none; padding-bottom:0; }
+.settings-row-info h4 { font-size:13px; font-weight:500; color:var(--text); }
+.settings-row-info p { font-size:11px; color:var(--text3); margin-top:2px; }
+.toggle-switch { width:40px; height:22px; border-radius:11px; background:var(--surface3); border:none; cursor:pointer; position:relative; transition:background 0.2s; flex-shrink:0; }
+.toggle-switch::after { content:''; position:absolute; width:16px; height:16px; border-radius:50%; background:#fff; top:3px; left:3px; transition:transform 0.2s; }
+.toggle-switch.on { background:var(--accent); }
+.toggle-switch.on::after { transform:translateX(18px); }
+.settings-slider { -webkit-appearance:none; width:120px; height:4px; border-radius:2px; background:var(--surface3); outline:none; }
+.settings-slider::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--accent); cursor:pointer; }
+
+/* Calculator */
+.calc-container { padding:16px; display:flex; flex-direction:column; gap:12px; height:100%; background:#0d0f14; }
+.calc-display { background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:16px 20px; text-align:right; }
+.calc-display .calc-expr { font-size:13px; color:var(--text3); font-family:var(--font-mono); min-height:18px; }
+.calc-display .calc-val { font-size:32px; font-weight:300; color:var(--text); font-family:var(--font-display); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.calc-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; flex:1; }
+.calc-btn {
+  border-radius:10px; border:none; cursor:pointer;
+  font-size:16px; font-weight:500; font-family:var(--font);
+  transition:transform 0.08s, filter 0.1s;
+  background:var(--surface2); color:var(--text); border:1px solid var(--border);
+}
+.calc-btn:hover { filter:brightness(1.2); }
+.calc-btn:active { transform:scale(0.93); }
+.calc-btn.op { background:rgba(91,141,238,0.15); color:var(--accent); border-color:rgba(91,141,238,0.2); }
+.calc-btn.fn { background:var(--surface3); color:var(--text2); }
+.calc-btn.eq { background:var(--accent); color:#fff; border:none; }
+.calc-btn.zero { grid-column:span 2; }
+
+/* Notes */
+.notes-container { display:flex; height:100%; }
+.notes-list { width:200px; background:var(--surface2); border-right:1px solid var(--border); display:flex; flex-direction:column; }
+.notes-list-header { padding:12px 14px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+.notes-list-header h3 { font-size:14px; font-weight:600; font-family:var(--font-display); }
+.notes-list-header button { background:none; border:none; cursor:pointer; color:var(--accent); font-size:18px; width:24px; height:24px; display:flex; align-items:center; justify-content:center; border-radius:6px; }
+.notes-list-header button:hover { background:var(--surface3); }
+.notes-items { flex:1; overflow-y:auto; padding:8px; }
+.notes-item { padding:10px 12px; border-radius:9px; cursor:pointer; margin-bottom:4px; transition:background 0.1s; }
+.notes-item:hover { background:var(--surface3); }
+.notes-item.active { background:rgba(91,141,238,0.15); }
+.notes-item h4 { font-size:12px; font-weight:500; color:var(--text); margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.notes-item p { font-size:11px; color:var(--text3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.notes-item time { font-size:10px; color:var(--text3); }
+.notes-editor { flex:1; display:flex; flex-direction:column; }
+.notes-editor-title { padding:16px 18px 8px; background:none; border:none; outline:none; font:600 18px var(--font-display); color:var(--text); border-bottom:1px solid var(--border); }
+.notes-editor-body { flex:1; padding:16px 18px; background:none; border:none; outline:none; font:400 14px/1.7 var(--font); color:var(--text2); resize:none; }
+
+/* Image Viewer */
+.imgv-container { display:flex; flex-direction:column; height:100%; }
+.imgv-toolbar { display:flex; align-items:center; gap:8px; padding:8px 12px; border-bottom:1px solid var(--border); background:var(--surface2); flex-shrink:0; }
+.imgv-toolbar button { width:30px; height:30px; border-radius:8px; background:none; border:none; cursor:pointer; color:var(--text2); font-size:13px; display:flex; align-items:center; justify-content:center; transition:all 0.1s; }
+.imgv-toolbar button:hover { background:var(--surface3); color:var(--text); }
+.imgv-toolbar span { font-size:12px; color:var(--text2); margin:0 8px; }
+.imgv-body { flex:1; display:flex; align-items:center; justify-content:center; overflow:hidden; background:#0a0c10; }
+.imgv-body img { max-width:100%; max-height:100%; object-fit:contain; border-radius:4px; }
+
+/* Music Player */
+.music-container { display:flex; flex-direction:column; height:100%; }
+.music-cover { height:180px; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,rgba(91,141,238,0.2),rgba(123,108,246,0.2)); flex-shrink:0; position:relative; overflow:hidden; }
+.music-cover-art { width:120px; height:120px; border-radius:50%; background:linear-gradient(135deg,var(--accent),var(--accent2)); display:flex; align-items:center; justify-content:center; font-size:48px; box-shadow:0 8px 32px rgba(91,141,238,0.4); animation:spin 8s linear infinite paused; }
+.music-cover-art.playing { animation-play-state:running; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.music-info { padding:16px; text-align:center; border-bottom:1px solid var(--border); }
+.music-info h3 { font-size:16px; font-weight:600; font-family:var(--font-display); margin-bottom:4px; }
+.music-info p { font-size:12px; color:var(--text2); }
+.music-progress { padding:16px; }
+.music-progress-bar { width:100%; height:4px; background:var(--surface3); border-radius:2px; cursor:pointer; margin-bottom:8px; position:relative; }
+.music-progress-fill { height:100%; background:var(--accent); border-radius:2px; transition:width 0.5s linear; }
+.music-times { display:flex; justify-content:space-between; font-size:11px; color:var(--text3); font-family:var(--font-mono); }
+.music-controls { display:flex; align-items:center; justify-content:center; gap:16px; padding:0 16px 16px; }
+.music-controls button { background:none; border:none; cursor:pointer; color:var(--text2); font-size:18px; transition:all 0.15s; }
+.music-controls button:hover { color:var(--text); transform:scale(1.1); }
+.music-controls .play-btn { width:48px; height:48px; border-radius:50%; background:var(--accent); color:#fff; font-size:18px; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 16px rgba(91,141,238,0.4); }
+.music-controls .play-btn:hover { background:var(--accent2); transform:scale(1.05); }
+.music-list { flex:1; overflow-y:auto; border-top:1px solid var(--border); }
+.music-track { display:flex; align-items:center; gap:10px; padding:10px 16px; cursor:pointer; transition:background 0.1s; }
+.music-track:hover { background:var(--surface2); }
+.music-track.active { background:rgba(91,141,238,0.1); }
+.music-track-num { font-size:12px; color:var(--text3); width:18px; text-align:center; font-family:var(--font-mono); flex-shrink:0; }
+.music-track-info { flex:1; }
+.music-track-info h4 { font-size:13px; font-weight:500; }
+.music-track-info span { font-size:11px; color:var(--text3); }
+.music-track-dur { font-size:11px; color:var(--text3); font-family:var(--font-mono); }
+
+/* Clock/Calendar */
+.clock-container { display:flex; flex-direction:column; align-items:center; padding:24px; gap:20px; height:100%; overflow-y:auto; }
+.clock-face { text-align:center; padding:24px; background:var(--surface2); border:1px solid var(--border); border-radius:20px; width:100%; }
+.clock-face .big-time { font-family:var(--font-display); font-size:56px; font-weight:300; color:var(--text); letter-spacing:-2px; line-height:1; }
+.clock-face .big-date { font-size:14px; color:var(--text2); margin-top:8px; }
+.clock-face .big-tz { font-size:11px; color:var(--text3); margin-top:4px; font-family:var(--font-mono); }
+.calendar { background:var(--surface2); border:1px solid var(--border); border-radius:16px; padding:16px; width:100%; }
+.cal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+.cal-header h3 { font-size:14px; font-weight:600; font-family:var(--font-display); }
+.cal-header button { background:none; border:none; cursor:pointer; color:var(--text2); font-size:14px; width:28px; height:28px; border-radius:7px; display:flex; align-items:center; justify-content:center; }
+.cal-header button:hover { background:var(--surface3); color:var(--text); }
+.cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
+.cal-day-name { text-align:center; font-size:10px; color:var(--text3); font-weight:600; padding:4px; }
+.cal-day { text-align:center; font-size:12px; color:var(--text2); padding:6px 4px; border-radius:7px; cursor:pointer; transition:background 0.1s; }
+.cal-day:hover { background:var(--surface3); color:var(--text); }
+.cal-day.today { background:var(--accent); color:#fff; font-weight:600; }
+.cal-day.other-month { color:var(--text3); }
+.cal-day.has-event::after { content:''; display:block; width:4px; height:4px; border-radius:50%; background:var(--accent3); margin:1px auto 0; }
+
+/* Weather */
+.weather-container { padding:20px; height:100%; overflow-y:auto; display:flex; flex-direction:column; gap:16px; }
+.weather-main { background:linear-gradient(135deg,rgba(91,141,238,0.2),rgba(62,207,178,0.1)); border:1px solid var(--border); border-radius:16px; padding:24px; display:flex; align-items:center; justify-content:space-between; }
+.weather-main-left h2 { font-family:var(--font-display); font-size:52px; font-weight:300; color:var(--text); line-height:1; }
+.weather-main-left p { font-size:14px; color:var(--text2); margin-top:4px; }
+.weather-main-left small { font-size:12px; color:var(--text3); }
+.weather-main-right { text-align:center; }
+.weather-main-right .weather-icon { font-size:64px; }
+.weather-main-right span { display:block; font-size:13px; color:var(--text2); margin-top:4px; }
+.weather-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.weather-stat { background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:14px; text-align:center; }
+.weather-stat i { font-size:20px; color:var(--accent); margin-bottom:6px; display:block; }
+.weather-stat .val { font-size:18px; font-weight:600; color:var(--text); }
+.weather-stat .lbl { font-size:11px; color:var(--text3); margin-top:2px; }
+.weather-forecast { display:flex; gap:8px; }
+.forecast-day { flex:1; background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:12px 8px; text-align:center; }
+.forecast-day .day { font-size:11px; color:var(--text3); font-weight:600; margin-bottom:6px; }
+.forecast-day .icon { font-size:22px; margin-bottom:6px; }
+.forecast-day .temp { font-size:13px; color:var(--text); font-weight:500; }
+.forecast-day .min { font-size:11px; color:var(--text3); }
+
+/* System Monitor */
+.sysmon-container { padding:16px; height:100%; overflow-y:auto; display:flex; flex-direction:column; gap:12px; }
+.sysmon-card { background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:14px; }
+.sysmon-card h4 { font-size:12px; font-weight:600; color:var(--text3); letter-spacing:0.06em; text-transform:uppercase; margin-bottom:12px; display:flex; justify-content:space-between; }
+.sysmon-card h4 span { color:var(--text); font-family:var(--font-mono); }
+.sysmon-bar { height:8px; background:var(--surface3); border-radius:4px; overflow:hidden; margin-bottom:6px; }
+.sysmon-fill { height:100%; border-radius:4px; transition:width 0.5s ease; }
+.sysmon-fill.cpu { background:linear-gradient(90deg,var(--accent),var(--accent2)); }
+.sysmon-fill.mem { background:linear-gradient(90deg,var(--accent3),var(--accent)); }
+.sysmon-fill.disk { background:linear-gradient(90deg,var(--yellow),var(--red)); }
+.sysmon-procs { display:flex; flex-direction:column; gap:4px; }
+.sysmon-proc { display:flex; align-items:center; gap:10px; padding:6px 8px; border-radius:7px; background:var(--surface3); }
+.sysmon-proc span { font-size:12px; font-family:var(--font-mono); }
+.sysmon-proc .pname { flex:1; color:var(--text2); }
+.sysmon-proc .pcpu { color:var(--accent); }
+.sysmon-proc .pmem { color:var(--accent3); }
+
+/* ─── WELCOME SCREEN ─── */
+#lock-screen {
+  position:fixed; inset:0; z-index:99999;
+  background: radial-gradient(ellipse 80% 60% at 50% 30%, rgba(91,141,238,0.25) 0%, transparent 60%), #0d0f14;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:24px;
+  cursor:pointer;
+}
+#lock-screen.unlocked { animation:unlockOut 0.4s ease forwards; }
+@keyframes unlockOut {
+  to { opacity:0; transform:scale(1.04); pointer-events:none; }
+}
+.lock-time { font-family:var(--font-display); font-size:80px; font-weight:200; color:var(--text); letter-spacing:-3px; text-align:center; line-height:1; }
+.lock-date { font-size:18px; color:var(--text2); text-align:center; margin-bottom:8px; }
+.lock-hint { font-size:13px; color:var(--text3); text-align:center; animation:pulse 2s ease-in-out infinite; }
+.lock-logo { font-family:var(--font-display); font-size:22px; font-weight:700; background:linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; letter-spacing:0.15em; margin-bottom:8px; }
+@keyframes pulse { 0%,100% { opacity:0.5; } 50% { opacity:1; } }
+
+/* Toast */
+#toast {
+  position:fixed; top:20px; right:20px; z-index:99998;
+  background:var(--surface2); border:1px solid var(--border2); border-radius:12px;
+  padding:12px 16px; font-size:13px; color:var(--text);
+  box-shadow:0 8px 32px rgba(0,0,0,0.4);
+  display:none; gap:10px; align-items:center;
+  max-width:280px;
+}
+#toast.show { display:flex; animation:toastIn 0.25s ease; }
+@keyframes toastIn { from { opacity:0; transform:translateX(20px); } }
+#toast i { color:var(--accent); font-size:16px; }
+
+</style>
+</head>
+<body>
+
+<!-- Lock Screen -->
+<div id="lock-screen" onclick="unlock()">
+  <div class="lock-logo">✦ AURA OS</div>
+  <div class="lock-time" id="lock-time">00:00</div>
+  <div class="lock-date" id="lock-date"></div>
+  <div class="lock-hint">Clique para entrar</div>
+</div>
+
+<!-- Desktop -->
+<div id="desktop" oncontextmenu="showCtxMenu(event,'desktop')" ondblclick="closeAllPanels()">
+
+  <!-- Desktop Icons -->
+  <div class="desk-icon" style="top:20px;left:20px" ondblclick="openApp('files')" oncontextmenu.stop="showCtxMenu(event,'icon')" onclick="selectIcon(this)">
+    <div class="desk-icon-img" style="background:rgba(91,141,238,0.2);">📁</div>
+    <span>Arquivos</span>
+  </div>
+  <div class="desk-icon" style="top:100px;left:20px" ondblclick="openApp('browser')" onclick="selectIcon(this)">
+    <div class="desk-icon-img" style="background:rgba(62,207,178,0.2);">🌐</div>
+    <span>Navegador</span>
+  </div>
+  <div class="desk-icon" style="top:180px;left:20px" ondblclick="openApp('editor')" onclick="selectIcon(this)">
+    <div class="desk-icon-img" style="background:rgba(245,197,66,0.2);">📝</div>
+    <span>Editor</span>
+  </div>
+  <div class="desk-icon" style="top:260px;left:20px" ondblclick="openApp('terminal')" onclick="selectIcon(this)">
+    <div class="desk-icon-img" style="background:rgba(240,102,116,0.2);">💻</div>
+    <span>Terminal</span>
+  </div>
+  <div class="desk-icon" style="top:340px;left:20px" ondblclick="openApp('calc')" onclick="selectIcon(this)">
+    <div class="desk-icon-img" style="background:rgba(123,108,246,0.2);">🧮</div>
+    <span>Calculadora</span>
+  </div>
+  <div class="desk-icon" style="top:20px;left:100px" ondblclick="openApp('music')" onclick="selectIcon(this)">
+    <div class="desk-icon-img" style="background:rgba(62,207,178,0.2);">🎵</div>
+    <span>Música</span>
+  </div>
+  <div class="desk-icon" style="top:100px;left:100px" ondblclick="openApp('clock')" onclick="selectIcon(this)">
+    <div class="desk-icon-img" style="background:rgba(91,141,238,0.15);">🕐</div>
+    <span>Relógio</span>
+  </div>
+  <div class="desk-icon" style="top:180px;left:100px" ondblclick="openApp('weather')" onclick="selectIcon(this)">
+    <div class="desk-icon-img" style="background:rgba(245,197,66,0.15);">⛅</div>
+    <span>Clima</span>
+  </div>
+  <div class="desk-icon" style="top:260px;left:100px" ondblclick="openApp('sysmon')" onclick="selectIcon(this)">
+    <div class="desk-icon-img" style="background:rgba(240,102,116,0.15);">📊</div>
+    <span>Monitor</span>
+  </div>
+  <div class="desk-icon" style="top:340px;left:100px" ondblclick="openApp('notes')" onclick="selectIcon(this)">
+    <div class="desk-icon-img" style="background:rgba(245,197,66,0.15);">🗒️</div>
+    <span>Notas</span>
+  </div>
+  <div class="desk-icon" style="top:420px;left:20px" ondblclick="openApp('settings')" onclick="selectIcon(this)">
+    <div class="desk-icon-img" style="background:rgba(91,141,238,0.15);">⚙️</div>
+    <span>Config.</span>
+  </div>
+
+</div>
+
+<!-- Taskbar -->
+<div id="taskbar">
+  <button id="tb-start" onclick="toggleLauncher()" title="Apps">
+    <i class="fa fa-th"></i>
+  </button>
+  <div id="tb-apps"></div>
+  <div id="tb-right">
+    <button class="tb-icon-btn" title="Redes"><i class="fa fa-wifi"></i></button>
+    <button class="tb-icon-btn" title="Som"><i class="fa fa-volume-up"></i></button>
+    <button class="tb-icon-btn" title="Notificações" onclick="toggleNotif()"><i class="fa fa-bell"></i></button>
+    <div id="tb-clock">
+      <span class="time" id="tb-time">00:00</span>
+      <span id="tb-date2"></span>
+    </div>
+  </div>
+</div>
+
+<!-- Launcher -->
+<div id="launcher">
+  <div id="launcher-search">
+    <i class="fa fa-search"></i>
+    <input type="text" placeholder="Buscar apps..." oninput="filterLauncher(this.value)" id="launcher-input">
+  </div>
+  <div id="launcher-grid"></div>
+</div>
+
+<!-- Notification Panel -->
+<div id="notif-panel">
+  <div class="notif-header">
+    <h3>Central de Controle</h3>
+    <button onclick="clearNotifs()">Limpar</button>
+  </div>
+  <div class="quick-toggles">
+    <div class="qtoggle on" onclick="this.classList.toggle('on')">
+      <i class="fa fa-wifi"></i><span>Wi-Fi</span>
+    </div>
+    <div class="qtoggle on" onclick="this.classList.toggle('on')">
+      <i class="fa fa-bluetooth-b"></i><span>Bluetooth</span>
+    </div>
+    <div class="qtoggle" onclick="this.classList.toggle('on')">
+      <i class="fa fa-moon"></i><span>Noturno</span>
+    </div>
+    <div class="qtoggle" onclick="this.classList.toggle('on')">
+      <i class="fa fa-plane"></i><span>Avião</span>
+    </div>
+  </div>
+  <div class="ctrl-sliders">
+    <div class="ctrl-row">
+      <i class="fa fa-sun"></i>
+      <input type="range" class="ctrl-slider" min="0" max="100" value="75">
+    </div>
+    <div class="ctrl-row">
+      <i class="fa fa-volume-up"></i>
+      <input type="range" class="ctrl-slider" min="0" max="100" value="50">
+    </div>
+  </div>
+  <div class="notif-list" id="notif-list"></div>
+</div>
+
+<!-- Context Menu -->
+<div id="ctx-menu">
+  <div class="ctx-item" onclick="closeCtxMenu()"><i class="fa fa-th-large"></i> Novo app</div>
+  <div class="ctx-item" onclick="closeCtxMenu()"><i class="fa fa-folder-plus"></i> Nova pasta</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" onclick="closeCtxMenu()"><i class="fa fa-image"></i> Papel de parede</div>
+  <div class="ctx-item" onclick="openApp('settings');closeCtxMenu()"><i class="fa fa-cog"></i> Configurações</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" onclick="closeCtxMenu()"><i class="fa fa-sync"></i> Atualizar desktop</div>
+</div>
+
+<!-- Toast -->
+<div id="toast"><i class="fa fa-check-circle"></i><span id="toast-msg"></span></div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────
+const state = {
+  windows: {},
+  zCounter: 100,
+  activeWin: null,
+  launcherOpen: false,
+  notifOpen: false,
+};
+
+const APPS = [
+  { id:'files',    label:'Arquivos',     icon:'📁', color:'rgba(91,141,238,0.2)' },
+  { id:'browser',  label:'Navegador',    icon:'🌐', color:'rgba(62,207,178,0.2)' },
+  { id:'editor',   label:'Editor',       icon:'📝', color:'rgba(245,197,66,0.2)' },
+  { id:'terminal', label:'Terminal',     icon:'💻', color:'rgba(240,102,116,0.2)' },
+  { id:'calc',     label:'Calculadora',  icon:'🧮', color:'rgba(123,108,246,0.2)' },
+  { id:'notes',    label:'Notas',        icon:'🗒️', color:'rgba(245,197,66,0.15)' },
+  { id:'music',    label:'Música',       icon:'🎵', color:'rgba(62,207,178,0.2)' },
+  { id:'clock',    label:'Relógio',      icon:'🕐', color:'rgba(91,141,238,0.15)' },
+  { id:'weather',  label:'Clima',        icon:'⛅', color:'rgba(245,197,66,0.15)' },
+  { id:'sysmon',   label:'Monitor Sys',  icon:'📊', color:'rgba(240,102,116,0.15)' },
+  { id:'settings', label:'Config.',      icon:'⚙️', color:'rgba(91,141,238,0.15)' },
+];
+
+// ─── LOCK SCREEN ─────────────────────────────────────────
+function unlock() {
+  const ls = document.getElementById('lock-screen');
+  ls.classList.add('unlocked');
+  ls.addEventListener('animationend', () => { ls.style.display='none'; }, {once:true});
+  showToast('Bem-vindo ao AURA OS ✦');
+  updateSysmon();
+}
+function updateLockClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  document.getElementById('lock-time').textContent = h+':'+m;
+  const days=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  const months=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  document.getElementById('lock-date').textContent = days[now.getDay()]+', '+now.getDate()+' de '+months[now.getMonth()]+' de '+now.getFullYear();
+}
+updateLockClock();
+setInterval(updateLockClock,10000);
+
+// ─── CLOCK ───────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const s = String(now.getSeconds()).padStart(2,'0');
+  const el = document.getElementById('tb-time');
+  if (el) el.textContent = h+':'+m+':'+s;
+  const days=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  const el2 = document.getElementById('tb-date2');
+  if (el2) el2.textContent = days[now.getDay()]+' '+now.getDate()+'/'+String(now.getMonth()+1).padStart(2,'0');
+
+  // update live clock app if open
+  const cEl = document.getElementById('app-clock-time');
+  const months=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const daysFull=['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+  if (cEl) cEl.textContent = h+':'+m+':'+s;
+  const cDate = document.getElementById('app-clock-date');
+  if (cDate) cDate.textContent = daysFull[now.getDay()]+', '+now.getDate()+' de '+months[now.getMonth()]+' de '+now.getFullYear();
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ─── TOAST ───────────────────────────────────────────────
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 3000);
+}
+
+// ─── LAUNCHER ────────────────────────────────────────────
+function buildLauncher() {
+  const grid = document.getElementById('launcher-grid');
+  grid.innerHTML = '';
+  APPS.forEach(app => {
+    const div = document.createElement('div');
+    div.className = 'launcher-app';
+    div.dataset.label = app.label.toLowerCase();
+    div.innerHTML = `<div class="launcher-app-icon" style="background:${app.color}">${app.icon}</div><span>${app.label}</span>`;
+    div.onclick = () => { openApp(app.id); closeLauncher(); };
+    grid.appendChild(div);
+  });
+}
+buildLauncher();
+
+function toggleLauncher() {
+  const el = document.getElementById('launcher');
+  if (state.launcherOpen) { closeLauncher(); }
+  else {
+    closeNotif();
+    el.classList.add('open');
+    state.launcherOpen = true;
+    document.getElementById('launcher-input').value = '';
+    filterLauncher('');
+    setTimeout(()=>document.getElementById('launcher-input').focus(),50);
+  }
+}
+function closeLauncher() {
+  document.getElementById('launcher').classList.remove('open');
+  state.launcherOpen = false;
+}
+function filterLauncher(q) {
+  q = q.toLowerCase();
+  document.querySelectorAll('.launcher-app').forEach(el => {
+    el.style.display = el.dataset.label.includes(q) ? '' : 'none';
+  });
+}
+
+// ─── NOTIFICATION PANEL ──────────────────────────────────
+const NOTIFS = [
+  { title:'Sistema', msg:'AURA OS inicializado com sucesso.' },
+  { title:'Atualização', msg:'Versão 2.4.1 disponível para instalar.' },
+  { title:'Wi-Fi', msg:'Conectado à rede AURA-NET 5G.' },
+];
+function buildNotifs() {
+  const list = document.getElementById('notif-list');
+  list.innerHTML = '';
+  NOTIFS.forEach(n => {
+    const d = document.createElement('div');
+    d.className = 'notif-item';
+    d.innerHTML = `<div class="notif-dot"></div><div><strong>${n.title}</strong><p>${n.msg}</p></div>`;
+    list.appendChild(d);
+  });
+}
+buildNotifs();
+
+function toggleNotif() {
+  const el = document.getElementById('notif-panel');
+  if (state.notifOpen) { closeNotif(); }
+  else { closeLauncher(); el.classList.add('open'); state.notifOpen = true; }
+}
+function closeNotif() {
+  document.getElementById('notif-panel').classList.remove('open');
+  state.notifOpen = false;
+}
+function clearNotifs() {
+  document.getElementById('notif-list').innerHTML = '<div style="padding:16px;text-align:center;font-size:12px;color:var(--text3)">Nenhuma notificação</div>';
+}
+
+// ─── CONTEXT MENU ────────────────────────────────────────
+function showCtxMenu(e, type) {
+  e.preventDefault(); e.stopPropagation();
+  const m = document.getElementById('ctx-menu');
+  m.classList.add('open');
+  let x = e.clientX, y = e.clientY;
+  m.style.left = Math.min(x, window.innerWidth-200)+'px';
+  m.style.top = Math.min(y, window.innerHeight-200)+'px';
+}
+function closeCtxMenu() { document.getElementById('ctx-menu').classList.remove('open'); }
+document.addEventListener('click', e => {
+  if (!e.target.closest('#ctx-menu')) closeCtxMenu();
+  if (!e.target.closest('#launcher') && !e.target.closest('#tb-start')) closeLauncher();
+  if (!e.target.closest('#notif-panel') && !e.target.closest('.tb-icon-btn')) closeNotif();
+  if (!e.target.closest('.desk-icon')) document.querySelectorAll('.desk-icon.selected').forEach(el=>el.classList.remove('selected'));
+});
+function closeAllPanels() { closeLauncher(); closeNotif(); closeCtxMenu(); }
+function selectIcon(el) { document.querySelectorAll('.desk-icon.selected').forEach(d=>d.classList.remove('selected')); el.classList.add('selected'); }
+
+// ─── WINDOW MANAGER ──────────────────────────────────────
+function openApp(id) {
+  if (state.windows[id]) {
+    const w = state.windows[id];
+    if (w.minimized) { w.minimized=false; w.el.classList.remove('minimized'); }
+    focusWin(id); return;
+  }
+  createWindow(id);
+}
+function createWindow(id) {
+  const app = APPS.find(a=>a.id===id);
+  if (!app) return;
+
+  const win = document.createElement('div');
+  win.className = 'win';
+  win.id = 'win-'+id;
+
+  const vw = window.innerWidth, vh = window.innerHeight - 56;
+  const defW = { files:700, browser:720, editor:640, terminal:600, calc:280, notes:560, music:340, clock:340, weather:420, sysmon:480, settings:680 };
+  const defH = { files:460, browser:520, editor:500, terminal:400, calc:420, notes:440, music:480, clock:360, weather:400, sysmon:440, settings:500 };
+  const w = Math.min(defW[id]||500, vw-40);
+  const h = Math.min(defH[id]||400, vh-40);
+  const x = Math.max(20, (vw-w)/2 + (Object.keys(state.windows).length * 20) % 80);
+  const y = Math.max(20, (vh-h)/2 + (Object.keys(state.windows).length * 20) % 60);
+
+  win.style.cssText = `left:${x}px;top:${y}px;width:${w}px;height:${h}px;z-index:${++state.zCounter}`;
+
+  win.innerHTML = `
+    <div class="win-header" id="wh-${id}">
+      <div class="win-icon">${app.icon}</div>
+      <div class="win-title">${app.label}</div>
+      <div class="win-controls">
+        <button class="win-btn close" onclick="closeWin('${id}')"><i class="fa fa-times"></i></button>
+        <button class="win-btn min"   onclick="minWin('${id}')"><i class="fa fa-minus"></i></button>
+        <button class="win-btn max"   onclick="maxWin('${id}')"><i class="fa fa-expand-alt"></i></button>
+      </div>
+    </div>
+    <div class="win-body" id="wb-${id}">${buildAppContent(id)}</div>
+    <div class="win-resize" id="wr-${id}"></div>
+  `;
+
+  document.getElementById('desktop').appendChild(win);
+  state.windows[id] = { el:win, minimized:false, maximized:false };
+  makeDraggable(win, document.getElementById('wh-'+id));
+  makeResizable(win, document.getElementById('wr-'+id));
+  addTaskbarItem(id, app);
+  focusWin(id);
+  win.style.animation = 'winOpen 0.18s cubic-bezier(0.34,1.56,0.64,1)';
+
+  if (id==='terminal') initTerminal(id);
+  if (id==='calc') initCalc(id);
+  if (id==='sysmon') initSysmon(id);
+  if (id==='clock') initClock();
+  if (id==='music') initMusic(id);
+  if (id==='notes') initNotes(id);
+  if (id==='calendar') initCalendar();
+}
+
+// window open animation
+const styleEl = document.createElement('style');
+styleEl.textContent = '@keyframes winOpen { from{opacity:0;transform:scale(0.93) translateY(8px)} to{opacity:1;transform:none} }';
+document.head.appendChild(styleEl);
+
+function closeWin(id) {
+  const w = state.windows[id];
+  if (!w) return;
+  w.el.style.animation='winClose 0.15s ease forwards';
+  const styleEl2=document.createElement('style');
+  styleEl2.textContent='@keyframes winClose{to{opacity:0;transform:scale(0.92) translateY(6px)}}';
+  document.head.appendChild(styleEl2);
+  w.el.addEventListener('animationend', ()=>{ w.el.remove(); }, {once:true});
+  delete state.windows[id];
+  removeTaskbarItem(id);
+  if (state.activeWin===id) state.activeWin=null;
+}
+function minWin(id) {
+  const w = state.windows[id];
+  w.minimized = true;
+  w.el.classList.add('minimized');
+  const tb = document.getElementById('tb-'+id);
+  if (tb) tb.classList.remove('active');
+}
+function maxWin(id) {
+  const w = state.windows[id];
+  w.maximized = !w.maximized;
+  w.el.classList.toggle('maximized', w.maximized);
+  const btn = w.el.querySelector('.win-btn.max i');
+  btn.className = w.maximized ? 'fa fa-compress-alt' : 'fa fa-expand-alt';
+}
+function focusWin(id) {
+  Object.entries(state.windows).forEach(([k,v])=>{ v.el.classList.remove('active'); v.el.style.zIndex=100; const t=document.getElementById('tb-'+k); if(t)t.classList.remove('active'); });
+  const w = state.windows[id];
+  if (!w) return;
+  w.el.classList.add('active');
+  w.el.style.zIndex = ++state.zCounter;
+  if (w.minimized) { w.minimized=false; w.el.classList.remove('minimized'); }
+  const tb = document.getElementById('tb-'+id);
+  if (tb) tb.classList.add('active');
+  state.activeWin = id;
+}
+
+// ─── TASKBAR ITEMS ───────────────────────────────────────
+function addTaskbarItem(id, app) {
+  const tb = document.getElementById('tb-apps');
+  const btn = document.createElement('button');
+  btn.className = 'tb-app active';
+  btn.id = 'tb-'+id;
+  btn.innerHTML = `<i>${app.icon}</i>${app.label}`;
+  btn.onclick = () => {
+    if (state.activeWin===id && !state.windows[id]?.minimized) minWin(id);
+    else focusWin(id);
+  };
+  tb.appendChild(btn);
+}
+function removeTaskbarItem(id) {
+  const btn = document.getElementById('tb-'+id);
+  if (btn) btn.remove();
+}
+
+// ─── DRAG ────────────────────────────────────────────────
+function makeDraggable(win, handle) {
+  let dx=0,dy=0,mx=0,my=0;
+  const start = e => {
+    if (win.classList.contains('maximized')) return;
+    const pt = e.touches?.[0]||e;
+    mx=pt.clientX; my=pt.clientY;
+    document.onmousemove = document.ontouchmove = move;
+    document.onmouseup = document.ontouchend = stop;
+    focusWin(win.id.replace('win-',''));
+    e.preventDefault();
+  };
+  const move = e => {
+    const pt = e.touches?.[0]||e;
+    dx=mx-pt.clientX; dy=my-pt.clientY; mx=pt.clientX; my=pt.clientY;
+    const newT = Math.max(0, Math.min(win.offsetTop-dy, window.innerHeight-56-40));
+    const newL = Math.max(-win.offsetWidth+60, Math.min(win.offsetLeft-dx, window.innerWidth-60));
+    win.style.top=newT+'px'; win.style.left=newL+'px';
+  };
+  const stop = () => { document.onmousemove=document.ontouchmove=document.onmouseup=document.ontouchend=null; };
+  handle.addEventListener('mousedown', start);
+  handle.addEventListener('touchstart', start, {passive:false});
+  win.addEventListener('mousedown', ()=>focusWin(win.id.replace('win-','')));
+}
+
+// ─── RESIZE ──────────────────────────────────────────────
+function makeResizable(win, handle) {
+  let sx,sy,sw,sh;
+  const start = e => {
+    if (win.classList.contains('maximized')) return;
+    const pt = e.touches?.[0]||e;
+    sx=pt.clientX; sy=pt.clientY; sw=win.offsetWidth; sh=win.offsetHeight;
+    document.onmousemove=document.ontouchmove=resize;
+    document.onmouseup=document.ontouchend=stop;
+    e.preventDefault();
+  };
+  const resize = e => {
+    const pt = e.touches?.[0]||e;
+    win.style.width=Math.max(260,sw+(pt.clientX-sx))+'px';
+    win.style.height=Math.max(180,sh+(pt.clientY-sy))+'px';
+  };
+  const stop = () => { document.onmousemove=document.ontouchmove=document.onmouseup=document.ontouchend=null; };
+  handle.addEventListener('mousedown',start);
+  handle.addEventListener('touchstart',start,{passive:false});
+}
+
+// ─── APP CONTENT BUILDERS ────────────────────────────────
+function buildAppContent(id) {
+  switch(id) {
+    case 'files': return buildFiles();
+    case 'browser': return buildBrowser();
+    case 'editor': return buildEditor();
+    case 'terminal': return buildTerminal();
+    case 'calc': return buildCalc();
+    case 'notes': return buildNotes();
+    case 'music': return buildMusic();
+    case 'clock': return buildClock();
+    case 'weather': return buildWeather();
+    case 'sysmon': return buildSysmon();
+    case 'settings': return buildSettings();
+    default: return `<div style="padding:24px;color:var(--text2);font-size:14px">App em construção...</div>`;
+  }
+}
+
+// FILES
+function buildFiles() {
+  const items = [
+    {icon:'📁',name:'Documentos',type:'folder'},
+    {icon:'📁',name:'Imagens',type:'folder'},
+    {icon:'📁',name:'Músicas',type:'folder'},
+    {icon:'📁',name:'Downloads',type:'folder'},
+    {icon:'📄',name:'README.md',type:'file'},
+    {icon:'🖼️',name:'wallpaper.png',type:'file'},
+    {icon:'📊',name:'dados.xlsx',type:'file'},
+    {icon:'🎵',name:'audio.mp3',type:'file'},
+    {icon:'📦',name:'projeto.zip',type:'file'},
+    {icon:'📁',name:'Projetos',type:'folder'},
+    {icon:'📄',name:'notas.txt',type:'file'},
+    {icon:'🎬',name:'video.mp4',type:'file'},
+  ];
+  const grid = items.map(it=>`<div class="fm-item" onclick="this.classList.toggle('selected')">
+    <div class="fm-item-icon" style="background:${it.type==='folder'?'rgba(91,141,238,0.15)':'rgba(255,255,255,0.05)'}">${it.icon}</div>
+    <span>${it.name}</span>
+  </div>`).join('');
+  return `<div class="fm-container">
+    <div class="fm-sidebar">
+      <div class="fm-sidebar-section">
+        <h4>Favoritos</h4>
+        <div class="fm-sidebar-item active"><i class="fa fa-home"></i> Home</div>
+        <div class="fm-sidebar-item"><i class="fa fa-desktop"></i> Desktop</div>
+        <div class="fm-sidebar-item"><i class="fa fa-download"></i> Downloads</div>
+        <div class="fm-sidebar-item"><i class="fa fa-image"></i> Imagens</div>
+        <div class="fm-sidebar-item"><i class="fa fa-music"></i> Músicas</div>
+      </div>
+      <div class="fm-sidebar-section">
+        <h4>Dispositivos</h4>
+        <div class="fm-sidebar-item"><i class="fa fa-hdd"></i> Disco C:</div>
+        <div class="fm-sidebar-item"><i class="fa fa-compact-disc"></i> DVD</div>
+      </div>
+    </div>
+    <div class="fm-main">
+      <div class="fm-toolbar">
+        <button><i class="fa fa-arrow-left"></i></button>
+        <button><i class="fa fa-arrow-right"></i></button>
+        <button><i class="fa fa-arrow-up"></i></button>
+        <div class="fm-path">~/Home</div>
+        <button><i class="fa fa-th"></i></button>
+        <button><i class="fa fa-list"></i></button>
+      </div>
+      <div class="fm-grid">${grid}</div>
+      <div class="fm-statusbar">12 itens — 4 pastas, 8 arquivos</div>
+    </div>
+  </div>`;
+}
+
+// BROWSER
+function buildBrowser() {
+  return `<div class="browser-container">
+    <div class="browser-bar">
+      <button class="browser-navbtn"><i class="fa fa-arrow-left"></i></button>
+      <button class="browser-navbtn"><i class="fa fa-arrow-right"></i></button>
+      <button class="browser-navbtn"><i class="fa fa-redo"></i></button>
+      <input class="browser-url" type="text" value="nova-aba" id="browser-url-input" onkeydown="browserNav(event)">
+      <button class="browser-navbtn"><i class="fa fa-bookmark"></i></button>
+    </div>
+    <div class="browser-body">
+      <div class="browser-start">
+        <h2>✦ AURA</h2>
+        <div class="browser-search-box">
+          <input type="text" placeholder="Pesquisar ou digitar URL..." id="browser-search-in" onkeydown="browserSearch(event)">
+          <button onclick="doSearch()"><i class="fa fa-search"></i></button>
+        </div>
+        <div class="browser-shortcuts">
+          <div class="browser-shortcut"><i class="fa fa-globe" style="color:var(--accent3)"></i><span>Web</span></div>
+          <div class="browser-shortcut"><i class="fa fa-video" style="color:var(--red)"></i><span>Vídeos</span></div>
+          <div class="browser-shortcut"><i class="fa fa-envelope" style="color:var(--accent)"></i><span>Email</span></div>
+          <div class="browser-shortcut"><i class="fa fa-newspaper" style="color:var(--yellow)"></i><span>Notícias</span></div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// EDITOR
+function buildEditor() {
+  return `<div class="te-container">
+    <div class="te-menubar">
+      <button class="te-menu-btn">Arquivo</button>
+      <button class="te-menu-btn">Editar</button>
+      <button class="te-menu-btn">Ver</button>
+      <button class="te-menu-btn">Formatar</button>
+    </div>
+    <div class="te-toolbar">
+      <select class="te-select"><option>DM Sans</option><option>DM Mono</option><option>Sora</option></select>
+      <select class="te-select"><option>14</option><option>12</option><option>16</option><option>18</option><option>24</option></select>
+      <div class="te-sep"></div>
+      <button class="te-tool" onclick="fmtText('bold')" title="Negrito"><i class="fa fa-bold"></i></button>
+      <button class="te-tool" onclick="fmtText('italic')" title="Itálico"><i class="fa fa-italic"></i></button>
+      <button class="te-tool" onclick="fmtText('underline')" title="Sublinhado"><i class="fa fa-underline"></i></button>
+      <div class="te-sep"></div>
+      <button class="te-tool"><i class="fa fa-align-left"></i></button>
+      <button class="te-tool"><i class="fa fa-align-center"></i></button>
+      <button class="te-tool"><i class="fa fa-align-right"></i></button>
+      <div class="te-sep"></div>
+      <button class="te-tool" onclick="saveEditorFile()"><i class="fa fa-save"></i></button>
+    </div>
+    <div class="te-body">
+      <div class="te-content" contenteditable="true" id="editor-body" oninput="updateEditorStatus()" onkeyup="updateEditorStatus()" spellcheck="false">Bem-vindo ao AURA Editor ✦
+
+Comece a digitar aqui. Este é um editor de texto completo com suporte a formatação básica.
+
+Você pode usar a barra de ferramentas acima para formatar o texto, ou use os atalhos:
+  • Ctrl+B para negrito
+  • Ctrl+I para itálico
+  • Ctrl+U para sublinhado
+
+Aproveite o AURA OS!</div>
+    </div>
+    <div class="te-statusbar">
+      <span id="editor-words">Palavras: 47</span>
+      <span id="editor-chars">Caracteres: 312</span>
+      <span>UTF-8</span>
+      <span>Linha 1, Col 1</span>
+    </div>
+  </div>`;
+}
+
+// TERMINAL
+function buildTerminal() {
+  return `<div class="term-container">
+    <div class="term-output" id="term-out"></div>
+    <div class="term-input-row">
+      <span class="term-prompt-label">aura@os ~ $</span>
+      <input class="term-input" id="term-in" type="text" autocomplete="off" spellcheck="false" onkeydown="handleTerm(event)" placeholder="digite um comando...">
+    </div>
+  </div>`;
+}
+
+// CALC
+function buildCalc() {
+  return `<div class="calc-container">
+    <div class="calc-display">
+      <div class="calc-expr" id="calc-expr"></div>
+      <div class="calc-val" id="calc-val">0</div>
+    </div>
+    <div class="calc-grid">
+      <button class="calc-btn fn" onclick="calcFn('clear')">C</button>
+      <button class="calc-btn fn" onclick="calcFn('sign')">+/−</button>
+      <button class="calc-btn fn" onclick="calcFn('pct')">%</button>
+      <button class="calc-btn op" onclick="calcOp('/')">÷</button>
+      <button class="calc-btn" onclick="calcNum('7')">7</button>
+      <button class="calc-btn" onclick="calcNum('8')">8</button>
+      <button class="calc-btn" onclick="calcNum('9')">9</button>
+      <button class="calc-btn op" onclick="calcOp('*')">×</button>
+      <button class="calc-btn" onclick="calcNum('4')">4</button>
+      <button class="calc-btn" onclick="calcNum('5')">5</button>
+      <button class="calc-btn" onclick="calcNum('6')">6</button>
+      <button class="calc-btn op" onclick="calcOp('-')">−</button>
+      <button class="calc-btn" onclick="calcNum('1')">1</button>
+      <button class="calc-btn" onclick="calcNum('2')">2</button>
+      <button class="calc-btn" onclick="calcNum('3')">3</button>
+      <button class="calc-btn op" onclick="calcOp('+')">+</button>
+      <button class="calc-btn zero" onclick="calcNum('0')">0</button>
+      <button class="calc-btn" onclick="calcNum('.')">.</button>
+      <button class="calc-btn eq" onclick="calcEq()">=</button>
+    </div>
+  </div>`;
+}
+
+// NOTES
+function buildNotes() {
+  const notes = [
+    {title:'Ideia de projeto',content:'Desenvolver um sistema de...',date:'Hoje'},
+    {title:'Reunião de amanhã',content:'Pauta: revisão do sprint...',date:'Ontem'},
+    {title:'Compras',content:'Pão, leite, café, arroz...',date:'2 dias atrás'},
+    {title:'Código snippet',content:'const fetch = async (url) =>...',date:'3 dias atrás'},
+  ];
+  const list = notes.map((n,i)=>`<div class="notes-item ${i===0?'active':''}" onclick="selectNote(this,'${n.title}','${n.content}')">
+    <h4>${n.title}</h4><p>${n.content}</p><time>${n.date}</time>
+  </div>`).join('');
+  return `<div class="notes-container">
+    <div class="notes-list">
+      <div class="notes-list-header"><h3>Notas</h3><button onclick="newNote()">+</button></div>
+      <div class="notes-items" id="notes-items">${list}</div>
+    </div>
+    <div class="notes-editor">
+      <input class="notes-editor-title" id="notes-title" value="Ideia de projeto" type="text" placeholder="Título...">
+      <textarea class="notes-editor-body" id="notes-body" placeholder="Comece a escrever...">Desenvolver um sistema de gerenciamento de projetos com interface intuitiva e suporte a colaboração em tempo real.
+
+Funcionalidades planejadas:
+- Dashboard com métricas
+- Kanban board
+- Timeline de projetos
+- Integração com APIs externas</textarea>
+    </div>
+  </div>`;
+}
+
+// MUSIC
+function buildMusic() {
+  const tracks = [
+    {n:1,title:'Neon Dreams',artist:'Synthwave Artist',dur:'3:42'},
+    {n:2,title:'Midnight Run',artist:'Future Bass',dur:'4:18'},
+    {n:3,title:'Aurora',artist:'Ambient Project',dur:'5:02'},
+    {n:4,title:'Code & Beats',artist:'Lo-fi Studio',dur:'3:55'},
+    {n:5,title:'Tokyo Night',artist:'City Pop Vol.2',dur:'4:30'},
+  ];
+  const list = tracks.map(t=>`<div class="music-track ${t.n===1?'active':''}" onclick="selectTrack(this,${t.n})">
+    <span class="music-track-num">${t.n}</span>
+    <div class="music-track-info"><h4>${t.title}</h4><span>${t.artist}</span></div>
+    <span class="music-track-dur">${t.dur}</span>
+  </div>`).join('');
+  return `<div class="music-container">
+    <div class="music-cover">
+      <div class="music-cover-art" id="music-disc">🎵</div>
+    </div>
+    <div class="music-info">
+      <h3 id="music-title">Neon Dreams</h3>
+      <p id="music-artist">Synthwave Artist</p>
+    </div>
+    <div class="music-progress">
+      <div class="music-progress-bar" onclick="seekMusic(event)">
+        <div class="music-progress-fill" id="music-progress" style="width:30%"></div>
+      </div>
+      <div class="music-times"><span id="music-cur">1:07</span><span id="music-dur">3:42</span></div>
+    </div>
+    <div class="music-controls">
+      <button onclick="musicPrev()"><i class="fa fa-step-backward"></i></button>
+      <button class="play-btn" id="play-btn" onclick="togglePlay()"><i class="fa fa-play" id="play-icon"></i></button>
+      <button onclick="musicNext()"><i class="fa fa-step-forward"></i></button>
+      <button onclick="this.style.color=this.style.color?'':'var(--accent)'"><i class="fa fa-random"></i></button>
+      <button onclick="this.style.color=this.style.color?'':'var(--accent)'"><i class="fa fa-redo"></i></button>
+    </div>
+    <div class="music-list">${list}</div>
+  </div>`;
+}
+
+// CLOCK
+function buildClock() {
+  const months=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const now = new Date();
+  return `<div class="clock-container">
+    <div class="clock-face">
+      <div class="big-time" id="app-clock-time">00:00:00</div>
+      <div class="big-date" id="app-clock-date">Carregando...</div>
+      <div class="big-tz">UTC-3 · São Paulo</div>
+    </div>
+    <div class="calendar" id="app-calendar"></div>
+  </div>`;
+}
+
+// WEATHER
+function buildWeather() {
+  return `<div class="weather-container">
+    <div class="weather-main">
+      <div class="weather-main-left">
+        <h2>28°C</h2>
+        <p>Parcialmente nublado</p>
+        <small>São Paulo, BR · Atualizado agora</small>
+      </div>
+      <div class="weather-main-right">
+        <div class="weather-icon">⛅</div>
+        <span>Sensação: 30°C</span>
+      </div>
+    </div>
+    <div class="weather-stats">
+      <div class="weather-stat"><i class="fa fa-tint"></i><div class="val">72%</div><div class="lbl">Humidade</div></div>
+      <div class="weather-stat"><i class="fa fa-wind"></i><div class="val">18km/h</div><div class="lbl">Vento</div></div>
+      <div class="weather-stat"><i class="fa fa-eye"></i><div class="val">10km</div><div class="lbl">Visibilidade</div></div>
+    </div>
+    <div style="font-size:12px;color:var(--text3);font-weight:600;letter-spacing:0.06em;text-transform:uppercase">Próximos 5 dias</div>
+    <div class="weather-forecast">
+      <div class="forecast-day"><div class="day">SEG</div><div class="icon">☀️</div><div class="temp">31°</div><div class="min">21°</div></div>
+      <div class="forecast-day"><div class="day">TER</div><div class="icon">🌧️</div><div class="temp">25°</div><div class="min">19°</div></div>
+      <div class="forecast-day"><div class="day">QUA</div><div class="icon">⛅</div><div class="temp">27°</div><div class="min">20°</div></div>
+      <div class="forecast-day"><div class="day">QUI</div><div class="icon">☀️</div><div class="temp">30°</div><div class="min">22°</div></div>
+      <div class="forecast-day"><div class="day">SEX</div><div class="icon">🌩️</div><div class="temp">24°</div><div class="min">18°</div></div>
+    </div>
+  </div>`;
+}
+
+// SYSMON
+function buildSysmon() {
+  return `<div class="sysmon-container">
+    <div class="sysmon-card">
+      <h4>CPU <span id="sysmon-cpu-val">--%</span></h4>
+      <div class="sysmon-bar"><div class="sysmon-fill cpu" id="sysmon-cpu" style="width:0%"></div></div>
+    </div>
+    <div class="sysmon-card">
+      <h4>Memória RAM <span id="sysmon-mem-val">--%</span></h4>
+      <div class="sysmon-bar"><div class="sysmon-fill mem" id="sysmon-mem" style="width:0%"></div></div>
+    </div>
+    <div class="sysmon-card">
+      <h4>Disco <span id="sysmon-disk-val">--%</span></h4>
+      <div class="sysmon-bar"><div class="sysmon-fill disk" id="sysmon-disk" style="width:0%"></div></div>
+    </div>
+    <div class="sysmon-card">
+      <h4>Processos Ativos</h4>
+      <div class="sysmon-procs" id="sysmon-procs"></div>
+    </div>
+  </div>`;
+}
+
+// SETTINGS
+function buildSettings() {
+  return `<div class="settings-container">
+    <div class="settings-nav">
+      <div class="settings-nav-item active" onclick="settingsPage('appearance',this)"><i class="fa fa-palette"></i> Aparência</div>
+      <div class="settings-nav-item" onclick="settingsPage('system',this)"><i class="fa fa-microchip"></i> Sistema</div>
+      <div class="settings-nav-item" onclick="settingsPage('network',this)"><i class="fa fa-wifi"></i> Rede</div>
+      <div class="settings-nav-item" onclick="settingsPage('sound',this)"><i class="fa fa-volume-up"></i> Som</div>
+      <div class="settings-nav-item" onclick="settingsPage('privacy',this)"><i class="fa fa-shield-alt"></i> Privacidade</div>
+      <div class="settings-nav-item" onclick="settingsPage('about',this)"><i class="fa fa-info-circle"></i> Sobre</div>
+    </div>
+    <div class="settings-body" id="settings-body">
+      <div class="settings-section">
+        <h3>Aparência</h3>
+        <div class="settings-card">
+          <div class="settings-row">
+            <div class="settings-row-info"><h4>Tema Escuro</h4><p>Interface no tema escuro</p></div>
+            <button class="toggle-switch on" onclick="this.classList.toggle('on')"></button>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-info"><h4>Transparência</h4><p>Efeito de vidro nas janelas</p></div>
+            <button class="toggle-switch on" onclick="this.classList.toggle('on')"></button>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-info"><h4>Animações</h4><p>Transições e efeitos</p></div>
+            <button class="toggle-switch on" onclick="this.classList.toggle('on')"></button>
+          </div>
+        </div>
+        <div class="settings-card">
+          <div class="settings-row">
+            <div class="settings-row-info"><h4>Escala da Interface</h4><p>Tamanho dos elementos</p></div>
+            <input type="range" class="settings-slider" min="80" max="130" value="100">
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-info"><h4>Brilho</h4><p>Ajuste o brilho da tela</p></div>
+            <input type="range" class="settings-slider" min="0" max="100" value="75">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ─── APP LOGIC ───────────────────────────────────────────
+
+// Terminal
+const termCmds = {
+  help: ()=>`Comandos disponíveis:\n  help       - Esta ajuda\n  ls         - Listar arquivos\n  pwd        - Diretório atual\n  date       - Data e hora\n  echo [txt] - Imprimir texto\n  whoami     - Usuário atual\n  uname      - Info do sistema\n  clear      - Limpar terminal`,
+  ls: ()=>`Documentos/  Imagens/  Músicas/  Downloads/\nREADME.md    dados.xlsx  projeto.zip  notas.txt`,
+  pwd: ()=>'/home/aura',
+  whoami: ()=>'aura',
+  date: ()=>new Date().toString(),
+  uname: ()=>'AURA OS 2.4.1 (x86_64) — Kernel 6.1.0-aura',
+  clear: ()=>'__clear__',
+};
+let termHistory=[], termHistIdx=-1;
+function initTerminal(id) {
+  const out = document.getElementById('term-out');
+  const addLine = (prompt,cmd,output,isErr=false)=>{
+    const d=document.createElement('div'); d.className='term-line';
+    if(prompt) d.innerHTML=`<span class="prompt">aura@os ~ $ </span><span class="cmd">${cmd}</span>`;
+    if(output!==undefined) {
+      const s=document.createElement('span'); s.className=isErr?'err':'out'; s.textContent=output; d.appendChild(s);
+    }
+    out.appendChild(d); out.scrollTop=out.scrollHeight;
+  };
+  addLine(false,'',' AURA OS v2.4.1 — Terminal');
+  addLine(false,'','Digite "help" para ver os comandos disponíveis.\n');
+  out._add = addLine;
+}
+function handleTerm(e) {
+  const inp=document.getElementById('term-in');
+  if (e.key==='ArrowUp') { if(termHistIdx<termHistory.length-1) inp.value=termHistory[++termHistIdx]; e.preventDefault(); return; }
+  if (e.key==='ArrowDown') { if(termHistIdx>0) inp.value=termHistory[--termHistIdx]; else {inp.value='';termHistIdx=-1;} e.preventDefault(); return; }
+  if (e.key!=='Enter') return;
+  const raw=inp.value.trim(); inp.value=''; termHistIdx=-1;
+  if (!raw) return;
+  termHistory.unshift(raw);
+  const out=document.getElementById('term-out');
+  const add=out._add;
+  const parts=raw.split(' '); const cmd=parts[0]; const args=parts.slice(1).join(' ');
+  add(true,'',raw);
+  if (cmd==='echo') { add(false,'',args||''); }
+  else if (termCmds[cmd]) {
+    const r=termCmds[cmd]();
+    if (r==='__clear__') { out.innerHTML=''; initTerminal(); }
+    else add(false,'',r);
+  } else { add(false,'',`bash: ${cmd}: comando não encontrado`,true); }
+}
+
+// Calculator
+let calcState={val:'0',expr:'',op:null,prev:null,fresh:true};
+function calcUpdate() {
+  document.getElementById('calc-val').textContent = calcState.val.length>12?parseFloat(calcState.val).toExponential(4):calcState.val;
+  document.getElementById('calc-expr').textContent = calcState.expr;
+}
+function calcNum(d) {
+  if (calcState.fresh) { calcState.val=d==='.'?'0.':d; calcState.fresh=false; }
+  else {
+    if (d==='.' && calcState.val.includes('.')) return;
+    calcState.val = calcState.val==='0'&&d!=='.' ? d : calcState.val+d;
+  }
+  calcUpdate();
+}
+function calcOp(op) {
+  calcState.prev=parseFloat(calcState.val);
+  calcState.op=op; calcState.fresh=true;
+  const sym={'+':'+','-':'−','*':'×','/':'÷'};
+  calcState.expr = calcState.val+' '+sym[op];
+  calcUpdate();
+}
+function calcEq() {
+  if (!calcState.op||calcState.prev===null) return;
+  const a=calcState.prev,b=parseFloat(calcState.val);
+  const sym={'+':'+','-':'−','*':'×','/':'÷'};
+  calcState.expr = a+' '+sym[calcState.op]+' '+b+' =';
+  const res = calcState.op==='+'?a+b:calcState.op==='-'?a-b:calcState.op==='*'?a*b:b!==0?a/b:'Erro';
+  calcState.val = typeof res==='number'?String(parseFloat(res.toFixed(10))):'Erro';
+  calcState.op=null; calcState.prev=null; calcState.fresh=true;
+  calcUpdate();
+}
+function calcFn(f) {
+  const v=parseFloat(calcState.val);
+  if (f==='clear') { calcState={val:'0',expr:'',op:null,prev:null,fresh:true}; }
+  else if (f==='sign') { calcState.val=String(-v); }
+  else if (f==='pct') { calcState.val=String(v/100); }
+  calcUpdate();
+}
+
+// System Monitor
+let sysInterval;
+function initSysmon(id) { updateSysmon(); sysInterval=setInterval(updateSysmon,2000); }
+function updateSysmon() {
+  const cpu = 20+Math.random()*50;
+  const mem = 40+Math.random()*30;
+  const disk = 60+Math.random()*10;
+  const cev=document.getElementById('sysmon-cpu'); if(cev){cev.style.width=cpu+'%'; document.getElementById('sysmon-cpu-val').textContent=cpu.toFixed(1)+'%';}
+  const mev=document.getElementById('sysmon-mem'); if(mev){mev.style.width=mem+'%'; document.getElementById('sysmon-mem-val').textContent=mem.toFixed(1)+'%';}
+  const dev=document.getElementById('sysmon-disk'); if(dev){dev.style.width=disk+'%'; document.getElementById('sysmon-disk-val').textContent=disk.toFixed(1)+'%';}
+  const procs=[
+    {n:'aura-shell',cpu:(2+Math.random()*3).toFixed(1),mem:(80+Math.random()*20).toFixed(0)},
+    {n:'renderer',cpu:(1+Math.random()*8).toFixed(1),mem:(120+Math.random()*40).toFixed(0)},
+    {n:'compositor',cpu:(0.5+Math.random()*2).toFixed(1),mem:(60+Math.random()*20).toFixed(0)},
+    {n:'audio-srv',cpu:(0.2+Math.random()*1).toFixed(1),mem:(32+Math.random()*8).toFixed(0)},
+  ];
+  const pe=document.getElementById('sysmon-procs');
+  if(pe) pe.innerHTML=procs.map(p=>`<div class="sysmon-proc"><span class="pname">${p.n}</span><span class="pcpu">${p.cpu}%</span><span class="pmem">${p.mem}MB</span></div>`).join('');
+}
+
+// Clock app
+function initClock() {
+  updateClock();
+  initCalendarWidget();
+}
+function initCalendarWidget() {
+  const el = document.getElementById('app-calendar');
+  if (!el) return;
+  const now = new Date();
+  renderCalendar(now.getFullYear(), now.getMonth(), el);
+  el.dataset.year=now.getFullYear(); el.dataset.month=now.getMonth();
+}
+function renderCalendar(year, month, el) {
+  const now=new Date(); const months=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const days=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  const first=new Date(year,month,1).getDay(); const daysInMonth=new Date(year,month+1,0).getDate();
+  let cells=''; for(let i=0;i<first;i++) cells+=`<div class="cal-day other-month"></div>`;
+  for(let d=1;d<=daysInMonth;d++){
+    const isToday=d===now.getDate()&&month===now.getMonth()&&year===now.getFullYear();
+    cells+=`<div class="cal-day ${isToday?'today':''}">${d}</div>`;
+  }
+  el.innerHTML=`<div class="cal-header"><h3>${months[month]} ${year}</h3><button onclick="calPrev()">‹</button><button onclick="calNext()">›</button></div>
+    <div class="cal-grid">${days.map(d=>`<div class="cal-day-name">${d}</div>`).join('')}${cells}</div>`;
+}
+function calPrev() { const el=document.getElementById('app-calendar'); let y=+el.dataset.year,m=+el.dataset.month-1; if(m<0){m=11;y--;} el.dataset.year=y;el.dataset.month=m; renderCalendar(y,m,el); }
+function calNext() { const el=document.getElementById('app-calendar'); let y=+el.dataset.year,m=+el.dataset.month+1; if(m>11){m=0;y++;} el.dataset.year=y;el.dataset.month=m; renderCalendar(y,m,el); }
+
+// Music
+let musicPlaying=false, musicProgress=30;
+let musicInterval;
+function togglePlay() {
+  musicPlaying=!musicPlaying;
+  document.getElementById('play-icon').className=musicPlaying?'fa fa-pause':'fa fa-play';
+  const disc=document.getElementById('music-disc');
+  if(disc) disc.classList.toggle('playing',musicPlaying);
+  if(musicPlaying) musicInterval=setInterval(()=>{
+    musicProgress=Math.min(100,musicProgress+0.5);
+    const pe=document.getElementById('music-progress');
+    if(pe) pe.style.width=musicProgress+'%';
+    if(musicProgress>=100){musicProgress=0;musicNext();}
+  },200);
+  else clearInterval(musicInterval);
+}
+function musicNext() { clearInterval(musicInterval); musicPlaying=false; document.getElementById('play-icon').className='fa fa-play'; musicProgress=0; const pe=document.getElementById('music-progress'); if(pe)pe.style.width='0%'; const disc=document.getElementById('music-disc'); if(disc)disc.classList.remove('playing'); }
+function musicPrev() { musicNext(); }
+function selectTrack(el,n) { document.querySelectorAll('.music-track').forEach(t=>t.classList.remove('active')); el.classList.add('active'); }
+function seekMusic(e) { const bar=e.currentTarget; const pct=e.offsetX/bar.offsetWidth*100; musicProgress=pct; const pe=document.getElementById('music-progress'); if(pe)pe.style.width=pct+'%'; }
+
+// Notes
+function selectNote(el,title,content) {
+  document.querySelectorAll('.notes-item').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('notes-title').value=title;
+  document.getElementById('notes-body').value=content.replace(/\|/g,'\n');
+}
+function newNote() {
+  const list=document.getElementById('notes-items');
+  const div=document.createElement('div'); div.className='notes-item active';
+  div.innerHTML='<h4>Nova Nota</h4><p>Sem conteúdo</p><time>Agora</time>';
+  div.onclick=function(){selectNote(this,'Nova Nota','');};
+  document.querySelectorAll('.notes-item').forEach(n=>n.classList.remove('active'));
+  list.prepend(div);
+  document.getElementById('notes-title').value='Nova Nota';
+  document.getElementById('notes-body').value='';
+  document.getElementById('notes-title').focus();
+  showToast('Nova nota criada');
+}
+
+// Text editor
+function fmtText(cmd) { document.execCommand(cmd); }
+function updateEditorStatus() {
+  const body=document.getElementById('editor-body');
+  if(!body) return;
+  const text=body.innerText||'';
+  const words=text.trim()?text.trim().split(/\s+/).length:0;
+  const we=document.getElementById('editor-words'); if(we)we.textContent='Palavras: '+words;
+  const ce=document.getElementById('editor-chars'); if(ce)ce.textContent='Caracteres: '+text.length;
+}
+function saveEditorFile() { showToast('Arquivo salvo com sucesso'); }
+
+// Browser
+function browserNav(e) { if(e.key==='Enter') doSearch(); }
+function browserSearch(e) { if(e.key==='Enter') doSearch(); }
+function doSearch() {
+  const q=document.getElementById('browser-search-in')?.value||document.getElementById('browser-url-input')?.value;
+  if(q) showToast('Navegando para: '+q);
+}
+
+// Settings
+function settingsPage(page,el) {
+  document.querySelectorAll('.settings-nav-item').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+  const body=document.getElementById('settings-body');
+  const pages={
+    system:`<div class="settings-section"><h3>Sistema</h3><div class="settings-card"><div class="settings-row"><div class="settings-row-info"><h4>Nome do dispositivo</h4><p>AURA-TABLET-01</p></div></div><div class="settings-row"><div class="settings-row-info"><h4>Versão do OS</h4><p>AURA OS 2.4.1</p></div></div><div class="settings-row"><div class="settings-row-info"><h4>Núcleos CPU</h4><p>8 núcleos · 3.2GHz</p></div></div><div class="settings-row"><div class="settings-row-info"><h4>RAM Total</h4><p>16 GB</p></div></div></div></div>`,
+    network:`<div class="settings-section"><h3>Rede</h3><div class="settings-card"><div class="settings-row"><div class="settings-row-info"><h4>Wi-Fi</h4><p>AURA-NET 5G</p></div><button class="toggle-switch on" onclick="this.classList.toggle('on')"></button></div><div class="settings-row"><div class="settings-row-info"><h4>Bluetooth</h4><p>Ligado · 2 dispositivos</p></div><button class="toggle-switch on" onclick="this.classList.toggle('on')"></button></div><div class="settings-row"><div class="settings-row-info"><h4>Modo Avião</h4><p>Desligar todas as conexões</p></div><button class="toggle-switch" onclick="this.classList.toggle('on')"></button></div></div></div>`,
+    sound:`<div class="settings-section"><h3>Som</h3><div class="settings-card"><div class="settings-row"><div class="settings-row-info"><h4>Volume principal</h4><p>50%</p></div><input type="range" class="settings-slider" value="50"></div><div class="settings-row"><div class="settings-row-info"><h4>Sons do sistema</h4><p>Notificações e alertas</p></div><button class="toggle-switch on" onclick="this.classList.toggle('on')"></button></div></div></div>`,
+    privacy:`<div class="settings-section"><h3>Privacidade</h3><div class="settings-card"><div class="settings-row"><div class="settings-row-info"><h4>Localização</h4><p>Acesso ao GPS</p></div><button class="toggle-switch" onclick="this.classList.toggle('on')"></button></div><div class="settings-row"><div class="settings-row-info"><h4>Câmera</h4><p>Acesso à câmera</p></div><button class="toggle-switch on" onclick="this.classList.toggle('on')"></button></div><div class="settings-row"><div class="settings-row-info"><h4>Telemetria</h4><p>Enviar relatórios de uso</p></div><button class="toggle-switch" onclick="this.classList.toggle('on')"></button></div></div></div>`,
+    about:`<div class="settings-section"><h3>Sobre</h3><div class="settings-card" style="text-align:center;padding:32px"><div style="font-family:var(--font-display);font-size:28px;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px">✦ AURA OS</div><div style="font-size:14px;color:var(--text2);margin-bottom:4px">Versão 2.4.1</div><div style="font-size:12px;color:var(--text3)">Build 20240308 · Kernel 6.1.0</div><div style="margin-top:24px;font-size:12px;color:var(--text3)">Sistema Operacional Web<br>Construído com HTML5 + CSS3 + JS Vanilla</div></div></div>`,
+  };
+  const appearance=`<div class="settings-section"><h3>Aparência</h3><div class="settings-card"><div class="settings-row"><div class="settings-row-info"><h4>Tema Escuro</h4><p>Interface no tema escuro</p></div><button class="toggle-switch on" onclick="this.classList.toggle('on')"></button></div><div class="settings-row"><div class="settings-row-info"><h4>Transparência</h4><p>Efeito de vidro nas janelas</p></div><button class="toggle-switch on" onclick="this.classList.toggle('on')"></button></div><div class="settings-row"><div class="settings-row-info"><h4>Animações</h4><p>Transições e efeitos</p></div><button class="toggle-switch on" onclick="this.classList.toggle('on')"></button></div></div><div class="settings-card"><div class="settings-row"><div class="settings-row-info"><h4>Escala da Interface</h4><p>Tamanho dos elementos</p></div><input type="range" class="settings-slider" min="80" max="130" value="100"></div></div></div>`;
+  body.innerHTML = pages[page]||appearance;
+}
+
+// keyboard shortcuts
+document.addEventListener('keydown', e => {
+  if (e.key==='Escape') { closeLauncher(); closeNotif(); closeCtxMenu(); }
+  if ((e.ctrlKey||e.metaKey) && e.key==='q' && state.activeWin) { closeWin(state.activeWin); }
+  if ((e.ctrlKey||e.metaKey) && e.key==='m' && state.activeWin) { minWin(state.activeWin); }
+});
+</script>
+</body>
+</html>
