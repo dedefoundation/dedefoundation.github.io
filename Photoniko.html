@@ -1,0 +1,1491 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Photoniko</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f11;
+    --surface: #17171a;
+    --surface2: #1f1f24;
+    --border: #2a2a32;
+    --accent: #e8ff47;
+    --accent2: #47d4ff;
+    --text: #f0f0f0;
+    --muted: #6b6b7a;
+    --danger: #ff4747;
+    --panel-w: 260px;
+    --toolbar-h: 52px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; touch-action: none; }
+
+  body {
+    font-family: 'Syne', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100dvh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── TOPBAR ── */
+  #topbar {
+    height: var(--toolbar-h);
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 10px;
+    flex-shrink: 0;
+    z-index: 100;
+  }
+
+  #logo {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+  #logo span { color: var(--muted); font-weight: 400; font-size: 12px; margin-left: 4px; }
+
+  .tb-btn {
+    height: 34px;
+    padding: 0 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    white-space: nowrap;
+    display: flex; align-items: center; gap: 6px;
+    flex-shrink: 0;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .tb-btn:hover { background: var(--border); }
+  .tb-btn.accent { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
+  .tb-btn.accent:hover { background: #d4e840; }
+  .tb-btn.danger { border-color: var(--danger); color: var(--danger); }
+
+  #topbar .spacer { flex: 1; }
+
+  /* ── MAIN LAYOUT ── */
+  #main {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* ── LEFT PANEL (queue) ── */
+  #queue-panel {
+    width: var(--panel-w);
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex-shrink: 0;
+    transition: transform 0.25s ease;
+  }
+
+  #queue-panel.collapsed {
+    transform: translateX(calc(-1 * var(--panel-w)));
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    z-index: 50;
+  }
+
+  #panel-header {
+    padding: 10px 12px 8px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+
+  #queue-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .queue-item {
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 8px;
+    cursor: pointer;
+    font-size: 11px;
+    color: var(--muted);
+    transition: all 0.15s;
+    position: relative;
+  }
+  .queue-item:hover { border-color: var(--accent); color: var(--text); }
+  .queue-item.active { border-color: var(--accent); background: rgba(232,255,71,0.07); color: var(--text); }
+  .queue-item.done { border-color: #2a4a2a; }
+  .queue-item.done::after { content: '✓'; position: absolute; right: 8px; color: #4aff7a; font-size: 12px; }
+
+  .queue-thumb {
+    width: 36px; height: 36px; border-radius: 4px;
+    object-fit: cover; flex-shrink: 0;
+    background: var(--border);
+  }
+  .queue-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; font-family: 'DM Mono', monospace; font-size: 10px; }
+  .queue-del { color: var(--danger); font-size: 14px; padding: 2px; opacity: 0.5; flex-shrink: 0; }
+  .queue-del:hover { opacity: 1; }
+
+  #add-images-btn {
+    margin: 8px;
+    height: 36px;
+    border-radius: 6px;
+    border: 1px dashed var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  #add-images-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── CANVAS AREA ── */
+  #canvas-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    background: #0a0a0c;
+  }
+
+  #canvas-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+    cursor: default;
+  }
+
+  #editor-canvas {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    position: absolute;
+    user-select: none;
+    display: block;
+  }
+
+  #overlay-svg {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none;
+  }
+
+  #empty-state {
+    text-align: center;
+    color: var(--muted);
+  }
+  #empty-state h2 { font-size: 22px; font-weight: 700; margin-bottom: 8px; color: var(--text); }
+  #empty-state p { font-size: 13px; line-height: 1.6; font-family: 'DM Mono', monospace; }
+
+  /* ── BOTTOM TOOLBAR ── */
+  #bottom-bar {
+    height: 56px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    gap: 6px;
+    flex-shrink: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  #bottom-bar::-webkit-scrollbar { display: none; }
+
+  .tool-btn {
+    height: 38px;
+    padding: 0 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    cursor: pointer;
+    white-space: nowrap;
+    display: flex; align-items: center; gap: 6px;
+    flex-shrink: 0;
+    transition: all 0.15s;
+  }
+  .tool-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+  .tool-btn.active { background: rgba(71,212,255,0.1); border-color: var(--accent2); color: var(--accent2); }
+
+  .sep { width: 1px; height: 30px; background: var(--border); flex-shrink: 0; margin: 0 2px; }
+
+  /* ── RIGHT PANEL ── */
+  #right-panel {
+    width: var(--panel-w);
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex-shrink: 0;
+    transition: transform 0.25s ease;
+  }
+
+  #right-panel.collapsed {
+    transform: translateX(var(--panel-w));
+    position: absolute;
+    right: 0; top: 0; bottom: 0;
+    z-index: 50;
+  }
+
+  .rpanel-section {
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  .rpanel-title {
+    padding: 8px 12px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    text-transform: uppercase;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: space-between;
+    user-select: none;
+  }
+  .rpanel-title .arrow { transition: transform 0.2s; }
+  .rpanel-title.open .arrow { transform: rotate(180deg); }
+
+  .rpanel-body { padding: 8px 12px 10px; }
+
+  /* Stamp section */
+  #stamp-preview {
+    width: 100%;
+    height: 70px;
+    border-radius: 6px;
+    border: 1px dashed var(--border);
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+    margin-bottom: 8px;
+    cursor: pointer;
+    background: #111;
+    position: relative;
+  }
+  #stamp-preview img { max-width: 100%; max-height: 100%; object-fit: contain; }
+  #stamp-preview .ph { color: var(--muted); font-size: 11px; font-family: 'DM Mono', monospace; }
+  #stamp-preview .del-stamp { position: absolute; top: 4px; right: 4px; background: var(--danger); color: #fff; border-radius: 4px; padding: 2px 5px; font-size: 10px; display: none; cursor: pointer; }
+  #stamp-preview:hover .del-stamp { display: block; }
+
+  /* Preset sizes */
+  .preset-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    margin-top: 6px;
+  }
+
+  .preset-item {
+    padding: 5px 8px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: space-between;
+    color: var(--text);
+    transition: all 0.15s;
+  }
+  .preset-item:hover { border-color: var(--accent); color: var(--accent); }
+  .preset-item .pname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+  .preset-item .pdel { color: var(--danger); padding-left: 4px; opacity: 0.5; flex-shrink: 0; }
+  .preset-item .pdel:hover { opacity: 1; }
+
+  .add-preset-btn {
+    margin-top: 6px;
+    width: 100%;
+    height: 28px;
+    border-radius: 5px;
+    border: 1px dashed var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .add-preset-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Layers list */
+  #layers-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 180px;
+    overflow-y: auto;
+  }
+
+  .layer-item {
+    display: flex; align-items: center; gap: 6px;
+    padding: 5px 8px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    cursor: pointer;
+    color: var(--muted);
+    transition: all 0.15s;
+  }
+  .layer-item:hover { border-color: var(--accent2); color: var(--text); }
+  .layer-item.selected { border-color: var(--accent2); color: var(--text); background: rgba(71,212,255,0.08); }
+  .layer-icon { font-size: 12px; flex-shrink: 0; }
+  .layer-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .layer-del { color: var(--danger); opacity: 0.5; flex-shrink: 0; }
+  .layer-del:hover { opacity: 1; }
+
+  /* Selection props */
+  #sel-props { display: none; }
+  #sel-props.visible { display: block; }
+  .prop-row { display: flex; gap: 6px; margin-bottom: 6px; align-items: center; }
+  .prop-label { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); width: 28px; flex-shrink: 0; }
+  .prop-input {
+    flex: 1;
+    height: 28px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    padding: 0 8px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .prop-input:focus { border-color: var(--accent2); }
+
+  /* Export modal */
+  #export-modal {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 999;
+    align-items: center;
+    justify-content: center;
+  }
+  #export-modal.visible { display: flex; }
+  #export-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    width: min(340px, 90vw);
+  }
+  #export-box h3 { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+  .modal-row { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; }
+  .modal-label { font-size: 12px; color: var(--muted); font-family: 'DM Mono', monospace; width: 80px; }
+  .modal-input {
+    flex: 1; height: 32px; border-radius: 6px;
+    border: 1px solid var(--border); background: var(--surface2);
+    color: var(--text); font-family: 'DM Mono', monospace; font-size: 12px; padding: 0 10px; outline: none;
+  }
+  .modal-input:focus { border-color: var(--accent); }
+  .modal-btns { display: flex; gap: 8px; margin-top: 16px; }
+  .modal-btns button { flex: 1; height: 38px; border-radius: 7px; border: 1px solid var(--border); cursor: pointer; font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600; }
+  #modal-cancel { background: var(--surface2); color: var(--text); }
+  #modal-export { background: var(--accent); color: #000; border-color: var(--accent); }
+
+  /* Notification */
+  #notif {
+    position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%);
+    background: var(--accent); color: #000;
+    padding: 8px 18px; border-radius: 8px;
+    font-size: 13px; font-weight: 700;
+    opacity: 0; transition: opacity 0.3s;
+    pointer-events: none; z-index: 9999;
+    white-space: nowrap;
+  }
+  #notif.show { opacity: 1; }
+
+  /* Mobile collapse toggle */
+  #toggle-left, #toggle-right {
+    display: none;
+    position: absolute;
+    top: 50%; transform: translateY(-50%);
+    z-index: 60;
+    width: 18px; height: 44px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    align-items: center; justify-content: center;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 10px;
+  }
+  #toggle-left { left: 0; border-radius: 0 6px 6px 0; border-left: none; }
+  #toggle-right { right: 0; border-radius: 6px 0 0 6px; border-right: none; }
+
+  /* Canvas element overlay (shapes rendered here) */
+  #shape-canvas {
+    position: absolute;
+    top: 0; left: 0;
+    pointer-events: all;
+    cursor: crosshair;
+    touch-action: none;
+  }
+
+  /* Mobile tweaks */
+  @media (max-width: 700px) {
+    :root { --panel-w: 220px; }
+    #queue-panel, #right-panel { position: absolute; top: 0; bottom: 0; z-index: 50; }
+    #queue-panel { left: 0; }
+    #right-panel { right: 0; }
+    #toggle-left, #toggle-right { display: flex; }
+    #topbar { padding: 0 8px; gap: 6px; }
+    #logo span { display: none; }
+  }
+
+  @media (max-height: 500px) and (orientation: landscape) {
+    :root { --toolbar-h: 42px; }
+    #bottom-bar { height: 46px; }
+    #queue-list { gap: 2px; }
+    .queue-item { padding: 4px 8px; }
+    .queue-thumb { width: 28px; height: 28px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div id="topbar">
+  <div id="logo">Photoniko<span>v1.0</span></div>
+  <button class="tb-btn" id="btn-queue" style="display:none" onclick="toggleLeft()">☰ Fila</button>
+  <button class="tb-btn" id="btn-props" style="display:none" onclick="toggleRight()">⚙ Props</button>
+  <div class="spacer"></div>
+  <button class="tb-btn" id="btn-save-prog" onclick="saveProgress()">💾 Salvar</button>
+  <button class="tb-btn accent" id="btn-export" onclick="openExportModal()">↓ Exportar</button>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <!-- LEFT: queue -->
+  <div id="queue-panel">
+    <div id="panel-header">
+      <span>Fila de Imagens</span>
+      <span id="queue-count" style="color:var(--accent);font-family:'DM Mono',monospace;font-size:11px;">0</span>
+    </div>
+    <div id="queue-list"></div>
+    <button id="add-images-btn" onclick="document.getElementById('file-input').click()">+ Adicionar imagens</button>
+  </div>
+
+  <!-- CENTER: canvas -->
+  <div id="canvas-wrap">
+    <div id="canvas-container">
+      <div id="empty-state">
+        <h2>Nenhuma imagem</h2>
+        <p>Adicione imagens pela fila à esquerda.<br>Use as ferramentas abaixo para<br>cobrir logomarcas.</p>
+      </div>
+      <canvas id="editor-canvas" style="display:none;"></canvas>
+      <canvas id="shape-canvas" style="display:none;"></canvas>
+    </div>
+    <!-- Bottom toolbar -->
+    <div id="bottom-bar">
+      <button class="tool-btn" id="tool-rect" onclick="setTool('rect')">▭ Retângulo</button>
+      <button class="tool-btn" id="tool-stamp" onclick="setTool('stamp')">🖼 Stamp</button>
+      <div class="sep"></div>
+      <button class="tool-btn" onclick="deleteSelected()">🗑 Deletar</button>
+      <button class="tool-btn" onclick="bringForward()">↑ Frente</button>
+      <button class="tool-btn" onclick="sendBackward()">↓ Fundo</button>
+      <div class="sep"></div>
+      <button class="tool-btn" onclick="markDone()">✓ Concluir</button>
+      <button class="tool-btn" onclick="nextImage()">→ Próxima</button>
+    </div>
+  </div>
+
+  <!-- RIGHT: props -->
+  <div id="right-panel">
+    <!-- Stamp section -->
+    <div class="rpanel-section">
+      <div class="rpanel-title open" onclick="toggleSection(this)">
+        <span>Stamp PNG</span><span class="arrow">▲</span>
+      </div>
+      <div class="rpanel-body">
+        <div id="stamp-preview" onclick="handleStampClick()">
+          <span class="ph" id="stamp-ph">Clique para carregar PNG</span>
+          <img id="stamp-img" style="display:none;" alt="stamp">
+          <span class="del-stamp" onclick="clearStamp(event)">✕</span>
+        </div>
+        <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:6px;">Tamanhos salvos:</div>
+        <div class="preset-grid" id="stamp-presets"></div>
+        <button class="add-preset-btn" onclick="saveStampPreset()">+ Salvar tamanho atual</button>
+      </div>
+    </div>
+
+    <!-- Rect presets -->
+    <div class="rpanel-section">
+      <div class="rpanel-title open" onclick="toggleSection(this)">
+        <span>Retângulos Salvos</span><span class="arrow">▲</span>
+      </div>
+      <div class="rpanel-body">
+        <div class="preset-grid" id="rect-presets"></div>
+        <button class="add-preset-btn" onclick="saveRectPreset()">+ Salvar tamanho atual</button>
+      </div>
+    </div>
+
+    <!-- Layers -->
+    <div class="rpanel-section">
+      <div class="rpanel-title open" onclick="toggleSection(this)">
+        <span>Layers</span><span class="arrow">▲</span>
+      </div>
+      <div class="rpanel-body">
+        <div id="layers-list"></div>
+      </div>
+    </div>
+
+    <!-- Selection props -->
+    <div class="rpanel-section">
+      <div class="rpanel-title open" onclick="toggleSection(this)">
+        <span>Propriedades</span><span class="arrow">▲</span>
+      </div>
+      <div class="rpanel-body">
+        <div id="no-sel" style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;">Selecione um elemento</div>
+        <div id="sel-props">
+          <div class="prop-row">
+            <span class="prop-label">X</span>
+            <input class="prop-input" id="prop-x" type="number" oninput="applyProp('x',this.value)">
+          </div>
+          <div class="prop-row">
+            <span class="prop-label">Y</span>
+            <input class="prop-input" id="prop-y" type="number" oninput="applyProp('y',this.value)">
+          </div>
+          <div class="prop-row">
+            <span class="prop-label">W</span>
+            <input class="prop-input" id="prop-w" type="number" oninput="applyProp('w',this.value)">
+          </div>
+          <div class="prop-row">
+            <span class="prop-label">H</span>
+            <input class="prop-input" id="prop-h" type="number" oninput="applyProp('h',this.value)">
+          </div>
+          <div class="prop-row" id="color-row">
+            <span class="prop-label">Cor</span>
+            <input class="prop-input" id="prop-color" type="color" value="#ffffff" oninput="applyProp('color',this.value)" style="padding:2px 4px;height:28px;">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toggle-left" onclick="toggleLeft()">‹</div>
+  <div id="toggle-right" onclick="toggleRight()">›</div>
+</div>
+
+<!-- Export modal -->
+<div id="export-modal">
+  <div id="export-box">
+    <h3>Exportar imagem</h3>
+    <div class="modal-row">
+      <span class="modal-label">Modo</span>
+      <select class="modal-input" id="export-mode" onchange="exportModeChange()">
+        <option value="original">Resolução original</option>
+        <option value="custom">Dimensões customizadas</option>
+      </select>
+    </div>
+    <div id="custom-dims" style="display:none;">
+      <div class="modal-row">
+        <span class="modal-label">Largura</span>
+        <input class="modal-input" id="export-w" type="number" placeholder="px">
+      </div>
+      <div class="modal-row">
+        <span class="modal-label">Altura</span>
+        <input class="modal-input" id="export-h" type="number" placeholder="px">
+      </div>
+    </div>
+    <div class="modal-row">
+      <span class="modal-label">Formato</span>
+      <select class="modal-input" id="export-fmt">
+        <option value="image/png">PNG</option>
+        <option value="image/jpeg">JPEG</option>
+        <option value="image/webp">WebP</option>
+      </select>
+    </div>
+    <div class="modal-row" id="quality-row" style="display:none;">
+      <span class="modal-label">Qualidade</span>
+      <input class="modal-input" id="export-quality" type="range" min="0.1" max="1" step="0.05" value="0.92">
+    </div>
+    <div class="modal-btns">
+      <button id="modal-cancel" onclick="closeExportModal()">Cancelar</button>
+      <button id="modal-export" onclick="doExport()">Exportar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Notification -->
+<div id="notif"></div>
+
+<!-- Hidden inputs -->
+<input type="file" id="file-input" multiple accept="image/*" style="display:none" onchange="handleFiles(this.files)">
+<input type="file" id="stamp-input" accept="image/png,image/svg+xml,image/webp" style="display:none" onchange="handleStamp(this.files[0])">
+
+<script>
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+const DB_KEY = 'photoniko_v1';
+let state = {
+  images: [],       // [{id, name, dataURL, layers:[], done, origW, origH}]
+  currentId: null,
+  tool: 'rect',
+  stampDataURL: null,
+  stampPresets: [],  // [{name, w, h}]
+  rectPresets: [],   // [{name, w, h}]
+};
+
+let selectedLayerId = null;
+let isDrawing = false;
+let drawStart = null;
+let isDragging = false;
+let isResizing = false;
+let dragOffset = {x:0, y:0};
+let resizeHandle = null; // 'br'
+let resizeStartRect = null;
+let resizeStartPos = null;
+let pinchStart = null;
+let pinchStartRect = null;
+
+// canvas scale factor (displayed vs original)
+let canvasScale = 1;
+let canvasOffset = {x:0, y:0}; // top-left of canvas on screen
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+function init() {
+  loadFromStorage();
+  setupCanvasEvents();
+  renderQueue();
+  renderStampPanel();
+  renderPresets();
+  if (state.currentId) openImage(state.currentId);
+  if (state.stampDataURL) restoreStampUI(state.stampDataURL);
+  updateQueueCount();
+  // responsive: detect mobile
+  if (window.innerWidth <= 700) {
+    document.getElementById('btn-queue').style.display = 'flex';
+    document.getElementById('btn-props').style.display = 'flex';
+    document.getElementById('queue-panel').classList.add('collapsed');
+    document.getElementById('right-panel').classList.add('collapsed');
+  }
+}
+
+// ═══════════════════════════════════════════
+// STORAGE
+// ═══════════════════════════════════════════
+function loadFromStorage() {
+  try {
+    const raw = localStorage.getItem(DB_KEY);
+    if (raw) {
+      const saved = JSON.parse(raw);
+      state = { ...state, ...saved };
+    }
+  } catch(e) { console.log('No saved state'); }
+}
+
+function saveProgress() {
+  try {
+    localStorage.setItem(DB_KEY, JSON.stringify(state));
+    notify('Progresso salvo!');
+  } catch(e) { notify('Erro ao salvar (armazenamento cheio?)'); }
+}
+
+// Auto-save every 30s
+setInterval(saveProgress, 30000);
+
+// ═══════════════════════════════════════════
+// FILE HANDLING
+// ═══════════════════════════════════════════
+function handleFiles(files) {
+  Array.from(files).forEach(f => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const id = 'img_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+        state.images.push({
+          id, name: f.name,
+          dataURL: e.target.result,
+          layers: [],
+          done: false,
+          origW: img.naturalWidth,
+          origH: img.naturalHeight
+        });
+        renderQueue();
+        updateQueueCount();
+        if (!state.currentId) openImage(id);
+        autoSave();
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(f);
+  });
+  document.getElementById('file-input').value = '';
+}
+
+function handleStamp(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    state.stampDataURL = e.target.result;
+    restoreStampUI(e.target.result);
+    autoSave();
+  };
+  reader.readAsDataURL(file);
+  document.getElementById('stamp-input').value = '';
+}
+
+function handleStampClick() {
+  if (!state.stampDataURL) document.getElementById('stamp-input').click();
+}
+
+function clearStamp(e) {
+  e.stopPropagation();
+  state.stampDataURL = null;
+  document.getElementById('stamp-img').style.display = 'none';
+  document.getElementById('stamp-ph').style.display = '';
+  autoSave();
+}
+
+function restoreStampUI(url) {
+  const img = document.getElementById('stamp-img');
+  img.src = url;
+  img.style.display = '';
+  document.getElementById('stamp-ph').style.display = 'none';
+}
+
+// ═══════════════════════════════════════════
+// QUEUE
+// ═══════════════════════════════════════════
+function renderQueue() {
+  const list = document.getElementById('queue-list');
+  list.innerHTML = '';
+  state.images.forEach(im => {
+    const div = document.createElement('div');
+    div.className = 'queue-item' + (im.id===state.currentId?' active':'') + (im.done?' done':'');
+    div.innerHTML = `
+      <img class="queue-thumb" src="${im.dataURL}" alt="">
+      <span class="queue-name">${im.name}</span>
+      <span class="queue-del" onclick="removeImage('${im.id}',event)">✕</span>
+    `;
+    div.addEventListener('click', () => openImage(im.id));
+    list.appendChild(div);
+  });
+}
+
+function updateQueueCount() {
+  document.getElementById('queue-count').textContent = state.images.length;
+}
+
+function removeImage(id, e) {
+  e.stopPropagation();
+  state.images = state.images.filter(i => i.id !== id);
+  if (state.currentId === id) {
+    state.currentId = state.images.length ? state.images[0].id : null;
+    if (state.currentId) openImage(state.currentId);
+    else showEmpty();
+  }
+  renderQueue();
+  updateQueueCount();
+  autoSave();
+}
+
+function openImage(id) {
+  selectedLayerId = null;
+  state.currentId = id;
+  const im = getCurrentImage();
+  if (!im) return;
+
+  const canvas = document.getElementById('editor-canvas');
+  const shapeCanvas = document.getElementById('shape-canvas');
+  const emptyState = document.getElementById('empty-state');
+
+  emptyState.style.display = 'none';
+  canvas.style.display = 'block';
+  shapeCanvas.style.display = 'block';
+
+  const img = new Image();
+  img.onload = () => {
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.drawImage(img, 0, 0);
+
+    shapeCanvas.width = img.naturalWidth;
+    shapeCanvas.height = img.naturalHeight;
+
+    computeScale();
+    redrawShapes();
+    renderLayers();
+    updatePropsPanel();
+  };
+  img.src = im.dataURL;
+  renderQueue();
+}
+
+function showEmpty() {
+  document.getElementById('empty-state').style.display = '';
+  document.getElementById('editor-canvas').style.display = 'none';
+  document.getElementById('shape-canvas').style.display = 'none';
+}
+
+function getCurrentImage() {
+  return state.images.find(i => i.id === state.currentId);
+}
+
+function nextImage() {
+  const idx = state.images.findIndex(i => i.id === state.currentId);
+  if (idx < state.images.length - 1) openImage(state.images[idx+1].id);
+  else notify('Última imagem da fila!');
+}
+
+function markDone() {
+  const im = getCurrentImage();
+  if (!im) return;
+  im.done = !im.done;
+  renderQueue();
+  autoSave();
+  notify(im.done ? 'Marcada como concluída ✓' : 'Desmarcada');
+}
+
+// ═══════════════════════════════════════════
+// CANVAS SCALE
+// ═══════════════════════════════════════════
+function computeScale() {
+  const canvas = document.getElementById('editor-canvas');
+  const container = document.getElementById('canvas-container');
+  const rect = container.getBoundingClientRect();
+  const cw = canvas.width, ch = canvas.height;
+  const sw = rect.width, sh = rect.height;
+  const scaleX = sw / cw, scaleY = sh / ch;
+  canvasScale = Math.min(scaleX, scaleY);
+  const dispW = cw * canvasScale;
+  const dispH = ch * canvasScale;
+  canvasOffset.x = rect.left + (sw - dispW) / 2;
+  canvasOffset.y = rect.top + (sh - dispH) / 2;
+}
+
+function screenToCanvas(sx, sy) {
+  return {
+    x: (sx - canvasOffset.x) / canvasScale,
+    y: (sy - canvasOffset.y) / canvasScale
+  };
+}
+
+window.addEventListener('resize', () => { if (state.currentId) computeScale(); });
+
+// ═══════════════════════════════════════════
+// LAYERS
+// ═══════════════════════════════════════════
+function addLayer(layer) {
+  const im = getCurrentImage();
+  if (!im) return;
+  im.layers.push(layer);
+  selectedLayerId = layer.id;
+  renderLayers();
+  redrawShapes();
+  updatePropsPanel();
+  autoSave();
+}
+
+function renderLayers() {
+  const im = getCurrentImage();
+  const list = document.getElementById('layers-list');
+  list.innerHTML = '';
+  if (!im || !im.layers.length) {
+    list.innerHTML = '<div style="font-size:11px;color:var(--muted);font-family:\'DM Mono\',monospace;">Nenhum layer</div>';
+    return;
+  }
+  [...im.layers].reverse().forEach(l => {
+    const div = document.createElement('div');
+    div.className = 'layer-item' + (l.id === selectedLayerId ? ' selected' : '');
+    div.innerHTML = `
+      <span class="layer-icon">${l.type==='rect'?'▭':'🖼'}</span>
+      <span class="layer-name">${l.type==='rect'?'Retângulo':'Stamp'} ${l.id.slice(-4)}</span>
+      <span class="layer-del" onclick="deleteLayerById('${l.id}',event)">✕</span>
+    `;
+    div.addEventListener('click', () => { selectedLayerId = l.id; renderLayers(); redrawShapes(); updatePropsPanel(); });
+    list.appendChild(div);
+  });
+}
+
+function deleteLayerById(id, e) {
+  e && e.stopPropagation();
+  const im = getCurrentImage();
+  if (!im) return;
+  im.layers = im.layers.filter(l => l.id !== id);
+  if (selectedLayerId === id) selectedLayerId = null;
+  renderLayers(); redrawShapes(); updatePropsPanel(); autoSave();
+}
+
+function deleteSelected() {
+  if (selectedLayerId) deleteLayerById(selectedLayerId);
+}
+
+function bringForward() {
+  const im = getCurrentImage();
+  if (!im || !selectedLayerId) return;
+  const idx = im.layers.findIndex(l => l.id === selectedLayerId);
+  if (idx < im.layers.length - 1) {
+    [im.layers[idx], im.layers[idx+1]] = [im.layers[idx+1], im.layers[idx]];
+    renderLayers(); redrawShapes(); autoSave();
+  }
+}
+
+function sendBackward() {
+  const im = getCurrentImage();
+  if (!im || !selectedLayerId) return;
+  const idx = im.layers.findIndex(l => l.id === selectedLayerId);
+  if (idx > 0) {
+    [im.layers[idx], im.layers[idx-1]] = [im.layers[idx-1], im.layers[idx]];
+    renderLayers(); redrawShapes(); autoSave();
+  }
+}
+
+// ═══════════════════════════════════════════
+// DRAW SHAPES ON SHAPE CANVAS
+// ═══════════════════════════════════════════
+const stampImgCache = {};
+
+function redrawShapes() {
+  const im = getCurrentImage();
+  const canvas = document.getElementById('shape-canvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (!im) return;
+
+  im.layers.forEach(l => {
+    if (l.type === 'rect') {
+      ctx.fillStyle = l.color || '#ffffff';
+      ctx.fillRect(l.x, l.y, l.w, l.h);
+    } else if (l.type === 'stamp' && state.stampDataURL) {
+      if (!stampImgCache[state.stampDataURL]) {
+        const si = new Image();
+        si.src = state.stampDataURL;
+        stampImgCache[state.stampDataURL] = si;
+      }
+      const si = stampImgCache[state.stampDataURL];
+      const draw = () => ctx.drawImage(si, l.x, l.y, l.w, l.h);
+      if (si.complete) draw();
+      else si.onload = () => { draw(); };
+    }
+    // draw selection handles
+    if (l.id === selectedLayerId) {
+      ctx.strokeStyle = '#47d4ff';
+      ctx.lineWidth = 2 / canvasScale;
+      ctx.setLineDash([6/canvasScale, 3/canvasScale]);
+      ctx.strokeRect(l.x, l.y, l.w, l.h);
+      ctx.setLineDash([]);
+      // corner handles
+      const hs = 8 / canvasScale;
+      ctx.fillStyle = '#47d4ff';
+      ctx.fillRect(l.x + l.w - hs/2, l.y + l.h - hs/2, hs, hs);
+      ctx.fillRect(l.x - hs/2, l.y - hs/2, hs, hs);
+      ctx.fillRect(l.x + l.w - hs/2, l.y - hs/2, hs, hs);
+      ctx.fillRect(l.x - hs/2, l.y + l.h - hs/2, hs, hs);
+    }
+  });
+}
+
+// ═══════════════════════════════════════════
+// TOOL
+// ═══════════════════════════════════════════
+function setTool(t) {
+  state.tool = t;
+  document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tool-'+t)?.classList.add('active');
+}
+
+// ═══════════════════════════════════════════
+// CANVAS EVENTS (pointer)
+// ═══════════════════════════════════════════
+function setupCanvasEvents() {
+  const sc = document.getElementById('shape-canvas');
+
+  sc.addEventListener('pointerdown', onPointerDown);
+  sc.addEventListener('pointermove', onPointerMove);
+  sc.addEventListener('pointerup', onPointerUp);
+  sc.addEventListener('pointercancel', onPointerUp);
+
+  // Pinch zoom for resizing (two-finger)
+  let touches = {};
+  sc.addEventListener('touchstart', e => {
+    if (e.touches.length === 2) {
+      pinchStart = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      const im = getCurrentImage();
+      if (im && selectedLayerId) {
+        pinchStartRect = {...im.layers.find(l=>l.id===selectedLayerId)};
+      }
+      e.preventDefault();
+    }
+  }, {passive:false});
+
+  sc.addEventListener('touchmove', e => {
+    if (e.touches.length === 2 && pinchStart && pinchStartRect) {
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      const ratio = dist / pinchStart;
+      const im = getCurrentImage();
+      if (im && selectedLayerId) {
+        const l = im.layers.find(l=>l.id===selectedLayerId);
+        if (l) {
+          l.w = Math.max(10, pinchStartRect.w * ratio);
+          l.h = Math.max(10, pinchStartRect.h * ratio);
+          redrawShapes();
+          updatePropsPanel();
+        }
+      }
+      e.preventDefault();
+    }
+  }, {passive:false});
+
+  sc.addEventListener('touchend', e => {
+    if (e.touches.length < 2) { pinchStart = null; pinchStartRect = null; autoSave(); }
+  });
+}
+
+function getPointerCanvasPos(e) {
+  computeScale();
+  return screenToCanvas(e.clientX, e.clientY);
+}
+
+function onPointerDown(e) {
+  if (e.touches && e.touches.length === 2) return;
+  e.preventDefault();
+  sc_setCapture(e);
+  computeScale();
+  const pos = getPointerCanvasPos(e);
+  const im = getCurrentImage();
+  if (!im) return;
+
+  // Check resize handle on selected
+  if (selectedLayerId) {
+    const l = im.layers.find(l=>l.id===selectedLayerId);
+    if (l) {
+      const hs = 10 / canvasScale;
+      // corners: br, bl, tr, tl
+      const corners = [
+        {h:'br', cx:l.x+l.w, cy:l.y+l.h},
+        {h:'bl', cx:l.x,     cy:l.y+l.h},
+        {h:'tr', cx:l.x+l.w, cy:l.y},
+        {h:'tl', cx:l.x,     cy:l.y},
+      ];
+      for (const c of corners) {
+        if (Math.abs(pos.x-c.cx)<hs && Math.abs(pos.y-c.cy)<hs) {
+          isResizing = true;
+          resizeHandle = c.h;
+          resizeStartRect = {...l};
+          resizeStartPos = {...pos};
+          return;
+        }
+      }
+      // Check if inside layer (drag)
+      if (pos.x>=l.x && pos.x<=l.x+l.w && pos.y>=l.y && pos.y<=l.y+l.h) {
+        isDragging = true;
+        dragOffset = {x: pos.x-l.x, y: pos.y-l.y};
+        return;
+      }
+    }
+  }
+
+  // Click on existing layer?
+  let hit = null;
+  for (let i = im.layers.length-1; i>=0; i--) {
+    const l = im.layers[i];
+    if (pos.x>=l.x && pos.x<=l.x+l.w && pos.y>=l.y && pos.y<=l.y+l.h) {
+      hit = l; break;
+    }
+  }
+  if (hit) {
+    selectedLayerId = hit.id;
+    isDragging = true;
+    dragOffset = {x: pos.x-hit.x, y: pos.y-hit.y};
+    renderLayers(); redrawShapes(); updatePropsPanel();
+    return;
+  }
+
+  // Create new
+  selectedLayerId = null;
+  isDrawing = true;
+  drawStart = pos;
+}
+
+function onPointerMove(e) {
+  e.preventDefault();
+  if (!isDrawing && !isDragging && !isResizing) return;
+  const pos = getPointerCanvasPos(e);
+  const im = getCurrentImage();
+  if (!im) return;
+
+  if (isResizing) {
+    const l = im.layers.find(l=>l.id===selectedLayerId);
+    if (!l) return;
+    const dx = pos.x - resizeStartPos.x;
+    const dy = pos.y - resizeStartPos.y;
+    if (resizeHandle === 'br') {
+      l.w = Math.max(10, resizeStartRect.w + dx);
+      l.h = Math.max(10, resizeStartRect.h + dy);
+    } else if (resizeHandle === 'bl') {
+      const nw = Math.max(10, resizeStartRect.w - dx);
+      l.x = resizeStartRect.x + resizeStartRect.w - nw;
+      l.w = nw;
+      l.h = Math.max(10, resizeStartRect.h + dy);
+    } else if (resizeHandle === 'tr') {
+      l.w = Math.max(10, resizeStartRect.w + dx);
+      const nh = Math.max(10, resizeStartRect.h - dy);
+      l.y = resizeStartRect.y + resizeStartRect.h - nh;
+      l.h = nh;
+    } else if (resizeHandle === 'tl') {
+      const nw = Math.max(10, resizeStartRect.w - dx);
+      const nh = Math.max(10, resizeStartRect.h - dy);
+      l.x = resizeStartRect.x + resizeStartRect.w - nw;
+      l.y = resizeStartRect.y + resizeStartRect.h - nh;
+      l.w = nw; l.h = nh;
+    }
+    redrawShapes(); updatePropsPanel();
+    return;
+  }
+
+  if (isDragging) {
+    const l = im.layers.find(l=>l.id===selectedLayerId);
+    if (!l) return;
+    l.x = pos.x - dragOffset.x;
+    l.y = pos.y - dragOffset.y;
+    redrawShapes(); updatePropsPanel();
+    return;
+  }
+
+  if (isDrawing) {
+    // preview
+    redrawShapes();
+    const canvas = document.getElementById('shape-canvas');
+    const ctx = canvas.getContext('2d');
+    const x = Math.min(pos.x, drawStart.x);
+    const y = Math.min(pos.y, drawStart.y);
+    const w = Math.abs(pos.x - drawStart.x);
+    const h = Math.abs(pos.y - drawStart.y);
+    if (state.tool === 'rect') {
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.fillRect(x,y,w,h);
+      ctx.strokeStyle = '#47d4ff';
+      ctx.lineWidth = 2/canvasScale;
+      ctx.strokeRect(x,y,w,h);
+    } else if (state.tool === 'stamp') {
+      ctx.strokeStyle = '#e8ff47';
+      ctx.lineWidth = 2/canvasScale;
+      ctx.setLineDash([6/canvasScale,3/canvasScale]);
+      ctx.strokeRect(x,y,w,h);
+      ctx.setLineDash([]);
+    }
+  }
+}
+
+function onPointerUp(e) {
+  if (isResizing || isDragging) { autoSave(); }
+  if (isDrawing && drawStart) {
+    const pos = getPointerCanvasPos(e);
+    const x = Math.min(pos.x, drawStart.x);
+    const y = Math.min(pos.y, drawStart.y);
+    const w = Math.abs(pos.x - drawStart.x);
+    const h = Math.abs(pos.y - drawStart.y);
+    if (w > 5 && h > 5) {
+      const id = 'l_' + Date.now();
+      const layer = {id, type: state.tool, x, y, w, h, color:'#ffffff'};
+      if (state.tool === 'stamp' && !state.stampDataURL) {
+        notify('Carregue um stamp PNG primeiro!');
+      } else {
+        addLayer(layer);
+      }
+    }
+  }
+  isDrawing = false; isDragging = false; isResizing = false;
+  drawStart = null; resizeHandle = null;
+}
+
+function sc_setCapture(e) {
+  const sc = document.getElementById('shape-canvas');
+  sc.setPointerCapture && sc.setPointerCapture(e.pointerId);
+}
+
+// ═══════════════════════════════════════════
+// PROPERTIES PANEL
+// ═══════════════════════════════════════════
+function updatePropsPanel() {
+  const im = getCurrentImage();
+  const noSel = document.getElementById('no-sel');
+  const selProps = document.getElementById('sel-props');
+  if (!im || !selectedLayerId) {
+    noSel.style.display = ''; selProps.classList.remove('visible'); return;
+  }
+  const l = im.layers.find(l=>l.id===selectedLayerId);
+  if (!l) { noSel.style.display = ''; selProps.classList.remove('visible'); return; }
+  noSel.style.display = 'none'; selProps.classList.add('visible');
+  document.getElementById('prop-x').value = Math.round(l.x);
+  document.getElementById('prop-y').value = Math.round(l.y);
+  document.getElementById('prop-w').value = Math.round(l.w);
+  document.getElementById('prop-h').value = Math.round(l.h);
+  const colorRow = document.getElementById('color-row');
+  if (l.type === 'rect') {
+    colorRow.style.display = 'flex';
+    document.getElementById('prop-color').value = l.color || '#ffffff';
+  } else { colorRow.style.display = 'none'; }
+}
+
+function applyProp(prop, val) {
+  const im = getCurrentImage();
+  if (!im || !selectedLayerId) return;
+  const l = im.layers.find(l=>l.id===selectedLayerId);
+  if (!l) return;
+  const n = parseFloat(val);
+  if (prop === 'color') l.color = val;
+  else if (!isNaN(n)) l[prop] = n;
+  redrawShapes();
+}
+
+// ═══════════════════════════════════════════
+// PRESETS
+// ═══════════════════════════════════════════
+function renderPresets() {
+  renderStampPresets();
+  renderRectPresets();
+}
+
+function renderStampPresets() {
+  const grid = document.getElementById('stamp-presets');
+  grid.innerHTML = '';
+  state.stampPresets.forEach((p, i) => {
+    const div = document.createElement('div');
+    div.className = 'preset-item';
+    div.innerHTML = `<span class="pname">${p.name}</span><span class="pdel" onclick="deletePreset('stamp',${i},event)">✕</span>`;
+    div.addEventListener('click', () => applyStampPreset(p));
+    grid.appendChild(div);
+  });
+}
+
+function renderRectPresets() {
+  const grid = document.getElementById('rect-presets');
+  grid.innerHTML = '';
+  state.rectPresets.forEach((p, i) => {
+    const div = document.createElement('div');
+    div.className = 'preset-item';
+    div.innerHTML = `<span class="pname">${p.name}</span><span class="pdel" onclick="deletePreset('rect',${i},event)">✕</span>`;
+    div.addEventListener('click', () => applyRectPreset(p));
+    grid.appendChild(div);
+  });
+}
+
+function saveStampPreset() {
+  const im = getCurrentImage();
+  if (!im || !selectedLayerId) { notify('Selecione um stamp primeiro'); return; }
+  const l = im.layers.find(l=>l.id===selectedLayerId && l.type==='stamp');
+  if (!l) { notify('Selecione um layer stamp'); return; }
+  const name = prompt('Nome do preset:', `${Math.round(l.w)}x${Math.round(l.h)}`);
+  if (!name) return;
+  state.stampPresets.push({name, w:l.w, h:l.h});
+  renderStampPresets(); autoSave();
+}
+
+function saveRectPreset() {
+  const im = getCurrentImage();
+  if (!im || !selectedLayerId) { notify('Selecione um retângulo primeiro'); return; }
+  const l = im.layers.find(l=>l.id===selectedLayerId && l.type==='rect');
+  if (!l) { notify('Selecione um layer retângulo'); return; }
+  const name = prompt('Nome do preset:', `${Math.round(l.w)}x${Math.round(l.h)}`);
+  if (!name) return;
+  state.rectPresets.push({name, w:l.w, h:l.h});
+  renderRectPresets(); autoSave();
+}
+
+function applyStampPreset(p) {
+  const im = getCurrentImage();
+  if (!im || !selectedLayerId) return;
+  const l = im.layers.find(l=>l.id===selectedLayerId);
+  if (!l) return;
+  l.w = p.w; l.h = p.h;
+  redrawShapes(); updatePropsPanel(); autoSave();
+}
+
+function applyRectPreset(p) {
+  const im = getCurrentImage();
+  if (!im || !selectedLayerId) return;
+  const l = im.layers.find(l=>l.id===selectedLayerId);
+  if (!l) return;
+  l.w = p.w; l.h = p.h;
+  redrawShapes(); updatePropsPanel(); autoSave();
+}
+
+function deletePreset(type, idx, e) {
+  e.stopPropagation();
+  if (type==='stamp') { state.stampPresets.splice(idx,1); renderStampPresets(); }
+  else { state.rectPresets.splice(idx,1); renderRectPresets(); }
+  autoSave();
+}
+
+// ═══════════════════════════════════════════
+// EXPORT
+// ═══════════════════════════════════════════
+function openExportModal() {
+  if (!state.currentId) { notify('Nenhuma imagem aberta'); return; }
+  document.getElementById('export-modal').classList.add('visible');
+}
+function closeExportModal() {
+  document.getElementById('export-modal').classList.remove('visible');
+}
+function exportModeChange() {
+  const v = document.getElementById('export-mode').value;
+  document.getElementById('custom-dims').style.display = v==='custom'?'block':'none';
+}
+document.getElementById('export-fmt').addEventListener('change', function() {
+  document.getElementById('quality-row').style.display = this.value==='image/png'?'none':'flex';
+});
+
+function doExport() {
+  const im = getCurrentImage();
+  if (!im) return;
+
+  const mode = document.getElementById('export-mode').value;
+  const fmt = document.getElementById('export-fmt').value;
+  const quality = parseFloat(document.getElementById('export-quality').value);
+
+  let outW = im.origW, outH = im.origH;
+  if (mode === 'custom') {
+    outW = parseInt(document.getElementById('export-w').value) || im.origW;
+    outH = parseInt(document.getElementById('export-h').value) || im.origH;
+  }
+
+  const offscreen = document.createElement('canvas');
+  offscreen.width = outW; offscreen.height = outH;
+  const ctx = offscreen.getContext('2d');
+
+  const baseImg = new Image();
+  baseImg.onload = () => {
+    ctx.drawImage(baseImg, 0, 0, outW, outH);
+    // draw layers
+    const scaleX = outW / im.origW;
+    const scaleY = outH / im.origH;
+    let pending = 0;
+    const finish = () => {
+      if (--pending > 0) return;
+      const ext = fmt === 'image/png' ? '.png' : fmt === 'image/jpeg' ? '.jpg' : '.webp';
+      const baseName = im.name.replace(/\.[^.]+$/, '');
+      const dataURL = fmt === 'image/png' ? offscreen.toDataURL(fmt) : offscreen.toDataURL(fmt, quality);
+      const a = document.createElement('a');
+      a.href = dataURL;
+      a.download = baseName + '_edited' + ext;
+      a.click();
+      closeExportModal();
+      notify('Exportado!');
+    };
+    pending = 1; // will call finish once all stamps loaded
+    const stampOps = [];
+    im.layers.forEach(l => {
+      if (l.type === 'rect') {
+        ctx.fillStyle = l.color || '#ffffff';
+        ctx.fillRect(l.x*scaleX, l.y*scaleY, l.w*scaleX, l.h*scaleY);
+      } else if (l.type === 'stamp' && state.stampDataURL) {
+        pending++;
+        stampOps.push({l});
+      }
+    });
+    if (stampOps.length) {
+      const si = new Image();
+      si.onload = () => {
+        stampOps.forEach(({l}) => {
+          ctx.drawImage(si, l.x*scaleX, l.y*scaleY, l.w*scaleX, l.h*scaleY);
+          finish();
+        });
+      };
+      si.src = state.stampDataURL;
+    }
+    finish();
+  };
+  baseImg.src = im.dataURL;
+}
+
+// ═══════════════════════════════════════════
+// STAMP PANEL
+// ═══════════════════════════════════════════
+function renderStampPanel() {
+  if (state.stampDataURL) restoreStampUI(state.stampDataURL);
+  renderStampPresets();
+}
+
+// ═══════════════════════════════════════════
+// UI HELPERS
+// ═══════════════════════════════════════════
+function toggleSection(title) {
+  const body = title.nextElementSibling;
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : '';
+  title.classList.toggle('open', !isOpen);
+  title.querySelector('.arrow').textContent = isOpen ? '▼' : '▲';
+}
+
+let leftCollapsed = false;
+let rightCollapsed = false;
+
+function toggleLeft() {
+  leftCollapsed = !leftCollapsed;
+  document.getElementById('queue-panel').classList.toggle('collapsed', leftCollapsed);
+  document.getElementById('toggle-left').textContent = leftCollapsed ? '›' : '‹';
+}
+
+function toggleRight() {
+  rightCollapsed = !rightCollapsed;
+  document.getElementById('right-panel').classList.toggle('collapsed', rightCollapsed);
+  document.getElementById('toggle-right').textContent = rightCollapsed ? '‹' : '›';
+}
+
+function notify(msg) {
+  const n = document.getElementById('notif');
+  n.textContent = msg;
+  n.classList.add('show');
+  clearTimeout(n._t);
+  n._t = setTimeout(() => n.classList.remove('show'), 2200);
+}
+
+function autoSave() {
+  try { localStorage.setItem(DB_KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+// Init
+init();
+setTool('rect');
+</script>
+</body>
+</html>
