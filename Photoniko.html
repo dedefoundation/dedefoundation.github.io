@@ -7,22 +7,21 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
-:root{--bg:#0f0f11;--surface:#17171a;--surface2:#1f1f24;--border:#2a2a32;--accent:#e8ff47;--accent2:#47d4ff;--text:#f0f0f0;--muted:#6b6b7a;--danger:#ff4747;--panel-w:260px;--toolbar-h:52px;}
+:root{--bg:#0f0f11;--surface:#17171a;--surface2:#1f1f24;--border:#2a2a32;--accent:#e8ff47;--accent2:#47d4ff;--text:#f0f0f0;--muted:#6b6b7a;--danger:#ff4747;--panel-w:260px;--toolbar-h:52px;--ruler-color:rgba(232,255,71,0.85);--ruler-snap:20;}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);height:100dvh;overflow:hidden;display:flex;flex-direction:column;}
+body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);height:100dvh;overflow:hidden;display:flex;flex-direction:column;user-select:none;}
 
-/* TOPBAR */
 #topbar{height:var(--toolbar-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 12px;gap:8px;flex-shrink:0;z-index:100;}
 #logo{font-size:18px;font-weight:800;letter-spacing:-.5px;color:var(--accent);flex-shrink:0;}
 #logo span{color:var(--muted);font-weight:400;font-size:12px;margin-left:4px;}
 .tb-btn{height:34px;padding:0 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px;flex-shrink:0;transition:background .15s,border-color .15s;}
 .tb-btn:hover{background:var(--border);}
+.tb-btn.on{background:rgba(232,255,71,.12);border-color:var(--accent);color:var(--accent);}
 .tb-btn.green{background:var(--accent);color:#000;border-color:var(--accent);font-weight:600;}
 .tb-btn.green:hover{background:#d4e840;}
 #topbar .spacer{flex:1;}
 #kbd-hint{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);padding:0 4px;flex-shrink:0;}
 
-/* MAIN */
 #main{flex:1;display:flex;overflow:hidden;position:relative;}
 
 /* LEFT PANEL */
@@ -45,8 +44,9 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);height
 /* CANVAS AREA */
 #canvas-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;background:#0a0a0c;}
 #canvas-container{flex:1;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;}
-/* THE canvas sits inside and we position it manually via JS */
-#c{display:none;touch-action:none;image-rendering:pixelated;}
+#c{display:none;touch-action:none;}
+/* Ruler overlay canvas — covers full container, draws rulers on top */
+#ruler-canvas{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:10;display:none;}
 #empty-state{text-align:center;color:var(--muted);pointer-events:none;}
 #empty-state h2{font-size:22px;font-weight:700;margin-bottom:8px;color:var(--text);}
 #empty-state p{font-size:13px;line-height:1.7;font-family:'DM Mono',monospace;}
@@ -77,7 +77,7 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);height
 #stamp-box .sdel{position:absolute;top:4px;right:4px;background:var(--danger);color:#fff;border-radius:4px;padding:2px 5px;font-size:10px;display:none;cursor:pointer;z-index:2;}
 #stamp-box:hover .sdel{display:block;}
 #sratio{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:6px;}
-.lockrow{display:flex;align-items:center;gap:6px;margin-bottom:8px;}
+.lockrow{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
 .lockrow label{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);cursor:pointer;display:flex;align-items:center;gap:6px;}
 .lockrow input{accent-color:var(--accent2);}
 .shelp{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;line-height:1.5;margin-bottom:6px;}
@@ -86,11 +86,22 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);height
 .pgrid{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:4px;}
 .pi{padding:5px 8px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;color:var(--text);transition:all .15s;}
 .pi:hover{border-color:var(--accent);color:var(--accent);}
+.pi.last-preset{border-color:var(--accent2);color:var(--accent2);}
 .pi .pn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
 .pi .pd{color:var(--danger);padding-left:4px;opacity:.5;flex-shrink:0;}
 .pi .pd:hover{opacity:1;}
 .padd{margin-top:6px;width:100%;height:28px;border-radius:5px;border:1px dashed var(--border);background:transparent;color:var(--muted);font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;transition:all .15s;}
 .padd:hover{border-color:var(--accent);color:var(--accent);}
+
+/* Rulers panel */
+.ruler-line-row{display:flex;align-items:center;gap:6px;margin-bottom:4px;}
+.ruler-tag{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);width:14px;flex-shrink:0;}
+.ruler-pos-input{flex:1;height:26px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:'DM Mono',monospace;font-size:10px;padding:0 6px;outline:none;}
+.ruler-pos-input:focus{border-color:var(--accent2);}
+.ruler-del-btn{color:var(--danger);font-size:13px;padding:0 4px;opacity:.5;cursor:pointer;background:none;border:none;flex-shrink:0;}
+.ruler-del-btn:hover{opacity:1;}
+#ruler-add-h,#ruler-add-v{margin-top:4px;height:26px;border-radius:5px;border:1px dashed var(--border);background:transparent;color:var(--muted);font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;transition:all .15s;width:100%;}
+#ruler-add-h:hover,#ruler-add-v:hover{border-color:var(--accent);color:var(--accent);}
 
 /* Layers */
 #layers-list{display:flex;flex-direction:column;gap:4px;max-height:180px;overflow-y:auto;}
@@ -110,6 +121,15 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);height
 .plabel{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);width:28px;flex-shrink:0;}
 .pinput{flex:1;height:28px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:'DM Mono',monospace;font-size:11px;padding:0 8px;outline:none;transition:border-color .15s;}
 .pinput:focus{border-color:var(--accent2);}
+
+/* Context menu */
+#ctx-menu{display:none;position:fixed;z-index:5000;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:4px;min-width:170px;box-shadow:0 8px 32px rgba(0,0,0,.6);}
+#ctx-menu.on{display:block;}
+.ctx-item{display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:5px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text);cursor:pointer;transition:background .1s;white-space:nowrap;}
+.ctx-item:hover{background:var(--surface2);}
+.ctx-item.danger{color:var(--danger);}
+.ctx-item .ctx-icon{width:16px;text-align:center;flex-shrink:0;}
+.ctx-sep{height:1px;background:var(--border);margin:3px 0;}
 
 /* Export modal */
 #xmodal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:999;align-items:center;justify-content:center;}
@@ -158,33 +178,34 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);height
 <body>
 
 <div id="topbar">
-  <div id="logo">Photoniko<span>v3.0</span></div>
+  <div id="logo">Photoniko<span>v4.0</span></div>
   <button class="tb-btn" id="btn-queue" style="display:none" onclick="togL()">☰ Fila</button>
   <button class="tb-btn" id="btn-props" style="display:none" onclick="togR()">⚙ Props</button>
   <div class="spacer"></div>
-  <span id="kbd-hint">V=sel · R=rect · S=stamp · Del · Esc</span>
+  <span id="kbd-hint">V=sel · R=rect · S=stamp · G=régua · Del · Esc</span>
+  <button class="tb-btn" id="btn-rulers" onclick="toggleRulers()" title="Toggle réguas (G)">📏 Réguas</button>
   <button class="tb-btn" onclick="saveProg()">💾 Salvar</button>
   <button class="tb-btn green" onclick="openX()">↓ Exportar</button>
 </div>
 
 <div id="main">
-  <!-- LEFT -->
   <div id="queue-panel">
     <div id="panel-header"><span>Fila</span><span id="qcount" style="color:var(--accent);font-family:'DM Mono',monospace;font-size:11px;">0</span></div>
     <div id="queue-list"></div>
     <button id="add-btn" onclick="document.getElementById('fi').click()">+ Adicionar imagens</button>
   </div>
 
-  <!-- CENTER -->
   <div id="canvas-wrap">
     <div id="canvas-container">
       <div id="empty-state"><h2>Nenhuma imagem</h2><p>Adicione imagens pela fila à esquerda.<br>Use as ferramentas abaixo para cobrir logos.</p></div>
       <canvas id="c"></canvas>
+      <canvas id="ruler-canvas"></canvas>
     </div>
     <div id="bottom-bar">
       <button class="tbtn on" id="tool-select" onclick="setTool('select')">↖ Selecionar</button>
       <button class="tbtn" id="tool-rect" onclick="setTool('rect')">▭ Retângulo</button>
       <button class="tbtn" id="tool-stamp" onclick="setTool('stamp')">🖼 Stamp</button>
+      <button class="tbtn" id="tool-ruler" onclick="setTool('ruler')" title="Adicionar régua clicando">📐 + Régua</button>
       <div class="sep"></div>
       <button class="tbtn" onclick="delSel()">🗑 Del</button>
       <button class="tbtn" onclick="bringFwd()">↑ Frente</button>
@@ -195,8 +216,9 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);height
     </div>
   </div>
 
-  <!-- RIGHT -->
   <div id="right-panel">
+
+    <!-- STAMP -->
     <div class="rsec">
       <div class="rtitle open" onclick="togSec(this)"><span>Stamp PNG</span><span class="rarrow">▲</span></div>
       <div class="rbody">
@@ -207,12 +229,15 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);height
         </div>
         <div id="sratio">Sem stamp carregado</div>
         <div class="lockrow"><label><input type="checkbox" id="rlock" checked> Lock proporção ao resize</label></div>
-        <p class="shelp">Ferramenta Stamp: clique na imagem para inserir centrado no cursor. Arraste handles para redimensionar. Stamp sempre usa lock.</p>
+        <div class="lockrow"><label><input type="checkbox" id="use-last-preset"> Usar último preset ao inserir</label></div>
+        <p class="shelp">Stamp: clique na imagem para inserir. Com "último preset" ativo, usa dimensões do preset mais recente.</p>
         <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:2px;">Tamanhos salvos:</div>
         <div class="pgrid" id="stamp-presets"></div>
         <button class="padd" onclick="saveStampPreset()">+ Salvar tamanho atual</button>
       </div>
     </div>
+
+    <!-- RECT PRESETS -->
     <div class="rsec">
       <div class="rtitle open" onclick="togSec(this)"><span>Retângulos Salvos</span><span class="rarrow">▲</span></div>
       <div class="rbody">
@@ -220,10 +245,29 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);height
         <button class="padd" onclick="saveRectPreset()">+ Salvar tamanho atual</button>
       </div>
     </div>
+
+    <!-- RULERS -->
+    <div class="rsec">
+      <div class="rtitle open" onclick="togSec(this)"><span>Réguas</span><span class="rarrow">▲</span></div>
+      <div class="rbody">
+        <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:6px;">Horizontais (Y em px do canvas):</div>
+        <div id="rulers-h-list"></div>
+        <button id="ruler-add-h" onclick="addRulerH()">+ Adicionar horizontal</button>
+        <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin:8px 0 6px;">Verticais (X em px do canvas):</div>
+        <div id="rulers-v-list"></div>
+        <button id="ruler-add-v" onclick="addRulerV()">+ Adicionar vertical</button>
+        <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:8px;">Snap threshold: <span id="snap-val">20</span>px</div>
+        <input type="range" min="2" max="60" value="20" style="width:100%;margin-top:4px;accent-color:var(--accent2)" oninput="S.snapThreshold=+this.value;document.getElementById('snap-val').textContent=this.value;autos()">
+      </div>
+    </div>
+
+    <!-- LAYERS -->
     <div class="rsec">
       <div class="rtitle open" onclick="togSec(this)"><span>Layers</span><span class="rarrow">▲</span></div>
       <div class="rbody"><div id="layers-list"></div></div>
     </div>
+
+    <!-- PROPS -->
     <div class="rsec">
       <div class="rtitle open" onclick="togSec(this)"><span>Propriedades</span><span class="rarrow">▲</span></div>
       <div class="rbody">
@@ -237,10 +281,23 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);height
         </div>
       </div>
     </div>
+
   </div>
 
   <div id="tog-l" onclick="togL()">‹</div>
   <div id="tog-r" onclick="togR()">›</div>
+</div>
+
+<!-- Context menu -->
+<div id="ctx-menu">
+  <div class="ctx-item" onclick="ctxAction('fwd')"><span class="ctx-icon">↑</span> Trazer à frente</div>
+  <div class="ctx-item" onclick="ctxAction('bk')"><span class="ctx-icon">↓</span> Enviar ao fundo</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" onclick="ctxAction('dup')"><span class="ctx-icon">⎘</span> Duplicar</div>
+  <div class="ctx-item" onclick="ctxAction('done')"><span class="ctx-icon">✓</span> Marcar concluída</div>
+  <div class="ctx-item" onclick="ctxAction('next')"><span class="ctx-icon">→</span> Próxima imagem</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item danger" onclick="ctxAction('del')"><span class="ctx-icon">🗑</span> Deletar elemento</div>
 </div>
 
 <!-- Export modal -->
@@ -280,67 +337,71 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);height
   </div>
 </div>
 
-<!-- Progress -->
-<div id="prog">
-  <div style="font-size:15px;font-weight:700;color:var(--text)">Exportando...</div>
-  <div id="pbar-wrap"><div id="pbar"></div></div>
-  <div id="plabel"></div>
-</div>
-
+<div id="prog"><div style="font-size:15px;font-weight:700;color:var(--text)">Exportando...</div><div id="pbar-wrap"><div id="pbar"></div></div><div id="plabel"></div></div>
 <div id="notif"></div>
 <input type="file" id="fi" multiple accept="image/*" style="display:none" onchange="handleFiles(this.files)">
 <input type="file" id="si" accept="image/png,image/webp,image/svg+xml" style="display:none" onchange="handleStamp(this.files[0])">
 
 <script>
-// ══════════════════════════════════════
+// ══════════════════════════════════════════
 // STATE
-// ══════════════════════════════════════
-const DBKEY = 'photoniko_v3';
+// ══════════════════════════════════════════
+const DBKEY = 'photoniko_v4';
 let S = {
-  images: [],       // {id,name,dataURL,origW,origH,layers:[],done}
+  images: [],
   currentId: null,
   tool: 'select',
   stampURL: null,
   stampW: 1, stampH: 1,
   stampPresets: [],
-  rectPresets: []
+  lastStampPresetIdx: -1,   // index of last used/saved stamp preset
+  rectPresets: [],
+  rulersH: [],   // array of {id, pos} — pos in canvas px
+  rulersV: [],
+  rulersVisible: true,
+  snapThreshold: 20,  // canvas px
 };
+
 let selId = null;
 
 // Interaction
-let mode = null; // null | 'draw' | 'drag' | 'resize'
+let mode = null; // null|'draw'|'drag'|'resize'|'ruler-drag'
 let drawStart = null;
 let dragOff = {x:0,y:0};
 let rsHandle = null, rsRect = null, rsPos = null;
+let draggingRuler = null; // {axis:'h'|'v', id}
 let pinchDist = null, pinchRect = null;
 
-// Canvas display geometry
-let scale = 1;           // canvas-px to screen-px
-let ox = 0, oy = 0;     // screen offset of canvas top-left
+// Canvas geometry
+let scale = 1, ox = 0, oy = 0;
 
-// Cached base image for current image
 let baseImg = null;
 const stampEl = new Image();
 
 const canvas = document.getElementById('c');
 const ctx = canvas.getContext('2d');
+const rCanvas = document.getElementById('ruler-canvas');
+const rCtx = rCanvas.getContext('2d');
 
-// ══════════════════════════════════════
+// ══════════════════════════════════════════
 // INIT
-// ══════════════════════════════════════
+// ══════════════════════════════════════════
 function init() {
   load();
   setupEvents();
   renderQueue();
   renderPresets();
+  renderRulersList();
   updateQCount();
   if (S.stampURL) {
-    stampEl.src = S.stampURL;
     stampEl.onload = () => { S.stampW = stampEl.naturalWidth; S.stampH = stampEl.naturalHeight; updateSRatio(); };
+    stampEl.src = S.stampURL;
     restoreStampUI(S.stampURL);
   }
   if (S.currentId) openImg(S.currentId);
   setTool('select');
+  updateRulersBtn();
+  // Mobile
   if (window.innerWidth <= 700) {
     document.getElementById('btn-queue').style.display = 'flex';
     document.getElementById('btn-props').style.display = 'flex';
@@ -349,21 +410,17 @@ function init() {
   }
 }
 
-// ══════════════════════════════════════
+// ══════════════════════════════════════════
 // STORAGE
-// ══════════════════════════════════════
-function load() {
-  try { const r = localStorage.getItem(DBKEY); if (r) S = {...S, ...JSON.parse(r)}; } catch(e){}
-}
-function saveProg() {
-  try { localStorage.setItem(DBKEY, JSON.stringify(S)); notify('Progresso salvo!'); } catch(e){ notify('Erro ao salvar'); }
-}
+// ══════════════════════════════════════════
+function load() { try { const r = localStorage.getItem(DBKEY); if (r) S = {...S, ...JSON.parse(r)}; } catch(e){} }
+function saveProg() { try { localStorage.setItem(DBKEY, JSON.stringify(S)); notify('Progresso salvo!'); } catch(e){ notify('Erro ao salvar'); } }
 function autos() { try { localStorage.setItem(DBKEY, JSON.stringify(S)); } catch(e){} }
 setInterval(autos, 30000);
 
-// ══════════════════════════════════════
+// ══════════════════════════════════════════
 // FILES
-// ══════════════════════════════════════
+// ══════════════════════════════════════════
 function handleFiles(files) {
   Array.from(files).forEach(f => {
     const r = new FileReader();
@@ -395,20 +452,14 @@ function handleStamp(file) {
   r.readAsDataURL(file);
   document.getElementById('si').value = '';
 }
-
 function stampBoxClick() { if (!S.stampURL) document.getElementById('si').click(); }
 function clearStamp(e) {
-  e.stopPropagation();
-  S.stampURL = null; S.stampW = 1; S.stampH = 1;
+  e.stopPropagation(); S.stampURL = null; S.stampW = 1; S.stampH = 1;
   document.getElementById('simg').style.display = 'none';
   document.getElementById('sph').style.display = '';
   updateSRatio(); autos();
 }
-function restoreStampUI(url) {
-  const img = document.getElementById('simg');
-  img.src = url; img.style.display = '';
-  document.getElementById('sph').style.display = 'none';
-}
+function restoreStampUI(url) { const img = document.getElementById('simg'); img.src = url; img.style.display = ''; document.getElementById('sph').style.display = 'none'; }
 function updateSRatio() {
   const el = document.getElementById('sratio');
   if (S.stampURL && S.stampW && S.stampH) {
@@ -417,9 +468,9 @@ function updateSRatio() {
   } else el.textContent = 'Sem stamp carregado';
 }
 
-// ══════════════════════════════════════
+// ══════════════════════════════════════════
 // QUEUE
-// ══════════════════════════════════════
+// ══════════════════════════════════════════
 function renderQueue() {
   const list = document.getElementById('queue-list'); list.innerHTML = '';
   S.images.forEach(im => {
@@ -432,144 +483,245 @@ function renderQueue() {
 }
 function updateQCount() { document.getElementById('qcount').textContent = S.images.length; }
 function removeImg(id, e) {
-  e.stopPropagation();
-  S.images = S.images.filter(i=>i.id!==id);
+  e.stopPropagation(); S.images = S.images.filter(i=>i.id!==id);
   if (S.currentId===id) { S.currentId = S.images.length?S.images[0].id:null; if (S.currentId) openImg(S.currentId); else showEmpty(); }
   renderQueue(); updateQCount(); autos();
 }
-
 function openImg(id) {
   selId = null; S.currentId = id;
   const im = getCur(); if (!im) return;
   document.getElementById('empty-state').style.display = 'none';
   canvas.style.display = 'block';
+  rCanvas.style.display = S.rulersVisible ? 'block' : 'none';
   baseImg = new Image();
-  baseImg.onload = () => { fitCanvas(); draw(); renderLayers(); updateProps(); };
+  baseImg.onload = () => { fitCanvas(); draw(); drawRulers(); renderLayers(); updateProps(); };
   baseImg.src = im.dataURL;
   renderQueue();
 }
 function showEmpty() {
   document.getElementById('empty-state').style.display = '';
-  canvas.style.display = 'none'; baseImg = null;
+  canvas.style.display = 'none';
+  rCanvas.style.display = 'none';
+  baseImg = null;
 }
 function getCur() { return S.images.find(i=>i.id===S.currentId); }
-function nextImg() {
-  const idx = S.images.findIndex(i=>i.id===S.currentId);
-  if (idx < S.images.length-1) openImg(S.images[idx+1].id);
-  else notify('Última imagem da fila!');
-}
-function markDone() {
-  const im=getCur(); if(!im)return;
-  im.done=!im.done; renderQueue(); autos();
-  notify(im.done?'Concluída ✓':'Desmarcada');
-}
+function nextImg() { const idx=S.images.findIndex(i=>i.id===S.currentId); if(idx<S.images.length-1)openImg(S.images[idx+1].id); else notify('Última imagem!'); }
+function markDone() { const im=getCur();if(!im)return;im.done=!im.done;renderQueue();autos();notify(im.done?'Concluída ✓':'Desmarcada'); }
 
-// ══════════════════════════════════════
+// ══════════════════════════════════════════
 // FIT CANVAS
-// ══════════════════════════════════════
+// ══════════════════════════════════════════
 function fitCanvas() {
   if (!baseImg) return;
-  const container = document.getElementById('canvas-container');
-  const cr = container.getBoundingClientRect();
+  const cc = document.getElementById('canvas-container');
+  const cr = cc.getBoundingClientRect();
   const pad = 16;
-  const availW = cr.width - pad*2;
-  const availH = cr.height - pad*2;
-  scale = Math.min(availW / baseImg.naturalWidth, availH / baseImg.naturalHeight);
-  const dw = baseImg.naturalWidth * scale;
-  const dh = baseImg.naturalHeight * scale;
+  scale = Math.min((cr.width-pad*2)/baseImg.naturalWidth, (cr.height-pad*2)/baseImg.naturalHeight);
+  const dw = baseImg.naturalWidth * scale, dh = baseImg.naturalHeight * scale;
+  canvas.style.width = dw+'px'; canvas.style.height = dh+'px';
+  canvas.width = baseImg.naturalWidth; canvas.height = baseImg.naturalHeight;
+  // ruler canvas covers whole container
+  rCanvas.width = cr.width; rCanvas.height = cr.height;
+  rCanvas.style.width = cr.width+'px'; rCanvas.style.height = cr.height+'px';
+  // recalculate ox/oy
+  const cr2 = canvas.getBoundingClientRect();
+  ox = cr2.left; oy = cr2.top;
+}
+window.addEventListener('resize', () => { if (getCur()) { fitCanvas(); draw(); drawRulers(); } });
 
-  canvas.style.width  = dw + 'px';
-  canvas.style.height = dh + 'px';
-  canvas.width  = baseImg.naturalWidth;
-  canvas.height = baseImg.naturalHeight;
-
-  // ox/oy = screen coords of canvas top-left
-  const cr2 = container.getBoundingClientRect();
-  ox = cr2.left + (cr2.width - dw) / 2;
-  oy = cr2.top  + (cr2.height - dh) / 2;
+function s2c(sx,sy) {
+  const cr = canvas.getBoundingClientRect();
+  ox = cr.left; oy = cr.top; scale = cr.width/canvas.width;
+  return { x:(sx-ox)/scale, y:(sy-oy)/scale };
+}
+function c2s(cx,cy) {
+  const cr = canvas.getBoundingClientRect();
+  return { x: cr.left + cx*scale, y: cr.top + cy*scale };
 }
 
-window.addEventListener('resize', () => { if (getCur()) { fitCanvas(); draw(); } });
-
-// Convert screen coords → canvas coords
-function s2c(sx, sy) {
-  return { x: (sx - ox) / scale, y: (sy - oy) / scale };
-}
-
-// ══════════════════════════════════════
-// DRAW
-// ══════════════════════════════════════
-function draw(previewRect) {
-  const im = getCur(); if (!im || !baseImg) return;
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.drawImage(baseImg, 0, 0);
-
-  // draw layers
-  im.layers.forEach(l => drawLayer(l));
-
-  // draw preview while dragging new rect
-  if (previewRect) {
-    ctx.fillStyle = 'rgba(255,255,255,0.5)';
-    ctx.fillRect(previewRect.x, previewRect.y, previewRect.w, previewRect.h);
-    ctx.strokeStyle = '#47d4ff';
-    ctx.lineWidth = 2/scale;
-    ctx.strokeRect(previewRect.x, previewRect.y, previewRect.w, previewRect.h);
+// ══════════════════════════════════════════
+// SNAP
+// ══════════════════════════════════════════
+// Given a value and axis, return snapped value if within threshold of any ruler
+function snapVal(v, axis) {
+  if (!S.rulersVisible) return v;
+  const rulers = axis==='x' ? S.rulersV : S.rulersH;
+  const thr = S.snapThreshold;
+  for (const r of rulers) {
+    if (Math.abs(v - r.pos) <= thr) return r.pos;
   }
-
-  // draw handles on selected
-  if (selId) {
-    const l = im.layers.find(l=>l.id===selId);
-    if (l) drawHandles(l);
-  }
+  return v;
+}
+// Snap a rect's edges to rulers
+function snapRect(l) {
+  if (!S.rulersVisible) return;
+  const thr = S.snapThreshold;
+  // Snap left edge
+  for (const r of S.rulersV) { if(Math.abs(l.x-r.pos)<=thr){l.x=r.pos;break;} }
+  // Snap right edge
+  for (const r of S.rulersV) { if(Math.abs((l.x+l.w)-r.pos)<=thr){l.x=r.pos-l.w;break;} }
+  // Snap top edge
+  for (const r of S.rulersH) { if(Math.abs(l.y-r.pos)<=thr){l.y=r.pos;break;} }
+  // Snap bottom edge
+  for (const r of S.rulersH) { if(Math.abs((l.y+l.h)-r.pos)<=thr){l.y=r.pos-l.h;break;} }
 }
 
-function drawLayer(l) {
-  if (l.type === 'rect') {
-    ctx.fillStyle = l.color || '#ffffff';
-    ctx.fillRect(l.x, l.y, l.w, l.h);
-  } else if (l.type === 'stamp') {
-    if (S.stampURL && stampEl.complete && stampEl.naturalWidth > 0) {
-      ctx.drawImage(stampEl, l.x, l.y, l.w, l.h);
-    }
-  }
+// ══════════════════════════════════════════
+// RULERS
+// ══════════════════════════════════════════
+let rulerId = 0;
+function newRulerId() { return 'r'+(++rulerId)+(Date.now()%10000); }
+
+function toggleRulers() {
+  S.rulersVisible = !S.rulersVisible;
+  rCanvas.style.display = S.rulersVisible && getCur() ? 'block' : 'none';
+  drawRulers();
+  updateRulersBtn();
+  autos();
+}
+function updateRulersBtn() {
+  document.getElementById('btn-rulers').classList.toggle('on', S.rulersVisible);
 }
 
-function drawHandles(l) {
-  ctx.strokeStyle = '#47d4ff';
-  ctx.lineWidth = 2/scale;
-  ctx.setLineDash([6/scale, 3/scale]);
-  ctx.strokeRect(l.x, l.y, l.w, l.h);
-  ctx.setLineDash([]);
-  const hs = 8/scale;
-  handles(l).forEach(h => {
-    ctx.fillStyle = '#47d4ff';
-    ctx.fillRect(h.cx - hs/2, h.cy - hs/2, hs, hs);
+function addRulerH(pos) {
+  const im = getCur();
+  const p = (pos !== undefined) ? pos : (im ? Math.round(im.origH/2) : 100);
+  S.rulersH.push({id:newRulerId(), pos:p});
+  renderRulersList(); drawRulers(); autos();
+}
+function addRulerV(pos) {
+  const im = getCur();
+  const p = (pos !== undefined) ? pos : (im ? Math.round(im.origW/2) : 100);
+  S.rulersV.push({id:newRulerId(), pos:p});
+  renderRulersList(); drawRulers(); autos();
+}
+function delRuler(axis, id) {
+  if (axis==='h') S.rulersH=S.rulersH.filter(r=>r.id!==id);
+  else S.rulersV=S.rulersV.filter(r=>r.id!==id);
+  renderRulersList(); drawRulers(); autos();
+}
+function updateRulerPos(axis, id, val) {
+  const arr = axis==='h'?S.rulersH:S.rulersV;
+  const r = arr.find(r=>r.id===id); if(r) r.pos=+val;
+  drawRulers(); autos();
+}
+
+function renderRulersList() {
+  const hl=document.getElementById('rulers-h-list'), vl=document.getElementById('rulers-v-list');
+  hl.innerHTML=''; vl.innerHTML='';
+  S.rulersH.forEach(r=>{
+    const d=document.createElement('div');d.className='ruler-line-row';
+    d.innerHTML=`<span class="ruler-tag">H</span><input class="ruler-pos-input" type="number" value="${Math.round(r.pos)}" oninput="updateRulerPos('h','${r.id}',this.value)"><button class="ruler-del-btn" onclick="delRuler('h','${r.id}')">✕</button>`;
+    hl.appendChild(d);
+  });
+  S.rulersV.forEach(r=>{
+    const d=document.createElement('div');d.className='ruler-line-row';
+    d.innerHTML=`<span class="ruler-tag">V</span><input class="ruler-pos-input" type="number" value="${Math.round(r.pos)}" oninput="updateRulerPos('v','${r.id}',this.value)"><button class="ruler-del-btn" onclick="delRuler('v','${r.id}')">✕</button>`;
+    vl.appendChild(d);
   });
 }
 
-function handles(l) {
-  return [
-    {h:'tl',cx:l.x,      cy:l.y},
-    {h:'tr',cx:l.x+l.w,  cy:l.y},
-    {h:'bl',cx:l.x,      cy:l.y+l.h},
-    {h:'br',cx:l.x+l.w,  cy:l.y+l.h},
-  ];
+function drawRulers() {
+  if (!S.rulersVisible || !getCur()) { rCtx.clearRect(0,0,rCanvas.width,rCanvas.height); return; }
+  rCtx.clearRect(0,0,rCanvas.width,rCanvas.height);
+  const cr = canvas.getBoundingClientRect();
+  const cc = document.getElementById('canvas-container').getBoundingClientRect();
+  const scr = cr.width / canvas.width; // screen scale
+
+  rCtx.save();
+  rCtx.strokeStyle = 'rgba(232,255,71,0.8)';
+  rCtx.lineWidth = 1;
+  rCtx.setLineDash([6,4]);
+
+  // Horizontal rulers (fixed Y in canvas space → line across full width of container)
+  S.rulersH.forEach(r => {
+    const sy = (cr.top - cc.top) + r.pos * scr;
+    rCtx.beginPath();
+    rCtx.moveTo(0, sy);
+    rCtx.lineTo(rCanvas.width, sy);
+    rCtx.stroke();
+    // label
+    rCtx.setLineDash([]);
+    rCtx.fillStyle='rgba(232,255,71,0.9)';
+    rCtx.font='bold 10px DM Mono,monospace';
+    rCtx.fillText(`H ${Math.round(r.pos)}`, 4, sy-3);
+    rCtx.setLineDash([6,4]);
+  });
+
+  // Vertical rulers
+  S.rulersV.forEach(r => {
+    const sx = (cr.left - cc.left) + r.pos * scr;
+    rCtx.beginPath();
+    rCtx.moveTo(sx, 0);
+    rCtx.lineTo(sx, rCanvas.height);
+    rCtx.stroke();
+    rCtx.setLineDash([]);
+    rCtx.fillStyle='rgba(232,255,71,0.9)';
+    rCtx.font='bold 10px DM Mono,monospace';
+    rCtx.save();
+    rCtx.translate(sx+3, 14);
+    rCtx.fillText(`V ${Math.round(r.pos)}`, 0, 0);
+    rCtx.restore();
+    rCtx.setLineDash([6,4]);
+  });
+
+  rCtx.restore();
 }
 
-// ══════════════════════════════════════
-// LAYERS
-// ══════════════════════════════════════
-function addLayer(l) {
-  const im=getCur(); if(!im)return;
-  im.layers.push(l); selId=l.id;
-  renderLayers(); draw(); updateProps(); autos();
+// Hit test a ruler line (within 8 screen px)
+function hitRuler(sx, sy) {
+  const cr = canvas.getBoundingClientRect();
+  const cc = document.getElementById('canvas-container').getBoundingClientRect();
+  const scr = cr.width / canvas.width;
+  const thr = 8;
+  for (const r of S.rulersH) {
+    const lineY = (cr.top - cc.top) + r.pos * scr;
+    if (Math.abs(sy - cc.top - lineY) < thr) return {axis:'h', id:r.id, r};
+  }
+  for (const r of S.rulersV) {
+    const lineX = (cr.left - cc.left) + r.pos * scr;
+    if (Math.abs(sx - cc.left - lineX) < thr) return {axis:'v', id:r.id, r};
+  }
+  return null;
 }
+
+// ══════════════════════════════════════════
+// DRAW (main canvas)
+// ══════════════════════════════════════════
+function draw(previewRect) {
+  const im = getCur(); if (!im || !baseImg) return;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.drawImage(baseImg,0,0);
+  im.layers.forEach(l => drawLayer(l));
+  if (previewRect) {
+    ctx.fillStyle='rgba(255,255,255,0.45)';ctx.fillRect(previewRect.x,previewRect.y,previewRect.w,previewRect.h);
+    ctx.strokeStyle='#47d4ff';ctx.lineWidth=2/scale;ctx.strokeRect(previewRect.x,previewRect.y,previewRect.w,previewRect.h);
+  }
+  if (selId) { const l=im.layers.find(l=>l.id===selId);if(l)drawHandles(l); }
+}
+function drawLayer(l) {
+  if (l.type==='rect') { ctx.fillStyle=l.color||'#fff'; ctx.fillRect(l.x,l.y,l.w,l.h); }
+  else if (l.type==='stamp' && S.stampURL && stampEl.complete && stampEl.naturalWidth>0) ctx.drawImage(stampEl,l.x,l.y,l.w,l.h);
+}
+function drawHandles(l) {
+  ctx.strokeStyle='#47d4ff';ctx.lineWidth=2/scale;
+  ctx.setLineDash([6/scale,3/scale]);ctx.strokeRect(l.x,l.y,l.w,l.h);ctx.setLineDash([]);
+  const hs=8/scale;
+  handles(l).forEach(h=>{ctx.fillStyle='#47d4ff';ctx.fillRect(h.cx-hs/2,h.cy-hs/2,hs,hs);});
+}
+function handles(l) {
+  return [{h:'tl',cx:l.x,cy:l.y},{h:'tr',cx:l.x+l.w,cy:l.y},{h:'bl',cx:l.x,cy:l.y+l.h},{h:'br',cx:l.x+l.w,cy:l.y+l.h}];
+}
+
+// ══════════════════════════════════════════
+// LAYERS
+// ══════════════════════════════════════════
+function addLayer(l) { const im=getCur();if(!im)return;im.layers.push(l);selId=l.id;renderLayers();draw();updateProps();autos(); }
 function renderLayers() {
   const im=getCur(); const list=document.getElementById('layers-list'); list.innerHTML='';
   if(!im||!im.layers.length){list.innerHTML='<div style="font-size:11px;color:var(--muted);font-family:\'DM Mono\',monospace">Nenhum layer</div>';return;}
   [...im.layers].reverse().forEach(l=>{
-    const d=document.createElement('div');
-    d.className='li'+(l.id===selId?' sel':'');
+    const d=document.createElement('div');d.className='li'+(l.id===selId?' sel':'');
     d.innerHTML=`<span class="licon">${l.type==='rect'?'▭':'🖼'}</span><span class="lname">${l.type==='rect'?'Rect':'Stamp'} …${l.id.slice(-4)}</span><span class="ldel" onclick="delById('${l.id}',event)">✕</span>`;
     d.addEventListener('click',()=>{selId=l.id;renderLayers();draw();updateProps();});
     list.appendChild(d);
@@ -577,26 +729,22 @@ function renderLayers() {
 }
 function delById(id,e) {
   e&&e.stopPropagation();
-  const im=getCur();if(!im)return;
-  im.layers=im.layers.filter(l=>l.id!==id);
-  if(selId===id)selId=null;
-  renderLayers();draw();updateProps();autos();
+  const im=getCur();if(!im)return;im.layers=im.layers.filter(l=>l.id!==id);
+  if(selId===id)selId=null;renderLayers();draw();updateProps();autos();
 }
 function delSel(){if(selId)delById(selId);}
-function bringFwd(){
+function bringFwd(){const im=getCur();if(!im||!selId)return;const i=im.layers.findIndex(l=>l.id===selId);if(i<im.layers.length-1){[im.layers[i],im.layers[i+1]]=[im.layers[i+1],im.layers[i]];renderLayers();draw();autos();}}
+function sendBk(){const im=getCur();if(!im||!selId)return;const i=im.layers.findIndex(l=>l.id===selId);if(i>0){[im.layers[i],im.layers[i-1]]=[im.layers[i-1],im.layers[i]];renderLayers();draw();autos();}}
+function dupSel(){
   const im=getCur();if(!im||!selId)return;
-  const i=im.layers.findIndex(l=>l.id===selId);
-  if(i<im.layers.length-1){[im.layers[i],im.layers[i+1]]=[im.layers[i+1],im.layers[i]];renderLayers();draw();autos();}
-}
-function sendBk(){
-  const im=getCur();if(!im||!selId)return;
-  const i=im.layers.findIndex(l=>l.id===selId);
-  if(i>0){[im.layers[i],im.layers[i-1]]=[im.layers[i-1],im.layers[i]];renderLayers();draw();autos();}
+  const l=im.layers.find(l=>l.id===selId);if(!l)return;
+  const nl={...l,id:'l'+Date.now(),x:l.x+20,y:l.y+20};
+  addLayer(nl);
 }
 
-// ══════════════════════════════════════
+// ══════════════════════════════════════════
 // TOOL
-// ══════════════════════════════════════
+// ══════════════════════════════════════════
 function setTool(t) {
   S.tool=t;
   document.querySelectorAll('.tbtn').forEach(b=>b.classList.remove('on'));
@@ -604,15 +752,44 @@ function setTool(t) {
   canvas.style.cursor = t==='select'?'default':'crosshair';
 }
 
-// ══════════════════════════════════════
+// ══════════════════════════════════════════
+// CONTEXT MENU
+// ══════════════════════════════════════════
+const ctxMenu = document.getElementById('ctx-menu');
+function showCtx(sx, sy) {
+  ctxMenu.style.left = sx+'px'; ctxMenu.style.top = sy+'px';
+  ctxMenu.classList.add('on');
+}
+function hideCtx() { ctxMenu.classList.remove('on'); }
+document.addEventListener('click', ()=>hideCtx());
+document.addEventListener('contextmenu', e=>e.preventDefault());
+
+function ctxAction(a) {
+  hideCtx();
+  if(a==='fwd')bringFwd();
+  else if(a==='bk')sendBk();
+  else if(a==='del')delSel();
+  else if(a==='dup')dupSel();
+  else if(a==='done')markDone();
+  else if(a==='next')nextImg();
+}
+
+// ══════════════════════════════════════════
 // EVENTS
-// ══════════════════════════════════════
+// ══════════════════════════════════════════
 function setupEvents() {
   canvas.addEventListener('pointerdown', onDown);
   canvas.addEventListener('pointermove', onMove);
   canvas.addEventListener('pointerup', onUp);
   canvas.addEventListener('pointercancel', onUp);
+  canvas.addEventListener('contextmenu', onRightClick);
 
+  // Ruler canvas also needs pointer for dragging rulers
+  rCanvas.addEventListener('pointerdown', onRulerDown);
+  rCanvas.addEventListener('pointermove', onRulerMove);
+  rCanvas.addEventListener('pointerup', onRulerUp);
+
+  // Pinch
   canvas.addEventListener('touchstart', e=>{
     if(e.touches.length===2){
       pinchDist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
@@ -623,13 +800,11 @@ function setupEvents() {
   canvas.addEventListener('touchmove', e=>{
     if(e.touches.length===2&&pinchDist&&pinchRect){
       const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
-      const ratio=d/pinchDist;
       const im=getCur();if(!im||!selId)return;
       const l=im.layers.find(l=>l.id===selId);if(!l)return;
       const ar=pinchRect.w/pinchRect.h;
-      const nw=Math.max(10,pinchRect.w*ratio);
-      l.w=nw;l.h=nw/ar;
-      draw();updateProps();e.preventDefault();
+      const nw=Math.max(10,pinchRect.w*(d/pinchDist));
+      l.w=nw;l.h=nw/ar;draw();updateProps();e.preventDefault();
     }
   },{passive:false});
   canvas.addEventListener('touchend',e=>{if(e.touches.length<2){pinchDist=null;pinchRect=null;autos();}});
@@ -637,26 +812,23 @@ function setupEvents() {
   window.addEventListener('keydown', e=>{
     if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT')return;
     if(e.key==='Delete'||e.key==='Backspace')delSel();
-    if(e.key==='Escape'){selId=null;renderLayers();draw();updateProps();}
+    if(e.key==='Escape'){selId=null;renderLayers();draw();updateProps();hideCtx();}
     if(e.key==='r'||e.key==='R')setTool('rect');
     if(e.key==='s'||e.key==='S')setTool('stamp');
     if(e.key==='v'||e.key==='V')setTool('select');
+    if(e.key==='g'||e.key==='G')toggleRulers();
   });
 }
 
 function gpos(e) {
-  // Recompute ox/oy fresh every time (handles scroll/resize)
-  const cr = canvas.getBoundingClientRect();
-  ox = cr.left; oy = cr.top;
-  scale = cr.width / canvas.width;
   const cx = e.touches&&e.touches.length>0 ? e.touches[0].clientX : e.clientX;
   const cy = e.touches&&e.touches.length>0 ? e.touches[0].clientY : e.clientY;
-  return { x:(cx-ox)/scale, y:(cy-oy)/scale };
+  return s2c(cx, cy);
 }
 
 function hitHandle(l, p) {
-  const hs = 12/scale;
-  for(const h of handles(l)) { if(Math.abs(p.x-h.cx)<hs&&Math.abs(p.y-h.cy)<hs) return h.h; }
+  const hs=12/scale;
+  for(const h of handles(l)){if(Math.abs(p.x-h.cx)<hs&&Math.abs(p.y-h.cy)<hs)return h.h;}
   return null;
 }
 function hitLayer(layers, p) {
@@ -664,17 +836,39 @@ function hitLayer(layers, p) {
   return null;
 }
 
+function onRightClick(e) {
+  e.preventDefault();
+  const p = gpos(e);
+  const im = getCur(); if (!im) return;
+  const hit = hitLayer(im.layers, p);
+  if (hit) { selId=hit.id; renderLayers(); draw(); updateProps(); }
+  showCtx(e.clientX, e.clientY);
+}
+
 function onDown(e) {
   if(e.touches&&e.touches.length===2)return;
-  e.preventDefault();
+  if(e.button===2)return; // handled by contextmenu
+  e.preventDefault(); hideCtx();
   canvas.setPointerCapture&&canvas.setPointerCapture(e.pointerId);
-  const p=gpos(e);
-  const im=getCur();if(!im)return;
+  const p = gpos(e);
+  const im = getCur(); if (!im) return;
 
-  if(S.tool==='select'){
-    if(selId){
+  if (S.tool==='ruler') {
+    // Click on canvas → place ruler centered on click
+    const id = newRulerId();
+    // Ask H or V? For now: if closer to horizontal center → H, else V
+    // Better: last placed type toggle, or just default H
+    // We'll add H ruler at clicked Y
+    S.rulersH.push({id, pos: Math.round(p.y)});
+    renderRulersList(); drawRulers(); autos();
+    setTool('select');
+    return;
+  }
+
+  if (S.tool==='select') {
+    if (selId) {
       const sel=im.layers.find(l=>l.id===selId);
-      if(sel){
+      if (sel) {
         const h=hitHandle(sel,p);
         if(h){mode='resize';rsHandle=h;rsRect={...sel};rsPos={...p};return;}
         if(p.x>=sel.x&&p.x<=sel.x+sel.w&&p.y>=sel.y&&p.y<=sel.y+sel.h){mode='drag';dragOff={x:p.x-sel.x,y:p.y-sel.y};return;}
@@ -685,32 +879,37 @@ function onDown(e) {
     selId=null;renderLayers();draw();updateProps();return;
   }
 
-  if(S.tool==='stamp'){
-    if(!S.stampURL){notify('Carregue um stamp PNG primeiro!');return;}
-    const dw=im.origW*0.2;
-    const ar=S.stampW/S.stampH;
-    const dh=dw/ar;
+  if (S.tool==='stamp') {
+    if (!S.stampURL) { notify('Carregue um stamp PNG primeiro!'); return; }
+    let dw, dh;
+    const useLastPreset = document.getElementById('use-last-preset').checked;
+    if (useLastPreset && S.lastStampPresetIdx >= 0 && S.stampPresets[S.lastStampPresetIdx]) {
+      const pr = S.stampPresets[S.lastStampPresetIdx];
+      dw = pr.w; dh = pr.h;
+    } else {
+      dw = im.origW*0.2;
+      const ar = S.stampW/S.stampH;
+      dh = dw/ar;
+    }
     const id='l'+Date.now();
     addLayer({id,type:'stamp',x:p.x-dw/2,y:p.y-dh/2,w:dw,h:dh});
     setTool('select');
     return;
   }
 
-  if(S.tool==='rect'){
-    mode='draw';drawStart={...p};return;
-  }
+  if (S.tool==='rect') { mode='draw'; drawStart={...p}; return; }
 }
 
 function onMove(e) {
   e.preventDefault();
-  const p=gpos(e);
-  const im=getCur();if(!im)return;
+  const p = gpos(e);
+  const im = getCur(); if (!im) return;
 
-  if(!mode&&S.tool==='select'){
+  if (!mode && S.tool==='select') {
     let cur='default';
-    if(selId){
+    if (selId) {
       const sel=im.layers.find(l=>l.id===selId);
-      if(sel){
+      if (sel) {
         const h=hitHandle(sel,p);
         if(h==='br'||h==='tl')cur='nwse-resize';
         else if(h==='bl'||h==='tr')cur='nesw-resize';
@@ -721,13 +920,14 @@ function onMove(e) {
     return;
   }
 
-  if(mode==='drag'){
+  if (mode==='drag') {
     const l=im.layers.find(l=>l.id===selId);if(!l)return;
-    l.x=p.x-dragOff.x;l.y=p.y-dragOff.y;
-    draw();updateProps();return;
+    l.x=p.x-dragOff.x; l.y=p.y-dragOff.y;
+    snapRect(l);
+    draw(); updateProps(); return;
   }
 
-  if(mode==='resize'){
+  if (mode==='resize') {
     const l=im.layers.find(l=>l.id===selId);if(!l)return;
     const dx=p.x-rsPos.x,dy=p.y-rsPos.y;
     const lock=l.type==='stamp'||document.getElementById('rlock').checked;
@@ -738,10 +938,10 @@ function onMove(e) {
     else if(rsHandle==='tr'){nw=Math.max(10,rsRect.w+dx);nh=lock?nw/ar:Math.max(10,rsRect.h-dy);ny=rsRect.y+rsRect.h-nh;}
     else if(rsHandle==='tl'){nw=Math.max(10,rsRect.w-dx);nh=lock?nw/ar:Math.max(10,rsRect.h-dy);nx=rsRect.x+rsRect.w-nw;ny=rsRect.y+rsRect.h-nh;}
     l.x=nx;l.y=ny;l.w=nw;l.h=nh;
-    draw();updateProps();return;
+    draw(); updateProps(); return;
   }
 
-  if(mode==='draw'&&drawStart){
+  if (mode==='draw' && drawStart) {
     const x=Math.min(p.x,drawStart.x),y=Math.min(p.y,drawStart.y);
     const w=Math.abs(p.x-drawStart.x),h=Math.abs(p.y-drawStart.y);
     draw({x,y,w,h});
@@ -760,9 +960,43 @@ function onUp(e) {
   mode=null;drawStart=null;rsHandle=null;rsRect=null;rsPos=null;
 }
 
-// ══════════════════════════════════════
+// Ruler dragging (on ruler canvas)
+function onRulerDown(e) {
+  if (!S.rulersVisible) return;
+  e.preventDefault();
+  const cc = document.getElementById('canvas-container').getBoundingClientRect();
+  const sx = e.clientX - cc.left;
+  const sy = e.clientY - cc.top;
+  const hit = hitRuler(e.clientX, e.clientY);
+  if (hit) {
+    draggingRuler = hit;
+    rCanvas.setPointerCapture && rCanvas.setPointerCapture(e.pointerId);
+  }
+}
+function onRulerMove(e) {
+  if (!draggingRuler) {
+    // Change cursor when hovering over ruler
+    const hit = hitRuler(e.clientX, e.clientY);
+    rCanvas.style.cursor = hit ? (hit.axis==='h'?'ns-resize':'ew-resize') : 'default';
+    return;
+  }
+  e.preventDefault();
+  const cp = s2c(e.clientX, e.clientY);
+  const r = draggingRuler.axis==='h'
+    ? S.rulersH.find(r=>r.id===draggingRuler.id)
+    : S.rulersV.find(r=>r.id===draggingRuler.id);
+  if (!r) return;
+  r.pos = Math.round(draggingRuler.axis==='h' ? cp.y : cp.x);
+  renderRulersList();
+  drawRulers();
+}
+function onRulerUp(e) {
+  if (draggingRuler) { autos(); draggingRuler = null; }
+}
+
+// ══════════════════════════════════════════
 // PROPS
-// ══════════════════════════════════════
+// ══════════════════════════════════════════
 function updateProps() {
   const im=getCur();
   const pn=document.getElementById('props-none'),pf=document.getElementById('props-form');
@@ -781,8 +1015,7 @@ function updateProps() {
 function applyP(prop,val){
   const im=getCur();if(!im||!selId)return;
   const l=im.layers.find(l=>l.id===selId);if(!l)return;
-  const n=parseFloat(val);
-  if(prop==='color')l.color=val;else if(!isNaN(n))l[prop]=n;
+  const n=parseFloat(val);if(prop==='color')l.color=val;else if(!isNaN(n))l[prop]=n;
   draw();
 }
 function applyPWH(prop,val){
@@ -795,16 +1028,18 @@ function applyPWH(prop,val){
   updateProps();draw();
 }
 
-// ══════════════════════════════════════
+// ══════════════════════════════════════════
 // PRESETS
-// ══════════════════════════════════════
+// ══════════════════════════════════════════
 function renderPresets(){renderSP();renderRP();}
 function renderSP(){
   const g=document.getElementById('stamp-presets');g.innerHTML='';
   S.stampPresets.forEach((p,i)=>{
-    const d=document.createElement('div');d.className='pi';
+    const d=document.createElement('div');
+    d.className='pi'+(i===S.lastStampPresetIdx?' last-preset':'');
     d.innerHTML=`<span class="pn">${p.name}</span><span class="pd" onclick="delPreset('s',${i},event)">✕</span>`;
-    d.addEventListener('click',()=>applyPreset('s',p));g.appendChild(d);
+    d.addEventListener('click',()=>applyPreset('s',p,i));
+    g.appendChild(d);
   });
 }
 function renderRP(){
@@ -812,48 +1047,46 @@ function renderRP(){
   S.rectPresets.forEach((p,i)=>{
     const d=document.createElement('div');d.className='pi';
     d.innerHTML=`<span class="pn">${p.name}</span><span class="pd" onclick="delPreset('r',${i},event)">✕</span>`;
-    d.addEventListener('click',()=>applyPreset('r',p));g.appendChild(d);
+    d.addEventListener('click',()=>applyPreset('r',p,i));g.appendChild(d);
   });
 }
 function saveStampPreset(){
   const im=getCur();if(!im||!selId){notify('Selecione um stamp');return;}
-  const l=im.layers.find(l=>l.id===selId&&l.type==='stamp');
-  if(!l){notify('Selecione um layer stamp');return;}
+  const l=im.layers.find(l=>l.id===selId&&l.type==='stamp');if(!l){notify('Selecione um layer stamp');return;}
   const name=prompt('Nome do preset:',`${Math.round(l.w)}×${Math.round(l.h)}`);if(!name)return;
-  S.stampPresets.push({name,w:l.w,h:l.h});renderSP();autos();
+  S.stampPresets.push({name,w:l.w,h:l.h});
+  S.lastStampPresetIdx=S.stampPresets.length-1;
+  renderSP();autos();
 }
 function saveRectPreset(){
   const im=getCur();if(!im||!selId){notify('Selecione um retângulo');return;}
-  const l=im.layers.find(l=>l.id===selId&&l.type==='rect');
-  if(!l){notify('Selecione um layer retângulo');return;}
+  const l=im.layers.find(l=>l.id===selId&&l.type==='rect');if(!l){notify('Selecione um layer retângulo');return;}
   const name=prompt('Nome do preset:',`${Math.round(l.w)}×${Math.round(l.h)}`);if(!name)return;
   S.rectPresets.push({name,w:l.w,h:l.h});renderRP();autos();
 }
-function applyPreset(t,p){
+function applyPreset(t,p,i){
   const im=getCur();if(!im||!selId)return;
   const l=im.layers.find(l=>l.id===selId);if(!l)return;
-  l.w=p.w;l.h=p.h;draw();updateProps();autos();
+  l.w=p.w;l.h=p.h;
+  if(t==='s'){S.lastStampPresetIdx=i;renderSP();}
+  draw();updateProps();autos();
 }
 function delPreset(t,i,e){
   e.stopPropagation();
-  if(t==='s'){S.stampPresets.splice(i,1);renderSP();}else{S.rectPresets.splice(i,1);renderRP();}
+  if(t==='s'){S.stampPresets.splice(i,1);if(S.lastStampPresetIdx>=S.stampPresets.length)S.lastStampPresetIdx=S.stampPresets.length-1;renderSP();}
+  else{S.rectPresets.splice(i,1);renderRP();}
   autos();
 }
 
-// ══════════════════════════════════════
+// ══════════════════════════════════════════
 // EXPORT
-// ══════════════════════════════════════
+// ══════════════════════════════════════════
 function openX(){if(!S.currentId){notify('Nenhuma imagem aberta');return;}document.getElementById('xmodal').classList.add('on');}
 function closeX(){document.getElementById('xmodal').classList.remove('on');}
 function xModeChange(){document.getElementById('xdims').style.display=document.getElementById('xmode').value==='custom'?'block':'none';}
 function xFmtChange(){document.getElementById('xqrow').style.display=document.getElementById('xfmt').value==='image/png'?'none':'flex';}
 function getExt(f){return f==='image/png'?'.png':f==='image/jpeg'?'.jpg':'.webp';}
-function getXImgs(){
-  const s=document.getElementById('xscope').value;
-  if(s==='current')return S.images.filter(i=>i.id===S.currentId);
-  if(s==='done')return S.images.filter(i=>i.done);
-  return S.images;
-}
+function getXImgs(){const s=document.getElementById('xscope').value;if(s==='current')return S.images.filter(i=>i.id===S.currentId);if(s==='done')return S.images.filter(i=>i.done);return S.images;}
 
 async function renderBlob(im,outW,outH,fmt,qual){
   return new Promise(resolve=>{
@@ -869,11 +1102,8 @@ async function renderBlob(im,outW,outH,fmt,qual){
         else if(l.type==='stamp'&&S.stampURL)stamps.push(l);
       });
       const fin=()=>off.toBlob(b=>resolve(b),fmt,fmt==='image/png'?undefined:qual);
-      if(stamps.length){
-        const si=new Image();si.crossOrigin='anonymous';
-        si.onload=()=>{stamps.forEach(l=>c2.drawImage(si,l.x*sx,l.y*sy,l.w*sx,l.h*sy));fin();};
-        si.src=S.stampURL;
-      }else fin();
+      if(stamps.length){const si=new Image();si.onload=()=>{stamps.forEach(l=>c2.drawImage(si,l.x*sx,l.y*sy,l.w*sx,l.h*sy));fin();};si.src=S.stampURL;}
+      else fin();
     };
     base.src=im.dataURL;
   });
@@ -882,61 +1112,51 @@ async function renderBlob(im,outW,outH,fmt,qual){
 async function doExport(asZip){
   closeX();
   const imgs=getXImgs();if(!imgs.length){notify('Nenhuma imagem');return;}
-  const fmt=document.getElementById('xfmt').value;
-  const qual=parseFloat(document.getElementById('xq').value);
-  const mode=document.getElementById('xmode').value;
-  const ext=getExt(fmt);
+  const fmt=document.getElementById('xfmt').value,qual=parseFloat(document.getElementById('xq').value);
+  const mode=document.getElementById('xmode').value,ext=getExt(fmt);
   const ov=document.getElementById('prog'),pb=document.getElementById('pbar'),pl=document.getElementById('plabel');
   ov.classList.add('on');
-
   if(asZip){
     const zip=new JSZip();
     for(let i=0;i<imgs.length;i++){
       const im=imgs[i];
-      const outW=mode==='custom'?(parseInt(document.getElementById('xw').value)||im.origW):im.origW;
-      const outH=mode==='custom'?(parseInt(document.getElementById('xh').value)||im.origH):im.origH;
-      pl.textContent=`${i+1} / ${imgs.length} — ${im.name}`;pb.style.width=((i/imgs.length)*100)+'%';
-      const blob=await renderBlob(im,outW,outH,fmt,qual);
-      zip.file(im.name.replace(/\.[^.]+$/,'')+`_edited${ext}`,blob);
+      const oW=mode==='custom'?(parseInt(document.getElementById('xw').value)||im.origW):im.origW;
+      const oH=mode==='custom'?(parseInt(document.getElementById('xh').value)||im.origH):im.origH;
+      pl.textContent=`${i+1}/${imgs.length} — ${im.name}`;pb.style.width=((i/imgs.length)*100)+'%';
+      zip.file(im.name.replace(/\.[^.]+$/,'')+`_edited${ext}`,await renderBlob(im,oW,oH,fmt,qual));
     }
     pb.style.width='100%';pl.textContent='Comprimindo...';
     const zb=await zip.generateAsync({type:'blob'});
     const url=URL.createObjectURL(zb);
-    const a=document.createElement('a');a.href=url;a.download='photoniko_export.zip';a.click();
+    Object.assign(document.createElement('a'),{href:url,download:'photoniko_export.zip'}).click();
     setTimeout(()=>URL.revokeObjectURL(url),5000);
     ov.classList.remove('on');notify('ZIP exportado!');
   }else{
     for(let i=0;i<imgs.length;i++){
       const im=imgs[i];
-      const outW=mode==='custom'?(parseInt(document.getElementById('xw').value)||im.origW):im.origW;
-      const outH=mode==='custom'?(parseInt(document.getElementById('xh').value)||im.origH):im.origH;
-      pl.textContent=`${i+1} / ${imgs.length} — ${im.name}`;pb.style.width=((i/imgs.length)*100)+'%';
-      const blob=await renderBlob(im,outW,outH,fmt,qual);
-      const url=URL.createObjectURL(blob);
-      const a=document.createElement('a');a.href=url;a.download=im.name.replace(/\.[^.]+$/,'')+`_edited${ext}`;a.click();
-      await new Promise(r=>setTimeout(r,250));
-      URL.revokeObjectURL(url);
+      const oW=mode==='custom'?(parseInt(document.getElementById('xw').value)||im.origW):im.origW;
+      const oH=mode==='custom'?(parseInt(document.getElementById('xh').value)||im.origH):im.origH;
+      pl.textContent=`${i+1}/${imgs.length} — ${im.name}`;pb.style.width=((i/imgs.length)*100)+'%';
+      const url=URL.createObjectURL(await renderBlob(im,oW,oH,fmt,qual));
+      Object.assign(document.createElement('a'),{href:url,download:im.name.replace(/\.[^.]+$/,'')+`_edited${ext}`}).click();
+      await new Promise(r=>setTimeout(r,250));URL.revokeObjectURL(url);
     }
     ov.classList.remove('on');notify(imgs.length===1?'Exportado!':imgs.length+' exportados!');
   }
 }
 
-// ══════════════════════════════════════
+// ══════════════════════════════════════════
 // UI HELPERS
-// ══════════════════════════════════════
+// ══════════════════════════════════════════
 function togSec(title){
   const body=title.nextElementSibling;const open=body.style.display!=='none';
-  body.style.display=open?'none':'';
-  title.classList.toggle('open',!open);
+  body.style.display=open?'none':'';title.classList.toggle('open',!open);
   title.querySelector('.rarrow').textContent=open?'▼':'▲';
 }
 let lOff=false,rOff=false;
 function togL(){lOff=!lOff;document.getElementById('queue-panel').classList.toggle('off',lOff);document.getElementById('tog-l').textContent=lOff?'›':'‹';}
 function togR(){rOff=!rOff;document.getElementById('right-panel').classList.toggle('off',rOff);document.getElementById('tog-r').textContent=rOff?'‹':'›';}
-function notify(msg){
-  const n=document.getElementById('notif');n.textContent=msg;n.classList.add('on');
-  clearTimeout(n._t);n._t=setTimeout(()=>n.classList.remove('on'),2200);
-}
+function notify(msg){const n=document.getElementById('notif');n.textContent=msg;n.classList.add('on');clearTimeout(n._t);n._t=setTimeout(()=>n.classList.remove('on'),2200);}
 
 init();
 </script>
