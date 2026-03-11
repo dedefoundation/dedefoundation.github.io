@@ -221,12 +221,10 @@
   .reel-wrapper:last-child { border-right: none; }
 
   .reel-strip {
-    position: absolute;
     width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
-    transition: none;
     will-change: transform;
   }
 
@@ -747,7 +745,7 @@
 // ══════════════════════════════════════════════════
 //   🔑 SECRET KEY — CHANGE THIS BEFORE DISTRIBUTING
 // ══════════════════════════════════════════════════
-const SECRET_KEY = "1470404df4eeeda27f575d171fd003b930f612ec8a96e727b347f8ba910e69c3";
+const SECRET_KEY = "FORTUNE_REEL_SECRET_2024_CHANGE_ME";
 // ══════════════════════════════════════════════════
 
 // ─── HMAC-SHA256 via SubtleCrypto ─────────────────
@@ -828,10 +826,10 @@ const SYMBOLS = [
   { s: '💎', w:  2, tier: 6 },
 ];
 
-const STRIP_LENGTH = 40;
 const CELL_H = 80;
-const VISIBLE_CELLS = 3;
+const VISIBLE = 3;        // visible rows
 const NUM_REELS = 4;
+const REEL_SIZE = 30;     // symbols per reel strip
 
 // Build weighted pool
 function buildPool() {
@@ -840,32 +838,38 @@ function buildPool() {
   return pool;
 }
 const POOL = buildPool();
-
 function randSym() { return POOL[Math.floor(Math.random() * POOL.length)]; }
 
-// ─── Reel Init ─────────────────────────────────────
-const strips = [];
-const positions = []; // current top offset in px
+// ─── Reel state ────────────────────────────────────
+// Each reel: array of symbols, current top index (which sym shows at top row)
+const reelSyms = [];   // reelSyms[i] = array of sym objects
+const reelTops = [];   // reelTops[i] = index of symbol at top visible row
 
-function buildStrip(id) {
-  const el = document.getElementById('strip' + id);
+function buildReel(id) {
   const syms = [];
-  for (let i = 0; i < STRIP_LENGTH; i++) {
-    const sym = randSym();
-    syms.push(sym);
-    const cell = document.createElement('div');
-    cell.className = 'symbol-cell';
-    cell.textContent = sym.s;
-    el.appendChild(cell);
-  }
-  strips.push({ el, syms });
-  // Start at middle of strip, showing center cell
-  const startPos = -(STRIP_LENGTH / 2) * CELL_H + CELL_H;
-  el.style.transform = `translateY(${startPos}px)`;
-  positions.push(startPos);
+  for (let i = 0; i < REEL_SIZE; i++) syms.push(randSym());
+  reelSyms.push(syms);
+  reelTops.push(0);
+  renderReel(reelSyms.length - 1);
 }
 
-for (let i = 0; i < NUM_REELS; i++) buildStrip(i);
+function renderReel(idx) {
+  const strip = document.getElementById('strip' + idx);
+  strip.innerHTML = '';
+  // Render VISIBLE cells starting from reelTops[idx]
+  for (let r = 0; r < VISIBLE; r++) {
+    const symIdx = (reelTops[idx] + r) % REEL_SIZE;
+    const cell = document.createElement('div');
+    cell.className = 'symbol-cell';
+    cell.textContent = reelSyms[idx][symIdx].s;
+    strip.appendChild(cell);
+  }
+  // Reset transform — no translateY needed with this approach
+  strip.style.transform = 'translateY(0)';
+  strip.style.transition = 'none';
+}
+
+for (let i = 0; i < NUM_REELS; i++) buildReel(i);
 
 // ─── Lights ────────────────────────────────────────
 const BULB_COUNT = 28;
@@ -1115,56 +1119,73 @@ async function spin() {
 function animateReel(idx, targetSym, delay, spinDur) {
   return new Promise(resolve => {
     setTimeout(() => {
-      const strip = strips[idx].el;
-      const syms = strips[idx].syms;
+      const strip = document.getElementById('strip' + idx);
+      const syms = reelSyms[idx];
 
-      // Find or place target symbol
-      let targetIdx = syms.findIndex(s => s.s === targetSym.s);
-      if (targetIdx < 0) {
-        // Replace a random cell with the target
-        targetIdx = Math.floor(Math.random() * STRIP_LENGTH);
-        syms[targetIdx] = targetSym;
-        const cells = strip.querySelectorAll('.symbol-cell');
-        cells[targetIdx].textContent = targetSym.s;
+      // Place target symbol at a fixed landing slot (index 1 = center row)
+      // We'll spin N full rotations then land with targetSym at center
+      const landingSlot = 1; // center of 3 visible rows
+
+      // Pick a random destination top index such that center shows targetSym
+      // Scatter target into a random position in the reel
+      const destTopIdx = Math.floor(Math.random() * REEL_SIZE);
+      const centerIdx = (destTopIdx + landingSlot) % REEL_SIZE;
+      syms[centerIdx] = targetSym;
+      // Also fill neighbours with random syms for variety
+      syms[(destTopIdx) % REEL_SIZE] = randSym();
+      syms[(destTopIdx + 2) % REEL_SIZE] = randSym();
+
+      // How many full reel steps to spin (each step = 1 symbol advance)
+      const extraSteps = REEL_SIZE * (3 + idx); // 3-6 full rotations depending on reel
+      const currentTop = reelTops[idx];
+      // Steps needed to reach destTopIdx from currentTop
+      const stepsToTarget = ((destTopIdx - currentTop) % REEL_SIZE + REEL_SIZE) % REEL_SIZE;
+      const totalSteps = extraSteps + stepsToTarget;
+
+      // Animation: scroll by rendering frames
+      // We animate a translateY from 0 to -totalSteps*CELL_H,
+      // but we swap symbols every CELL_H pixels to create infinite scroll illusion
+      
+      // Build a tall virtual strip for this spin (totalSteps + VISIBLE cells)
+      const virtualLen = totalSteps + VISIBLE;
+      strip.innerHTML = '';
+      strip.style.transition = 'none';
+      strip.style.transform = 'translateY(0)';
+
+      for (let r = 0; r < virtualLen; r++) {
+        const symIdx = (currentTop + r) % REEL_SIZE;
+        // Override the landing area
+        let sym;
+        if (r >= totalSteps && r < totalSteps + VISIBLE) {
+          const row = r - totalSteps;
+          sym = syms[(destTopIdx + row) % REEL_SIZE];
+        } else {
+          sym = syms[symIdx];
+        }
+        const cell = document.createElement('div');
+        cell.className = 'symbol-cell';
+        cell.textContent = sym.s;
+        strip.appendChild(cell);
       }
 
-      // Target position: targetIdx cell in center
-      // center offset = -(targetIdx * CELL_H) + CELL_H (to show 3 cells, center is +CELL_H)
-      const targetPos = -(targetIdx * CELL_H) + CELL_H;
-
-      // Spin: add several full rotations
-      const fullRotations = 3 + Math.floor(spinDur / 300);
-      const totalScroll = fullRotations * STRIP_LENGTH * CELL_H;
-
-      // Current pos
-      const startPos = positions[idx];
-
-      // Animate
+      // Animate translateY from 0 to -(totalSteps * CELL_H)
+      const totalPx = totalSteps * CELL_H;
       const startTime = performance.now();
-      const totalDur = spinDur;
 
       function frame(now) {
         const elapsed = now - startTime;
-        const progress = Math.min(elapsed / totalDur, 1);
-
-        // Easing: ease-out cubic
+        const progress = Math.min(elapsed / spinDur, 1);
+        // ease-out cubic
         const eased = 1 - Math.pow(1 - progress, 3);
-
-        const currentPos = startPos - totalScroll * eased;
-
-        // Wrap within strip bounds
-        const stripH = STRIP_LENGTH * CELL_H;
-        const wrapped = ((currentPos % stripH) - stripH) % stripH;
-        strip.style.transform = `translateY(${wrapped}px)`;
-        positions[idx] = wrapped;
+        strip.style.transform = `translateY(${-totalPx * eased}px)`;
 
         if (progress < 1) {
           requestAnimationFrame(frame);
         } else {
-          // Snap to exact target
-          const snappedPos = ((targetPos % (STRIP_LENGTH * CELL_H)) - STRIP_LENGTH * CELL_H) % (STRIP_LENGTH * CELL_H);
-          strip.style.transform = `translateY(${snappedPos}px)`;
-          positions[idx] = snappedPos;
+          // Snap and rebuild with just 3 clean cells
+          strip.style.transform = `translateY(0)`;
+          reelTops[idx] = destTopIdx;
+          renderReel(idx);
           sfxReelStop(idx);
           resolve();
         }
@@ -1175,8 +1196,10 @@ function animateReel(idx, targetSym, delay, spinDur) {
   });
 }
 
-function evaluateResult(syms) {
-  const payout = calcPayout(syms);
+function evaluateResult(resultSyms) {
+  // Read actual center symbols after animation
+  const finalSyms = resultSyms; // already the targets we set
+  const payout = calcPayout(finalSyms);
   animateLights('idle');
 
   if (payout) {
@@ -1204,8 +1227,8 @@ function evaluateResult(syms) {
     animateLights('win');
 
     // Highlight winning reels
-    syms.forEach((s, i) => {
-      if (s.s === syms[0].s || (payout.mult > 5)) {
+    finalSyms.forEach((s, i) => {
+      if (s.s === finalSyms[0].s || (payout.mult > 5)) {
         document.getElementById('reel'+i).classList.add('winning');
         setTimeout(() => document.getElementById('reel'+i).classList.remove('winning'), 1500);
       }
