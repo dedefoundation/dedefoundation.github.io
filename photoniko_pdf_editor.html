@@ -5,8 +5,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>PDF Editor</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- PDF.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<!-- PDF.js text layer CSS — this is mandatory for renderTextLayer() to work -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf_viewer.min.css">
 <style>
+/* ══ RESET ══ */
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 :root{
   --ink:#0a0a0b;--paper:#f2f0eb;--surf:#fff;--ghost:#eae8e2;--rule:#d4d0c8;
@@ -17,24 +21,22 @@
 html,body{height:100%;overflow:hidden;background:var(--paper);color:var(--ink);font-family:var(--sans);}
 #app{display:flex;flex-direction:column;height:100dvh;}
 
-/* ─── TOPBAR ─── */
+/* ══ TOPBAR ══ */
 #bar{
   height:var(--th);background:var(--surf);border-bottom:1px solid var(--rule);
-  display:flex;align-items:center;padding:0 10px;gap:5px;flex-shrink:0;z-index:100;
+  display:flex;align-items:center;padding:0 10px;gap:5px;flex-shrink:0;z-index:200;
 }
-.logo{font-family:var(--mono);font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;flex-shrink:0;margin-right:2px;}
+.logo{font-family:var(--mono);font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;flex-shrink:0;margin-right:3px;}
 .logo-dot{width:6px;height:6px;border-radius:50%;background:var(--ink);}
 .sep{width:1px;height:18px;background:var(--rule);flex-shrink:0;margin:0 3px;}
 .sp{flex:1;}
-/* icon button */
 .ib{width:32px;height:32px;border-radius:6px;border:1px solid var(--rule);background:transparent;
   cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink);
-  flex-shrink:0;transition:background .1s;}
+  flex-shrink:0;transition:background .1s,color .1s,border-color .1s;}
 .ib:hover{background:var(--ghost);}
 .ib:disabled{opacity:.3;cursor:not-allowed;}
 .ib.on{background:var(--ink);color:var(--live);border-color:var(--ink);}
 .ib svg{width:14px;height:14px;pointer-events:none;}
-/* text button */
 .tb{height:32px;padding:0 11px;border-radius:6px;border:1px solid var(--rule);background:transparent;
   color:var(--ink);font-family:var(--mono);font-size:11px;font-weight:500;cursor:pointer;
   white-space:nowrap;display:inline-flex;align-items:center;gap:5px;flex-shrink:0;transition:background .1s;}
@@ -43,7 +45,6 @@ html,body{height:100%;overflow:hidden;background:var(--paper);color:var(--ink);f
 .tb.primary{background:var(--ink);color:#fff;border-color:var(--ink);}
 .tb.primary:hover:not(:disabled){background:#222;}
 .tb.on{background:var(--ink);color:var(--live);border-color:var(--ink);}
-/* page nav */
 #pgnav{display:none;align-items:center;gap:3px;}
 #pgin{width:32px;height:26px;border:1px solid var(--rule);border-radius:4px;background:var(--ghost);
   font-family:var(--mono);font-size:11px;text-align:center;color:var(--ink);outline:none;}
@@ -51,55 +52,103 @@ html,body{height:100%;overflow:hidden;background:var(--paper);color:var(--ink);f
 #pgof{font-family:var(--mono);font-size:10px;color:var(--dim);white-space:nowrap;}
 #zmlbl{font-family:var(--mono);font-size:11px;color:var(--dim);min-width:36px;text-align:center;}
 
-/* ─── MAIN VIEWPORT ─── */
+/* ══ VIEWPORT ══ */
 #vp{flex:1;position:relative;overflow:hidden;background:var(--paper);}
 
-/* ─── SCROLL AREA ─── */
-#scr{position:absolute;inset:0;overflow:auto;display:flex;flex-direction:column;
-  align-items:center;padding:20px 12px 140px;gap:12px;}
+/* ══ SCROLL ══ */
+#scr{position:absolute;inset:0;overflow:auto;
+  display:flex;flex-direction:column;align-items:center;padding:20px 12px 160px;gap:16px;}
 #scr::-webkit-scrollbar{width:5px;}
 #scr::-webkit-scrollbar-thumb{background:var(--rule);border-radius:3px;}
 
-/* ─── PAGE WRAPPER ─── */
-/* Each page = position:relative container
-   img = background render
-   .txt-layer = absolute, same size, contains all text spans */
-.pgw{position:relative;flex-shrink:0;box-shadow:0 2px 20px rgba(0,0,0,.14);background:#fff;}
-.pgw img{display:block;width:100%;height:100%;}
-.txt-layer{
-  position:absolute;top:0;left:0;width:100%;height:100%;
-  overflow:hidden;/* text spans positioned inside */
-  pointer-events:none;/* turned on per span */
+/* ══ PAGE WRAPPER ══ */
+.pgw{
+  position:relative;flex-shrink:0;
+  box-shadow:0 1px 12px rgba(0,0,0,.15),0 4px 24px rgba(0,0,0,.08);
+  background:#fff;
 }
-/* Individual text span */
-.ts{
-  position:absolute;
-  transform-origin:0 100%;/* PDF: y=0 at bottom, so anchor bottom-left */
-  white-space:pre;
-  cursor:text;
-  pointer-events:all;
-  border-radius:1px;
-  /* base style set via inline style from data */
-  line-height:1;
-}
-.ts:hover{background:rgba(232,255,71,.25);outline:1px solid rgba(180,200,0,.5);}
-.ts.edited{background:rgba(255,255,255,.9);outline:1px solid rgba(37,99,235,.4);}
-.ts.match{background:rgba(232,255,71,.4);}
-.ts.match.cur{background:rgba(232,255,71,.8);outline:1.5px solid rgba(150,170,0,.8);}
+/* Canvas — background render */
+.pgw canvas{display:block;position:relative;z-index:0;}
 
-/* ─── DROP ZONE ─── */
+/* PDF.js text layer — sits exactly over canvas */
+.pgw .textLayer{
+  position:absolute !important;
+  top:0 !important;left:0 !important;
+  right:0 !important;bottom:0 !important;
+  overflow:hidden;
+  opacity:1 !important;
+  line-height:1;
+  z-index:1;
+}
+
+/*
+  PDF.js renders each span with:
+  transform: matrix(scaleX,0,0,scaleY,tx,ty)  (already in viewport px)
+  font-size: 1px  (scaling done via matrix scaleY)
+  The span text then fills the right visual size.
+  
+  We override the default PDF.js text layer opacity/selection styles
+  to make text INVISIBLE by default (canvas shows it),
+  and show it only when edited (with background cover).
+*/
+.pgw .textLayer span,
+.pgw .textLayer br{
+  color:transparent !important;
+  background:transparent !important;
+  cursor:text;
+  border-radius:1px;
+  /* DO NOT change position/transform/font — PDF.js sets these precisely */
+}
+.pgw .textLayer span:hover{
+  background:rgba(232,255,71,.25) !important;
+  color:transparent !important;
+  outline:1px solid rgba(180,200,0,.4);
+}
+/* Edited span — show background cover + new text */
+.pgw .textLayer span.edited{
+  background:var(--bg-color, #ffffff) !important;
+  color:var(--text-color, #1a1a1b) !important;
+  outline:none !important;
+  /* font/position unchanged — inherited from PDF.js */
+}
+/* Match highlight */
+.pgw .textLayer span.match{
+  background:rgba(232,255,71,.5) !important;
+  color:transparent !important;
+}
+.pgw .textLayer span.match.cur{
+  background:rgba(232,255,71,.85) !important;
+  outline:1.5px solid rgba(150,180,0,.9) !important;
+  color:transparent !important;
+}
+/* While inline-editing */
+.pgw .textLayer span.editing{
+  background:var(--bg-color, #ffffff) !important;
+  color:var(--text-color, #1a1a1b) !important;
+  outline:1.5px solid #2563eb !important;
+  cursor:text;
+  white-space:pre;
+}
+/* page number label */
+.pgw .pglabel{
+  position:absolute;bottom:-22px;left:50%;transform:translateX(-50%);
+  font-family:var(--mono);font-size:9px;color:var(--dim);pointer-events:none;
+  white-space:nowrap;
+}
+
+/* ══ DROP ZONE ══ */
 #drop{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;gap:12px;cursor:pointer;z-index:10;}
+  justify-content:center;gap:12px;cursor:pointer;z-index:10;transition:background .15s;}
 #drop:hover,#drop.drag{background:var(--ghost);}
 #drop.gone{display:none;}
 .di{width:52px;height:52px;border:1.5px dashed var(--rule);border-radius:10px;
   display:flex;align-items:center;justify-content:center;font-size:20px;}
 .dt{font-size:14px;font-weight:600;letter-spacing:-.3px;}
 .ds{font-family:var(--mono);font-size:11px;color:var(--dim);}
-.dk{font-family:var(--mono);font-size:10px;color:var(--dim);
-  border:1px solid var(--rule);border-radius:20px;padding:3px 12px;margin-top:2px;}
+.dk{font-family:var(--mono);font-size:10px;color:var(--dim);border:1px solid var(--rule);
+  border-radius:20px;padding:3px 12px;margin-top:2px;}
 
-/* ─── FIND & REPLACE PANEL ─── */
+/* ══ FNR PANEL ══ */
 #fnr{
   position:absolute;bottom:0;left:50%;width:min(600px,100%);
   transform:translate(-50%,100%);
@@ -118,8 +167,7 @@ html,body{height:100%;overflow:hidden;background:var(--paper);color:var(--ink);f
   text-transform:uppercase;color:var(--dim);flex:1;}
 #fnr-mi{font-family:var(--mono);font-size:11px;color:var(--dim);}
 .fx{width:22px;height:22px;border-radius:4px;border:none;background:transparent;
-  cursor:pointer;font-size:15px;color:var(--dim);display:flex;align-items:center;
-  justify-content:center;}
+  cursor:pointer;font-size:15px;color:var(--dim);display:flex;align-items:center;justify-content:center;}
 .fx:hover{background:var(--rule);color:var(--ink);}
 #fnr-body{padding:10px 12px 14px;display:flex;flex-direction:column;gap:7px;}
 .fr{display:flex;gap:7px;align-items:center;}
@@ -141,13 +189,11 @@ html,body{height:100%;overflow:hidden;background:var(--paper);color:var(--ink);f
   display:flex;align-items:center;gap:4px;cursor:pointer;user-select:none;}
 .fopts input[type=checkbox]{accent-color:var(--ink);}
 
-/* ─── RULES DRAWER ─── */
-#rdr{
-  position:absolute;right:0;top:0;bottom:0;width:min(290px,90vw);
+/* ══ RULES DRAWER ══ */
+#rdr{position:absolute;right:0;top:0;bottom:0;width:min(290px,90vw);
   background:var(--surf);border-left:1px solid var(--rule);
   transform:translateX(100%);transition:transform .22s cubic-bezier(.4,0,.2,1);
-  z-index:250;display:flex;flex-direction:column;
-}
+  z-index:250;display:flex;flex-direction:column;}
 #rdr.open{transform:translateX(0);}
 #rdr-hdr{height:var(--th);display:flex;align-items:center;padding:0 10px;gap:6px;
   border-bottom:1px solid var(--rule);flex-shrink:0;}
@@ -169,52 +215,49 @@ html,body{height:100%;overflow:hidden;background:var(--paper);color:var(--ink);f
   cursor:pointer;color:var(--dim);font-size:12px;display:flex;align-items:center;justify-content:center;}
 .rdel:hover{background:var(--ghost);color:var(--red);}
 #rdr-footer{padding:8px;border-top:1px solid var(--rule);flex-shrink:0;}
-#rdr-empty{padding:28px 12px;text-align:center;color:var(--dim);
-  font-family:var(--mono);font-size:10px;line-height:1.8;}
+#rdr-empty{padding:28px 12px;text-align:center;color:var(--dim);font-family:var(--mono);font-size:10px;line-height:1.8;}
 #vp-overlay{display:none;position:absolute;inset:0;z-index:240;background:rgba(0,0,0,.12);}
 #vp-overlay.on{display:block;}
 
-/* ─── PROGRESS ─── */
+/* ══ PROGRESS ══ */
 #prog{display:none;position:fixed;inset:0;z-index:900;
-  background:rgba(242,240,235,.9);backdrop-filter:blur(6px);
+  background:rgba(242,240,235,.92);backdrop-filter:blur(6px);
   align-items:center;justify-content:center;}
 #prog.on{display:flex;}
 #pgcard{background:var(--surf);border:1px solid var(--rule);border-radius:12px;
   padding:28px 32px;width:min(340px,90vw);display:flex;flex-direction:column;gap:14px;}
-#pgtitle{font-size:13px;font-weight:600;letter-spacing:-.2px;}
+#pgtitle{font-size:13px;font-weight:600;}
 #pgtrack{height:2px;background:var(--ghost);border-radius:2px;overflow:hidden;}
 #pgfill{height:100%;background:var(--ink);width:0%;transition:width .25s;}
 #pgsub{font-family:var(--mono);font-size:10px;color:var(--dim);}
 
-/* ─── TOAST ─── */
+/* ══ TOAST ══ */
 #toast{position:fixed;bottom:72px;left:50%;transform:translateX(-50%) translateY(6px);
   background:var(--ink);color:#fff;padding:7px 16px;border-radius:20px;
   font-family:var(--mono);font-size:11px;opacity:0;transition:opacity .18s,transform .18s;
   pointer-events:none;z-index:999;white-space:nowrap;}
 #toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
-#toast.ok{background:var(--grn);color:#fff;}
+#toast.ok{background:var(--grn);}
 #toast.err{background:var(--red);}
 
-/* ─── MOBILE ─── */
 @media(max-width:580px){
   .logo span,.tb .lbl{display:none;}
-  #scr{padding:12px 6px 160px;}
+  #scr{padding:12px 4px 180px;}
 }
-@media(max-height:480px) and (orientation:landscape){
-  :root{--th:40px;}
-}
+@media(max-height:480px) and (orientation:landscape){:root{--th:40px;}}
 </style>
 </head>
 <body>
 <div id="app">
 
-<!-- TOPBAR -->
 <div id="bar">
   <div class="logo"><div class="logo-dot"></div><span>PDF Editor</span></div>
   <div class="sep"></div>
+  <!-- open -->
   <button class="ib" onclick="document.getElementById('fi-pdf').click()" title="Abrir PDF (Ctrl+O)">
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="1.5" width="12" height="13" rx="1.5"/><path d="M5 5.5h6M5 8h6M5 10.5h4"/></svg>
   </button>
+  <!-- page nav -->
   <div id="pgnav">
     <button class="ib" id="bprev" onclick="navPg(-1)" disabled>
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 12L6 8l4-4"/></svg>
@@ -226,44 +269,45 @@ html,body{height:100%;overflow:hidden;background:var(--paper);color:var(--ink);f
     </button>
   </div>
   <div class="sep"></div>
-  <button class="ib" onclick="zm(-.25)" title="Zoom out">
+  <!-- zoom -->
+  <button class="ib" onclick="zm(-.25)">
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10"/></svg>
   </button>
   <span id="zmlbl">100%</span>
-  <button class="ib" onclick="zm(+.25)" title="Zoom in">
+  <button class="ib" onclick="zm(+.25)">
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v10M3 8h10"/></svg>
   </button>
-  <button class="ib" onclick="zmFit()" title="Ajustar">
+  <button class="ib" onclick="zmFit()" title="Ajustar à tela">
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 5V2h3M12 2h3v3M1 11v3h3M12 14h3v-3"/></svg>
   </button>
   <div class="sep"></div>
+  <!-- find -->
   <button class="ib" id="bfnr" onclick="togFnr()" disabled title="Localizar e Substituir (Ctrl+H)">
-    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6.5" cy="6.5" r="3.5"/><path d="M10.5 10.5l3 3"/><path d="M9 13h5"/><path d="M11.5 11l2.5 2"/></svg>
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6.5" cy="6.5" r="3.5"/><path d="M10.5 10.5l3 3"/><path d="M9 13h5"/></svg>
   </button>
+  <!-- rules -->
   <button class="ib" id="brdr" onclick="togRdr()" title="Regras salvas">
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 7.5h9M2 11h11"/></svg>
   </button>
-  <div class="sep"></div>
+  <div class="sp"></div>
+  <!-- export -->
   <button class="tb primary" id="bexp" onclick="doExport()" disabled>
-    <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" style="width:13px;height:13px"><path d="M7 2v7M4.5 6.5L7 9l2.5-2.5"/><path d="M2 11h10"/></svg>
+    <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" style="width:13px;height:13px"><path d="M7 1v8M4.5 6.5L7 9l2.5-2.5"/><path d="M2 11h10"/></svg>
     <span class="lbl">Exportar PDF</span>
   </button>
 </div>
 
-<!-- VIEWPORT -->
 <div id="vp">
-  <!-- drop zone -->
   <div id="drop" onclick="document.getElementById('fi-pdf').click()">
     <div class="di">📄</div>
     <div class="dt">Abrir PDF</div>
-    <div class="ds">Arraste aqui ou clique para selecionar</div>
-    <div class="dk">Ctrl+O · Ctrl+H para buscar</div>
+    <div class="ds">Arraste ou clique para selecionar</div>
+    <div class="dk">Ctrl+O · Ctrl+H para localizar</div>
   </div>
-  <!-- pages go here -->
   <div id="scr" style="display:none"></div>
-  <!-- overlay for drawer -->
   <div id="vp-overlay" onclick="closeRdr()"></div>
-  <!-- FNR panel -->
+
+  <!-- FNR -->
   <div id="fnr">
     <div id="fnr-hdr">
       <span id="fnr-title">Localizar e Substituir</span>
@@ -274,8 +318,8 @@ html,body{height:100%;overflow:hidden;background:var(--paper);color:var(--ink);f
       <div class="fr">
         <span class="fl">Localizar</span>
         <input class="fi" id="fi-find" placeholder="texto a localizar…" oninput="onFind()">
-        <button class="fnb" id="fnb-p" onclick="navM(-1)" disabled title="Anterior (Shift+Enter)">↑</button>
-        <button class="fnb" id="fnb-n" onclick="navM(1)" disabled title="Próximo (Enter)">↓</button>
+        <button class="fnb" id="fnb-p" onclick="navM(-1)" disabled>↑</button>
+        <button class="fnb" id="fnb-n" onclick="navM(1)" disabled>↓</button>
       </div>
       <div class="fr">
         <span class="fl">Substituir</span>
@@ -284,18 +328,19 @@ html,body{height:100%;overflow:hidden;background:var(--paper);color:var(--ink);f
       <div class="frow">
         <button class="tb" id="fb-one" onclick="replOne()" disabled>Substituir este</button>
         <button class="tb primary" id="fb-all" onclick="replAll()" disabled>Substituir todos</button>
-        <div class="sep" style="margin:0 2px;height:20px;"></div>
-        <button class="tb" id="fb-save" onclick="saveRule()" disabled title="Salvar como regra reutilizável">
+        <div class="sep" style="margin:0;height:20px;"></div>
+        <button class="tb" id="fb-save" onclick="saveRule()" disabled>
           <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" style="width:12px;height:12px"><path d="M2 2h8l2 2v8H2V2z"/><rect x="4" y="7.5" width="6" height="4"/><rect x="4" y="2" width="5" height="3"/></svg>
           Salvar regra
         </button>
         <div class="fopts">
           <label title="Case sensitive"><input type="checkbox" id="fc-cs">Aa</label>
-          <label title="Palavra inteira"><input type="checkbox" id="fc-w">W</label>
+          <label title="Palavra inteira"><input type="checkbox" id="fc-w">Wb</label>
         </div>
       </div>
     </div>
   </div>
+
   <!-- Rules drawer -->
   <div id="rdr">
     <div id="rdr-hdr">
@@ -313,9 +358,10 @@ html,body{height:100%;overflow:hidden;background:var(--paper);color:var(--ink);f
       <button class="tb primary" id="b-applyall" onclick="applyAll()" disabled style="width:100%;justify-content:center">Aplicar todas as regras</button>
     </div>
   </div>
-</div>
+</div><!-- #vp -->
 
-<!-- progress -->
+</div><!-- #app -->
+
 <div id="prog">
   <div id="pgcard">
     <div id="pgtitle">Processando…</div>
@@ -328,605 +374,790 @@ html,body{height:100%;overflow:hidden;background:var(--paper);color:var(--ink);f
 <input type="file" id="fi-rules" accept=".json" style="display:none" onchange="importRules(this.files[0])">
 
 <script>
-pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+// ══════════════════════════════════════════════════════════
+// PDF.js setup
+// ══════════════════════════════════════════════════════════
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
 // STATE
-// ══════════════════════════════════════════════
-const LS = 'pdfed_rules_v3';
-let PDF = null;         // pdf.js doc
-let pdfBytes = null;    // Uint8Array original
+// ══════════════════════════════════════════════════════════
+const LS_KEY = 'pdfed_v4_rules';
+
+let PDF = null;
+let pdfBytes = null;
 let zoomLevel = 1.0;
 let curPg = 1;
-let fnrOpen = false;
-let rdrOpen = false;
+let fnrOpen = false, rdrOpen = false;
 let pdfLibMod = null;
 
-// Text model: array of line-groups, each group = {page, lineY, spans:[{id,text,x,y,w,h,fontSize,color,bold,italic}]}
-// "lines" are sets of spans sharing the same y baseline (within tolerance)
-let lines = [];   // flat: [{id, page, text, x, y, w, h, fontSize, color, fontName}]
-let lineId = 0;
+// Text model — one entry per PDF.js textContent item
+// {id, page, text, transform, fontName, hasEOL}
+let textItems = [];  // flat, all pages
+let itemId = 0;
 
-// edits: Map spanId → newText
+// Edits — Map<itemId, newText>
 let edits = new Map();
 
-// find
+// Span registry — Map<itemId, HTMLElement>
+let spanMap = new Map();
+
+// Background color registry — Map<itemId, string css color>
+// sampled from canvas pixel at span position
+let bgColors = new Map();
+let fgColors = new Map();
+
+// Find matches — array of itemIds
 let matches = [];
 let mCursor = -1;
 
-// rules
-let rules = (() => { try { return JSON.parse(localStorage.getItem(LS)||'[]'); } catch{return[];} })();
+// Rules
+let rules = (() => { try { return JSON.parse(localStorage.getItem(LS_KEY)||'[]'); } catch{return[];} })();
 
-// ══════════════════════════════════════════════
-// OPEN
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
+// OPEN PDF
+// ══════════════════════════════════════════════════════════
 const drop = document.getElementById('drop');
 drop.addEventListener('dragover', e=>{e.preventDefault();drop.classList.add('drag');});
 drop.addEventListener('dragleave', ()=>drop.classList.remove('drag'));
-drop.addEventListener('drop', e=>{e.preventDefault();drop.classList.remove('drag');const f=e.dataTransfer.files[0];if(f?.name.endsWith('.pdf'))openPDF(f);});
+drop.addEventListener('drop', e=>{
+  e.preventDefault(); drop.classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if(f?.name.endsWith('.pdf')) openPDF(f);
+});
 
 async function openPDF(file) {
   if(!file) return;
-  showProg('Carregando PDF…','Lendo estrutura…');
+  showProg('Carregando PDF…','Lendo estrutura…'); setProg(5);
   const ab = await file.arrayBuffer();
   pdfBytes = new Uint8Array(ab);
-  edits.clear(); matches=[]; mCursor=-1; lines=[];
-  PDF = await pdfjsLib.getDocument({data:pdfBytes.slice()}).promise;
-  spg(20,`${PDF.numPages} páginas`);
+  edits.clear(); spanMap.clear(); bgColors.clear(); fgColors.clear();
+  matches=[]; mCursor=-1; textItems=[]; itemId=0;
 
-  // Build text model
-  await buildLines();
-  spg(60);
+  PDF = await pdfjsLib.getDocument({data: pdfBytes.slice()}).promise;
+  setProg(15, `${PDF.numPages} páginas encontradas`);
 
-  // Render all pages
   drop.classList.add('gone');
   const scr = document.getElementById('scr');
-  scr.style.display='flex';
-  scr.innerHTML='';
+  scr.style.display = 'flex';
+  scr.innerHTML = '';
 
-  for(let p=1;p<=PDF.numPages;p++){
-    spg(60+(p/PDF.numPages)*38,`Renderizando ${p}/${PDF.numPages}…`);
-    await renderPage(p);
+  // Render all pages
+  for(let p=1; p<=PDF.numPages; p++){
+    setProg(15 + (p/PDF.numPages)*82, `Renderizando ${p} / ${PDF.numPages}…`);
+    await buildPage(p);
   }
 
   hideProg();
   curPg=1; updPgNav();
-  document.getElementById('bfnr').disabled=false;
-  document.getElementById('bexp').disabled=false;
-  document.getElementById('pgnav').style.display='flex';
-  document.getElementById('b-applyall').disabled=rules.length===0;
-  toast(`${PDF.numPages} páginas carregadas`,'ok');
-  scr.scrollTop=0;
+  document.getElementById('bfnr').disabled = false;
+  document.getElementById('bexp').disabled = false;
+  document.getElementById('pgnav').style.display = 'flex';
+  document.getElementById('b-applyall').disabled = rules.length === 0;
+  scr.scrollTop = 0;
+  toast(`${PDF.numPages} páginas carregadas`, 'ok');
+  // Auto fit on mobile
+  if(window.innerWidth < 600) zmFit();
 }
 
-// ══════════════════════════════════════════════
-// BUILD TEXT MODEL
-// Group PDF.js items into logical lines by reconstructing
-// text that was fragmented across items
-// ══════════════════════════════════════════════
-async function buildLines() {
-  lines=[];
-  for(let p=1;p<=PDF.numPages;p++){
-    const page = await PDF.getPage(p);
-    const tc = await page.getTextContent({includeMarkedContent:false});
-    const vp = page.getViewport({scale:1});
-    const pH = vp.height, pW = vp.width;
-
-    // Group items by Y baseline (within 2pt tolerance)
-    const buckets = new Map();
-    tc.items.forEach(item=>{
-      if(!item.str) return;
-      const tx = item.transform;
-      const y = Math.round(tx[5]);   // PDF y (0=bottom)
-      const key = y;
-      if(!buckets.has(key)) buckets.set(key,[]);
-      buckets.get(key).push(item);
-    });
-
-    // Sort buckets by Y descending (top to bottom visually)
-    const sortedYs = [...buckets.keys()].sort((a,b)=>b-a);
-
-    sortedYs.forEach(y=>{
-      const items = buckets.get(y).sort((a,b)=>a.transform[4]-b.transform[4]);
-      // Try to merge adjacent items with same font/size into single spans
-      // but keep track of each item separately for precise replacement
-      items.forEach(item=>{
-        if(!item.str.trim()&&item.str.length>3) return; // skip blank padding
-        const tx=item.transform;
-        const x=tx[4], iy=tx[5];
-        const fontSize=Math.abs(tx[3])||item.height||9;
-        const w=item.width||item.str.length*fontSize*0.55;
-        const isBold=!!(item.fontName||'').match(/bold|heavy|black/i);
-        const isItalic=!!(item.fontName||'').match(/italic|oblique/i);
-        lines.push({
-          id:'s'+(++lineId),
-          page:p,
-          text:item.str,
-          origText:item.str,
-          x, y:iy, w, h:fontSize,
-          fontSize, isBold, isItalic,
-          fontName:item.fontName||'',
-          pdfH:pH, pdfW:pW,
-        });
-      });
-    });
-  }
-}
-
-// ══════════════════════════════════════════════
-// RENDER PAGE
-// Canvas background + HTML text layer on top
-// ══════════════════════════════════════════════
-async function renderPage(pageNum) {
+// ══════════════════════════════════════════════════════════
+// BUILD PAGE
+// Renders canvas + uses PDF.js renderTextLayer() for 
+// pixel-perfect text layer positioning
+// ══════════════════════════════════════════════════════════
+async function buildPage(pageNum) {
   const page = await PDF.getPage(pageNum);
-  const vp1 = page.getViewport({scale:1});
-  const vp = page.getViewport({scale:zoomLevel});
-  const sc = zoomLevel;
-  const pH = vp1.height;
+  const vp = page.getViewport({scale: zoomLevel});
 
-  let wrap = document.getElementById('pw'+pageNum);
-  if(!wrap){
-    wrap = document.createElement('div');
-    wrap.className='pgw'; wrap.id='pw'+pageNum;
-    const img = document.createElement('canvas');
-    img.id='pc'+pageNum; img.className='pgbg';
-    const txtLayer = document.createElement('div');
-    txtLayer.className='txt-layer'; txtLayer.id='tl'+pageNum;
-    const pgn = document.createElement('div');
-    pgn.className='pn'; pgn.textContent=pageNum;
-    pgn.style.cssText='position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:9px;color:var(--dim);';
-    wrap.appendChild(img);
-    wrap.appendChild(txtLayer);
-    wrap.appendChild(pgn);
-    document.getElementById('scr').appendChild(wrap);
-  }
+  // Create wrapper
+  const wrap = document.createElement('div');
+  wrap.className = 'pgw';
+  wrap.id = 'pw' + pageNum;
+  wrap.style.width = vp.width + 'px';
+  wrap.style.height = vp.height + 'px';
 
-  const canvas = document.getElementById('pc'+pageNum);
-  canvas.width=vp.width; canvas.height=vp.height;
-  wrap.style.width=vp.width+'px'; wrap.style.height=vp.height+'px';
-  await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;
+  // Canvas
+  const canvas = document.createElement('canvas');
+  canvas.width = vp.width;
+  canvas.height = vp.height;
+  canvas.style.display = 'block';
+  wrap.appendChild(canvas);
 
-  // Build text layer
-  const txtLayer = document.getElementById('tl'+pageNum);
-  txtLayer.innerHTML='';
-  txtLayer.style.width=vp.width+'px';
-  txtLayer.style.height=vp.height+'px';
+  // Text layer div — PDF.js will populate this
+  const textLayerDiv = document.createElement('div');
+  textLayerDiv.className = 'textLayer';
+  textLayerDiv.style.width = vp.width + 'px';
+  textLayerDiv.style.height = vp.height + 'px';
+  wrap.appendChild(textLayerDiv);
 
-  const pageLines = lines.filter(l=>l.page===pageNum);
-  pageLines.forEach(l=>{
-    const span = document.createElement('span');
-    span.id='sp'+l.id;
-    span.className='ts';
-    const displayText = edits.has(l.id) ? edits.get(l.id) : l.text;
-    span.textContent = displayText;
-    if(edits.has(l.id)) span.classList.add('edited');
+  // Page label
+  const label = document.createElement('div');
+  label.className = 'pglabel';
+  label.textContent = pageNum;
+  wrap.appendChild(label);
 
-    // Position: PDF y=0 at bottom → canvas y=0 at top
-    // span anchor: bottom-left (transform-origin: 0 100%)
-    const sx = l.x * sc;
-    const sy = (pH - l.y) * sc;  // distance from top
-    const fs = l.fontSize * sc;
+  document.getElementById('scr').appendChild(wrap);
 
-    span.style.cssText=`
-      left:${sx}px;
-      top:${sy - fs*1.15}px;
-      font-size:${fs}px;
-      font-family:${pickFont(l)};
-      font-weight:${l.isBold?'600':'400'};
-      font-style:${l.isItalic?'italic':'normal'};
-      color:${pickColor(l)};
-      min-width:${Math.max(4,l.w*sc)}px;
-    `;
-    span.title=l.text; // original text as tooltip
+  // Render canvas
+  const ctx = canvas.getContext('2d');
+  await page.render({canvasContext: ctx, viewport: vp}).promise;
 
-    // Click to edit inline
-    span.addEventListener('click', e=>{ e.stopPropagation(); openSpanEdit(l.id, span); });
+  // Get text content
+  const textContent = await page.getTextContent({includeMarkedContent: false});
 
-    // Match highlight
-    const mi = matches.indexOf(l.id);
-    if(mi>=0){
-      span.classList.add('match');
-      if(mi===mCursor) span.classList.add('cur');
+  // Register items for this page
+  const pageFirstIdx = textItems.length;
+  textContent.items.forEach((item, localIdx) => {
+    if(!item.str) return;
+    const id = 'i' + (++itemId);
+    textItems.push({
+      id, page: pageNum,
+      text: item.str,
+      origText: item.str,
+      transform: [...item.transform],
+      fontName: item.fontName || '',
+      width: item.width,
+      height: item.height,
+      localIdx,
+    });
+  });
+
+  // Use PDF.js renderTextLayer — THE official API for perfect positioning
+  const textDivs = [];
+  const renderTask = pdfjsLib.renderTextLayer({
+    textContentSource: textContent,
+    container: textLayerDiv,
+    viewport: vp,
+    textDivs: textDivs,
+    enhanceTextSelection: false,
+  });
+  await renderTask.promise;
+
+  // Map rendered divs back to our textItems for this page
+  // The divs are created in the same order as textContent.items
+  const pageItems = textItems.filter(t => t.page === pageNum);
+  let divIdx = 0;
+  textDivs.forEach((div, i) => {
+    if(!div || div.tagName === 'BR') return;
+    if(divIdx >= pageItems.length) return;
+    const item = pageItems[divIdx++];
+    if(!item) return;
+
+    div.id = 'sp' + item.id;
+    div.dataset.itemId = item.id;
+
+    // Sample background color from canvas at this span's position
+    // We do this after render so canvas has the page drawn
+    const bgColor = sampleBgColor(canvas, div, vp);
+    bgColors.set(item.id, bgColor);
+
+    // Determine text color (dark vs light based on bg)
+    // For this document almost everything is dark on light — set black
+    fgColors.set(item.id, '#1a1a1b');
+
+    // Set CSS custom properties for cover color
+    div.style.setProperty('--bg-color', bgColor);
+    div.style.setProperty('--text-color', '#1a1a1b');
+
+    // Register in span map
+    spanMap.set(item.id, div);
+
+    // Click to edit
+    div.addEventListener('click', e => {
+      e.stopPropagation();
+      openInlineEdit(item.id);
+    });
+  });
+
+  // Apply any existing edits (e.g. after zoom rerender)
+  pageItems.forEach(item => {
+    if(edits.has(item.id)){
+      const sp = spanMap.get(item.id);
+      if(sp){ applyEditToSpan(sp, item.id, edits.get(item.id)); }
     }
-
-    txtLayer.appendChild(span);
   });
+
+  // Apply match highlights
+  applyMatchHighlights();
 }
 
-function pickFont(l){
-  const fn=(l.fontName||'').toLowerCase();
-  if(fn.includes('courier')||fn.includes('mono')) return "'IBM Plex Mono',monospace";
-  if(fn.includes('times')||fn.includes('roman')||fn.includes('georgia')) return "Georgia,serif";
-  return "'IBM Plex Sans','Arial',sans-serif";
-}
-function pickColor(l){
-  // PDF colors come from pdfplumber; PDF.js doesn't expose them easily
-  // Use black as safe default — almost all text in this doc is dark
-  return '#1a1a1b';
-}
-
-async function rerenderAll(){
-  for(let p=1;p<=PDF.numPages;p++) await renderPage(p);
-}
-
-// ══════════════════════════════════════════════
-// INLINE SPAN EDITING
-// ══════════════════════════════════════════════
-let activeEdit = null;
-
-function openSpanEdit(spanId, spanEl) {
-  // Close any existing editor
-  closeActiveEdit();
-
-  const line = lines.find(l=>l.id===spanId);
-  if(!line) return;
-
-  const input = document.createElement('input');
-  input.type='text';
-  input.value = edits.has(spanId) ? edits.get(spanId) : line.text;
-  input.style.cssText=`
-    position:absolute;
-    left:${spanEl.style.left};
-    top:${spanEl.style.top};
-    font-size:${spanEl.style.fontSize};
-    font-family:${spanEl.style.fontFamily};
-    font-weight:${spanEl.style.fontWeight};
-    font-style:${spanEl.style.fontStyle};
-    color:${spanEl.style.color};
-    background:#fff;
-    border:1.5px solid #2563eb;
-    border-radius:2px;
-    outline:none;
-    padding:0 2px;
-    min-width:${spanEl.offsetWidth+40}px;
-    width:auto;
-    z-index:50;
-    line-height:1;
-    height:${spanEl.offsetHeight+2}px;
-  `;
-
-  const tl = document.getElementById('tl'+line.page);
-  tl.appendChild(input);
-  spanEl.style.visibility='hidden';
-  input.focus();
-  input.select();
-  activeEdit={spanId, spanEl, input, line};
-
-  input.addEventListener('keydown', e=>{
-    if(e.key==='Enter'||e.key==='Tab'){ e.preventDefault(); commitEdit(); }
-    if(e.key==='Escape'){ e.preventDefault(); cancelEdit(); }
-    // Auto-grow width
-    setTimeout(()=>{ input.style.minWidth=(input.value.length*parseInt(spanEl.style.fontSize)*0.65+20)+'px'; },0);
-  });
-  input.addEventListener('blur', ()=>{ setTimeout(commitEdit, 120); });
-}
-
-function commitEdit(){
-  if(!activeEdit) return;
-  const {spanId, spanEl, input, line} = activeEdit;
-  activeEdit = null;
-  const newVal = input.value;
-  input.remove();
-  spanEl.style.visibility='';
-  if(newVal !== line.origText){
-    edits.set(spanId, newVal);
-    spanEl.classList.add('edited');
-  } else {
-    edits.delete(spanId);
-    spanEl.classList.remove('edited');
+// Sample the background color from the rendered canvas at a span's position
+function sampleBgColor(canvas, span, vp) {
+  try {
+    const ctx = canvas.getContext('2d');
+    // Get the span's bounding rect relative to its parent (the page wrapper)
+    const spanRect = span.getBoundingClientRect();
+    const wrapRect = span.closest('.pgw').getBoundingClientRect();
+    
+    // Center of the span in canvas coordinates
+    const cx = Math.round(spanRect.left - wrapRect.left + spanRect.width/2);
+    const cy = Math.round(spanRect.top - wrapRect.top + spanRect.height/2);
+    
+    if(cx < 0 || cy < 0 || cx >= canvas.width || cy >= canvas.height) return '#ffffff';
+    
+    const px = ctx.getImageData(cx, cy, 1, 1).data;
+    return `rgb(${px[0]},${px[1]},${px[2]})`;
+  } catch(e) {
+    return '#ffffff';
   }
-  spanEl.textContent = newVal;
-  document.getElementById('bexp').disabled=false;
-}
-function cancelEdit(){
-  if(!activeEdit) return;
-  const{spanEl,input}=activeEdit;
-  activeEdit=null;
-  input.remove();
-  spanEl.style.visibility='';
-}
-function closeActiveEdit(){ if(activeEdit) commitEdit(); }
-
-// ══════════════════════════════════════════════
-// FIND & REPLACE — searches the RECONSTRUCTED lines
-// including lines that span multiple PDF.js items
-// ══════════════════════════════════════════════
-function togFnr(){
-  fnrOpen=!fnrOpen;
-  document.getElementById('fnr').classList.toggle('open',fnrOpen);
-  document.getElementById('bfnr').classList.toggle('on',fnrOpen);
-  if(fnrOpen) setTimeout(()=>document.getElementById('fi-find').focus(),250);
-  else { matches=[]; mCursor=-1; rerenderAll(); updMI(); }
 }
 
-function mkRe(term,cs,whole){
-  let flags=cs?'g':'gi';
-  let pat=term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-  if(whole) pat=`(?<![\\wÀ-ÖØ-öø-ÿ])${pat}(?![\\wÀ-ÖØ-öø-ÿ])`;
-  return new RegExp(pat,flags);
+// ══════════════════════════════════════════════════════════
+// APPLY EDIT TO SPAN
+// Make the span visible with the new text, covering the original
+// ══════════════════════════════════════════════════════════
+function applyEditToSpan(span, itemId, newText) {
+  span.classList.add('edited');
+  span.classList.remove('match','cur');
+  span.textContent = newText;
+  const bg = bgColors.get(itemId) || '#ffffff';
+  const fg = fgColors.get(itemId) || '#1a1a1b';
+  span.style.setProperty('--bg-color', bg);
+  span.style.setProperty('--text-color', fg);
 }
 
-function onFind(){
-  const term=document.getElementById('fi-find').value;
-  const repl=document.getElementById('fi-repl').value;
-  document.getElementById('fb-save').disabled=!term||repl==='';
-  if(!term){ matches=[]; mCursor=-1; updMI(); setBtns(false); rerenderAll(); return; }
-  try{
-    const re=mkRe(term,document.getElementById('fc-cs').checked,document.getElementById('fc-w').checked);
-    matches=lines.filter(l=>re.test(l.text)).map(l=>l.id);
-    mCursor=matches.length?0:-1;
-    updMI(); setBtns(matches.length>0); rerenderAll();
-    if(mCursor>=0) scrollToSpan(matches[mCursor]);
-  }catch(e){}
+function clearEditFromSpan(span) {
+  span.classList.remove('edited');
+  const item = textItems.find(t => 'sp'+t.id === span.id);
+  if(item) span.textContent = item.origText;
 }
 
-function setBtns(has){
-  document.getElementById('fnb-p').disabled=!has;
-  document.getElementById('fnb-n').disabled=!has;
-  document.getElementById('fb-one').disabled=!has;
-  document.getElementById('fb-all').disabled=!has;
-}
-function updMI(){
-  document.getElementById('fnr-mi').textContent=matches.length?`${mCursor+1} / ${matches.length}`:'';
-}
-function navM(d){
-  if(!matches.length) return;
-  mCursor=((mCursor+d)+matches.length)%matches.length;
-  updMI(); rerenderAll(); scrollToSpan(matches[mCursor]);
-}
-function scrollToSpan(sid){
-  const l=lines.find(l=>l.id===sid);
-  if(!l) return;
-  if(l.page!==curPg){ curPg=l.page; updPgNav(); }
-  const el=document.getElementById('pw'+l.page);
-  if(el) el.scrollIntoView({behavior:'smooth',block:'center'});
+// ══════════════════════════════════════════════════════════
+// INLINE EDITING
+// ══════════════════════════════════════════════════════════
+let activeEditId = null;
+
+function openInlineEdit(itemId) {
+  if(activeEditId) commitEdit(activeEditId);
+  
+  const item = textItems.find(t => t.id === itemId);
+  const span = spanMap.get(itemId);
+  if(!item || !span) return;
+
+  activeEditId = itemId;
+  const currentText = edits.has(itemId) ? edits.get(itemId) : item.origText;
+  
+  span.classList.add('editing');
+  span.classList.remove('match','cur');
+  span.textContent = currentText;
+  span.contentEditable = 'true';
+  span.focus();
+
+  // Select all text
+  const range = document.createRange();
+  range.selectNodeContents(span);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+
+  span.addEventListener('keydown', onEditKey, {once: false});
+  span.addEventListener('blur', onEditBlur, {once: true});
 }
 
-function replOne(){
-  if(mCursor<0||!matches.length) return;
-  const sid=matches[mCursor];
-  const l=lines.find(l=>l.id===sid);
-  if(!l) return;
-  const term=document.getElementById('fi-find').value;
-  const repl=document.getElementById('fi-repl').value;
-  const re=mkRe(term,document.getElementById('fc-cs').checked,document.getElementById('fc-w').checked);
-  const cur=edits.has(sid)?edits.get(sid):l.text;
-  const next=cur.replace(re,repl);
-  edits.set(sid,next);
-  matches.splice(mCursor,1);
-  if(mCursor>=matches.length) mCursor=matches.length-1;
-  updMI(); setBtns(matches.length>0);
-  renderPage(l.page);
-  document.getElementById('bexp').disabled=false;
-  toast(`Substituído na pág. ${l.page}`);
+function onEditKey(e) {
+  if(e.key === 'Enter') { e.preventDefault(); commitEdit(activeEditId); }
+  if(e.key === 'Escape') { e.preventDefault(); cancelEdit(activeEditId); }
+  e.stopPropagation();
 }
 
-function replAll(){
-  if(!matches.length) return;
-  closeActiveEdit();
-  const term=document.getElementById('fi-find').value;
-  const repl=document.getElementById('fi-repl').value;
-  const re=mkRe(term,document.getElementById('fc-cs').checked,document.getElementById('fc-w').checked);
-  const pages=new Set();
-  let count=0;
-  matches.forEach(sid=>{
-    const l=lines.find(l=>l.id===sid); if(!l) return;
-    const cur=edits.has(sid)?edits.get(sid):l.text;
-    edits.set(sid,cur.replace(re,repl));
-    pages.add(l.page); count++;
+function commitEdit(itemId) {
+  if(!itemId) return;
+  const span = spanMap.get(itemId);
+  const item = textItems.find(t => t.id === itemId);
+  if(!span || !item) { activeEditId = null; return; }
+
+  span.removeEventListener('keydown', onEditKey);
+  span.contentEditable = 'false';
+  span.classList.remove('editing');
+
+  const newText = span.textContent;
+  if(newText !== item.origText) {
+    edits.set(itemId, newText);
+    applyEditToSpan(span, itemId, newText);
+    document.getElementById('bexp').disabled = false;
+  } else {
+    edits.delete(itemId);
+    clearEditFromSpan(span);
+  }
+  activeEditId = null;
+}
+
+function cancelEdit(itemId) {
+  if(!itemId) return;
+  const span = spanMap.get(itemId);
+  const item = textItems.find(t => t.id === itemId);
+  if(!span) { activeEditId = null; return; }
+
+  span.removeEventListener('keydown', onEditKey);
+  span.contentEditable = 'false';
+  span.classList.remove('editing');
+
+  // Restore
+  if(edits.has(itemId)) {
+    applyEditToSpan(span, itemId, edits.get(itemId));
+  } else {
+    clearEditFromSpan(span);
+  }
+  activeEditId = null;
+}
+
+function onEditBlur() {
+  // Small delay to allow clicks on other spans
+  setTimeout(() => { if(activeEditId) commitEdit(activeEditId); }, 150);
+}
+
+// ══════════════════════════════════════════════════════════
+// ZOOM — rerender all pages
+// ══════════════════════════════════════════════════════════
+async function zm(d) {
+  if(!PDF) return;
+  zoomLevel = Math.max(0.3, Math.min(4.0, zoomLevel + d));
+  document.getElementById('zmlbl').textContent = Math.round(zoomLevel*100)+'%';
+  await rerender();
+}
+async function zmFit() {
+  if(!PDF) return;
+  const page = await PDF.getPage(1);
+  const vp1 = page.getViewport({scale:1});
+  const availW = document.getElementById('scr').clientWidth - 28;
+  zoomLevel = Math.min(availW / vp1.width, 2.5);
+  document.getElementById('zmlbl').textContent = Math.round(zoomLevel*100)+'%';
+  await rerender();
+}
+window.addEventListener('resize', () => { if(PDF) zmFit(); });
+
+async function rerender() {
+  if(!PDF) return;
+  if(activeEditId) commitEdit(activeEditId);
+  spanMap.clear(); bgColors.clear();
+  textItems = textItems.filter(() => false); // clear
+  textItems.length = 0; itemId = 0;
+  matches = []; mCursor = -1;
+
+  const scr = document.getElementById('scr');
+  scr.innerHTML = '';
+  showProg('Renderizando…'); setProg(5);
+  for(let p=1; p<=PDF.numPages; p++){
+    setProg(5+(p/PDF.numPages)*93, `Página ${p}/${PDF.numPages}…`);
+    await buildPage(p);
+  }
+  hideProg();
+  // Re-run find if panel open
+  if(fnrOpen) onFind();
+}
+
+// ══════════════════════════════════════════════════════════
+// FIND & REPLACE
+// Key insight: search across FULL TEXT of each item.
+// PDF.js gives us items that already contain full words —
+// the fragmentation we had before was from our manual grouping.
+// With renderTextLayer(), each span = one textContent item.
+// We search item.text (the original) to avoid searching
+// already-edited text as the source of truth.
+// ══════════════════════════════════════════════════════════
+function togFnr() {
+  fnrOpen = !fnrOpen;
+  document.getElementById('fnr').classList.toggle('open', fnrOpen);
+  document.getElementById('bfnr').classList.toggle('on', fnrOpen);
+  if(fnrOpen) setTimeout(()=>document.getElementById('fi-find').focus(), 220);
+  else { clearMatches(); }
+}
+
+function mkRe(term, cs, whole) {
+  let flags = cs ? 'g' : 'gi';
+  // Escape special regex chars
+  let pat = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  if(whole) pat = `(?<![\\wÀ-ÖØ-öø-ÿ])${pat}(?![\\wÀ-ÖØ-öø-ÿ])`;
+  return new RegExp(pat, flags);
+}
+
+function onFind() {
+  const term = document.getElementById('fi-find').value;
+  const repl = document.getElementById('fi-repl').value;
+  document.getElementById('fb-save').disabled = !term;
+  if(!term) { clearMatches(); setBtns(false); return; }
+  try {
+    const re = mkRe(term,
+      document.getElementById('fc-cs').checked,
+      document.getElementById('fc-w').checked);
+    // Search in ORIGINAL text (not current edits) — consistent with find behavior
+    matches = textItems
+      .filter(t => re.test(t.origText))
+      .map(t => t.id);
+    mCursor = matches.length ? 0 : -1;
+    updMI(); setBtns(matches.length > 0);
+    applyMatchHighlights();
+    if(mCursor >= 0) scrollToItem(matches[mCursor]);
+  } catch(e) {}
+}
+
+function clearMatches() {
+  matches = []; mCursor = -1;
+  spanMap.forEach((sp, id) => {
+    sp.classList.remove('match','cur');
   });
-  matches=[]; mCursor=-1; updMI(); setBtns(false);
-  document.getElementById('bexp').disabled=false;
-  pages.forEach(p=>renderPage(p));
-  toast(`${count} substituição(ões)  aplicada(s)`,'ok');
+  updMI();
 }
 
-// ══════════════════════════════════════════════
-// RULES
-// ══════════════════════════════════════════════
-function persistRules(){ localStorage.setItem(LS,JSON.stringify(rules)); }
+function applyMatchHighlights() {
+  // Clear all
+  spanMap.forEach(sp => sp.classList.remove('match','cur'));
+  matches.forEach((id, i) => {
+    const sp = spanMap.get(id);
+    if(!sp) return;
+    if(sp.classList.contains('edited')) return; // don't highlight edited
+    sp.classList.add('match');
+    if(i === mCursor) sp.classList.add('cur');
+  });
+}
 
-function saveRule(){
-  const find=document.getElementById('fi-find').value.trim();
-  const repl=document.getElementById('fi-repl').value;
+function setBtns(has) {
+  ['fnb-p','fnb-n','fb-one','fb-all'].forEach(id =>
+    document.getElementById(id).disabled = !has);
+}
+
+function updMI() {
+  document.getElementById('fnr-mi').textContent =
+    matches.length ? `${mCursor+1} / ${matches.length}` : '';
+}
+
+function navM(d) {
+  if(!matches.length) return;
+  mCursor = ((mCursor + d) + matches.length) % matches.length;
+  updMI(); applyMatchHighlights();
+  scrollToItem(matches[mCursor]);
+}
+
+function scrollToItem(id) {
+  const sp = spanMap.get(id);
+  if(!sp) return;
+  const item = textItems.find(t => t.id === id);
+  if(item && item.page !== curPg) { curPg = item.page; updPgNav(); }
+  sp.scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+function replOne() {
+  if(mCursor < 0 || !matches.length) return;
+  const id = matches[mCursor];
+  const item = textItems.find(t => t.id === id);
+  if(!item) return;
+  const term = document.getElementById('fi-find').value;
+  const repl = document.getElementById('fi-repl').value;
+  const re = mkRe(term,
+    document.getElementById('fc-cs').checked,
+    document.getElementById('fc-w').checked);
+  const newText = item.origText.replace(re, repl);
+  edits.set(id, newText);
+  const sp = spanMap.get(id);
+  if(sp) applyEditToSpan(sp, id, newText);
+  matches.splice(mCursor, 1);
+  if(mCursor >= matches.length) mCursor = matches.length - 1;
+  updMI(); setBtns(matches.length > 0);
+  applyMatchHighlights();
+  document.getElementById('bexp').disabled = false;
+  toast(`Substituído — pág. ${item.page}`);
+}
+
+function replAll() {
+  if(!matches.length) return;
+  if(activeEditId) commitEdit(activeEditId);
+  const term = document.getElementById('fi-find').value;
+  const repl = document.getElementById('fi-repl').value;
+  const re = mkRe(term,
+    document.getElementById('fc-cs').checked,
+    document.getElementById('fc-w').checked);
+  let count = 0;
+  matches.forEach(id => {
+    const item = textItems.find(t => t.id === id);
+    if(!item) return;
+    const newText = item.origText.replace(re, repl);
+    edits.set(id, newText);
+    const sp = spanMap.get(id);
+    if(sp) applyEditToSpan(sp, id, newText);
+    count++;
+  });
+  matches = []; mCursor = -1;
+  updMI(); setBtns(false);
+  document.getElementById('bexp').disabled = false;
+  toast(`${count} substituição(ões) aplicada(s)`, 'ok');
+}
+
+// ══════════════════════════════════════════════════════════
+// RULES
+// ══════════════════════════════════════════════════════════
+function persistRules() { localStorage.setItem(LS_KEY, JSON.stringify(rules)); }
+
+function saveRule() {
+  const find = document.getElementById('fi-find').value.trim();
+  const repl = document.getElementById('fi-repl').value;
   if(!find) return;
-  rules.push({id:Date.now(),find,replace:repl,
-    cs:document.getElementById('fc-cs').checked,
-    whole:document.getElementById('fc-w').checked});
+  rules.push({id: Date.now(), find, replace: repl,
+    cs: document.getElementById('fc-cs').checked,
+    whole: document.getElementById('fc-w').checked});
   persistRules(); renderRules();
-  document.getElementById('b-applyall').disabled=false;
+  document.getElementById('b-applyall').disabled = false;
   toast('Regra salva');
 }
-function delRule(id){ rules=rules.filter(r=>r.id!==id); persistRules(); renderRules(); document.getElementById('b-applyall').disabled=rules.length===0; }
-function loadRule(r){
-  document.getElementById('fi-find').value=r.find;
-  document.getElementById('fi-repl').value=r.replace;
-  document.getElementById('fc-cs').checked=r.cs||false;
-  document.getElementById('fc-w').checked=r.whole||false;
+
+function delRule(id) {
+  rules = rules.filter(r => r.id !== id);
+  persistRules(); renderRules();
+  document.getElementById('b-applyall').disabled = rules.length === 0;
+}
+
+function loadRule(r) {
+  document.getElementById('fi-find').value = r.find;
+  document.getElementById('fi-repl').value = r.replace;
+  document.getElementById('fc-cs').checked = r.cs || false;
+  document.getElementById('fc-w').checked = r.whole || false;
   onFind();
   if(!fnrOpen) togFnr();
 }
-function applyAll(){
-  if(!PDF||!rules.length) return;
-  closeActiveEdit();
-  let total=0; const pages=new Set();
-  rules.forEach(r=>{
+
+function applyAll() {
+  if(!PDF || !rules.length) return;
+  if(activeEditId) commitEdit(activeEditId);
+  let total = 0;
+  rules.forEach(r => {
     if(!r.find) return;
-    const re=mkRe(r.find,r.cs,r.whole);
-    lines.forEach(l=>{
-      if(!re.test(l.text)) return;
-      const cur=edits.has(l.id)?edits.get(l.id):l.text;
-      edits.set(l.id,cur.replace(re,r.replace));
-      pages.add(l.page); total++;
+    const re = mkRe(r.find, r.cs, r.whole);
+    textItems.forEach(item => {
+      if(!re.test(item.origText)) return;
+      const newText = item.origText.replace(re, r.replace);
+      edits.set(item.id, newText);
+      const sp = spanMap.get(item.id);
+      if(sp) applyEditToSpan(sp, item.id, newText);
+      total++;
     });
   });
-  document.getElementById('bexp').disabled=false;
-  pages.forEach(p=>renderPage(p));
-  toast(`${total} substituições de ${rules.length} regra(s)`,'ok');
+  document.getElementById('bexp').disabled = false;
+  toast(`${total} substituições de ${rules.length} regra(s)`, 'ok');
 }
-function renderRules(){
-  const list=document.getElementById('rdr-list');
-  if(!rules.length){ list.innerHTML='<div id="rdr-empty">Nenhuma regra salva.<br>Use "Salvar regra" no painel de busca.</div>'; return; }
-  list.innerHTML='';
-  rules.forEach(r=>{
-    const d=document.createElement('div'); d.className='ri';
-    d.innerHTML=`<div class="ri-txt"><div class="ri-old">${esc(r.find)}</div><div class="ri-arr">→</div><div class="ri-new">${esc(r.replace||'(vazio)')}</div></div><button class="rdel" onclick="delRule(${r.id})" title="Remover">×</button>`;
-    d.addEventListener('click',e=>{ if(e.target.classList.contains('rdel')) return; loadRule(r); });
+
+function renderRules() {
+  const list = document.getElementById('rdr-list');
+  if(!rules.length) {
+    list.innerHTML = '<div id="rdr-empty">Nenhuma regra salva.<br>Use "Salvar regra" no painel de busca.</div>';
+    return;
+  }
+  list.innerHTML = '';
+  rules.forEach(r => {
+    const d = document.createElement('div');
+    d.className = 'ri';
+    d.innerHTML = `<div class="ri-txt"><div class="ri-old">${esc(r.find)}</div><div class="ri-arr">→</div><div class="ri-new">${esc(r.replace||'(vazio)')}</div></div><button class="rdel" onclick="delRule(${r.id})" title="Remover">×</button>`;
+    d.addEventListener('click', e => { if(e.target.classList.contains('rdel')) return; loadRule(r); });
     list.appendChild(d);
   });
 }
-function togRdr(){ rdrOpen=!rdrOpen; document.getElementById('rdr').classList.toggle('open',rdrOpen); document.getElementById('vp-overlay').classList.toggle('on',rdrOpen); document.getElementById('brdr').classList.toggle('on',rdrOpen); if(rdrOpen) renderRules(); }
-function closeRdr(){ rdrOpen=false; document.getElementById('rdr').classList.remove('open'); document.getElementById('vp-overlay').classList.remove('on'); document.getElementById('brdr').classList.remove('on'); }
-function exportRF(){ const b=new Blob([JSON.stringify(rules,null,2)],{type:'application/json'}); const u=URL.createObjectURL(b); Object.assign(document.createElement('a'),{href:u,download:'pdf_rules.json'}).click(); setTimeout(()=>URL.revokeObjectURL(u),3000); toast('Regras exportadas'); }
-function importRF(){ document.getElementById('fi-rules').click(); }
-function importRules(file){ if(!file) return; const r=new FileReader(); r.onload=e=>{ try{ const d=JSON.parse(e.target.result); rules=d.map((x,i)=>({id:Date.now()+i,find:x.find||x.old||'',replace:x.replace||x.new||'',cs:x.cs||false,whole:x.whole||false})); persistRules(); renderRules(); document.getElementById('b-applyall').disabled=rules.length===0; toast(rules.length+' regra(s) importada(s)','ok'); }catch{ toast('JSON inválido','err'); } }; r.readAsText(file); document.getElementById('fi-rules').value=''; }
 
-// ══════════════════════════════════════════════
-// PAGE NAV & ZOOM
-// ══════════════════════════════════════════════
-function updPgNav(){
-  if(!PDF) return;
-  document.getElementById('pgin').value=curPg;
-  document.getElementById('pgin').max=PDF.numPages;
-  document.getElementById('pgof').textContent='/'+PDF.numPages;
-  document.getElementById('bprev').disabled=curPg<=1;
-  document.getElementById('bnext').disabled=curPg>=PDF.numPages;
+function togRdr() {
+  rdrOpen = !rdrOpen;
+  document.getElementById('rdr').classList.toggle('open', rdrOpen);
+  document.getElementById('vp-overlay').classList.toggle('on', rdrOpen);
+  document.getElementById('brdr').classList.toggle('on', rdrOpen);
+  if(rdrOpen) renderRules();
 }
-function navPg(d){ const n=curPg+d; if(!PDF||n<1||n>PDF.numPages) return; goPg(n); }
-function goPg(n){ if(!PDF) return; n=Math.max(1,Math.min(PDF.numPages,n)); curPg=n; updPgNav(); document.getElementById('pw'+n)?.scrollIntoView({behavior:'smooth',block:'start'}); }
-async function zm(d){ zoomLevel=Math.max(.25,Math.min(4,zoomLevel+d)); document.getElementById('zmlbl').textContent=Math.round(zoomLevel*100)+'%'; await rerenderAll(); }
-async function zmFit(){ if(!PDF) return; const p=await PDF.getPage(1); const vp=p.getViewport({scale:1}); const sw=document.getElementById('scr').clientWidth-36; zoomLevel=Math.min(sw/vp.width,2.5); document.getElementById('zmlbl').textContent=Math.round(zoomLevel*100)+'%'; await rerenderAll(); }
-window.addEventListener('resize',()=>{ if(PDF) rerenderAll(); });
-document.getElementById('scr').addEventListener('scroll',()=>{
+function closeRdr() {
+  rdrOpen = false;
+  document.getElementById('rdr').classList.remove('open');
+  document.getElementById('vp-overlay').classList.remove('on');
+  document.getElementById('brdr').classList.remove('on');
+}
+
+function exportRF() {
+  const b = new Blob([JSON.stringify(rules,null,2)], {type:'application/json'});
+  const u = URL.createObjectURL(b);
+  Object.assign(document.createElement('a'), {href:u, download:'pdf_rules.json'}).click();
+  setTimeout(()=>URL.revokeObjectURL(u),3000);
+  toast('Regras exportadas');
+}
+function importRF() { document.getElementById('fi-rules').click(); }
+function importRules(file) {
+  if(!file) return;
+  const r = new FileReader();
+  r.onload = e => {
+    try {
+      const d = JSON.parse(e.target.result);
+      rules = d.map((x,i) => ({id:Date.now()+i, find:x.find||x.old||'',
+        replace:x.replace||x.new||'', cs:x.cs||false, whole:x.whole||false}));
+      persistRules(); renderRules();
+      document.getElementById('b-applyall').disabled = rules.length === 0;
+      toast(rules.length+' regra(s) importada(s)', 'ok');
+    } catch { toast('JSON inválido','err'); }
+  };
+  r.readAsText(file);
+  document.getElementById('fi-rules').value = '';
+}
+
+// ══════════════════════════════════════════════════════════
+// PAGE NAV
+// ══════════════════════════════════════════════════════════
+function updPgNav() {
   if(!PDF) return;
-  const scr=document.getElementById('scr');
-  const mid=scr.scrollTop+scr.clientHeight/2;
-  for(let p=1;p<=PDF.numPages;p++){
-    const w=document.getElementById('pw'+p); if(!w) continue;
-    if(w.offsetTop<=mid&&w.offsetTop+w.offsetHeight>mid){ if(curPg!==p){curPg=p;updPgNav();} break; }
+  document.getElementById('pgin').value = curPg;
+  document.getElementById('pgin').max = PDF.numPages;
+  document.getElementById('pgof').textContent = '/' + PDF.numPages;
+  document.getElementById('bprev').disabled = curPg <= 1;
+  document.getElementById('bnext').disabled = curPg >= PDF.numPages;
+}
+function navPg(d) { goPg(curPg + d); }
+function goPg(n) {
+  if(!PDF) return;
+  n = Math.max(1, Math.min(PDF.numPages, n));
+  curPg = n; updPgNav();
+  document.getElementById('pw'+n)?.scrollIntoView({behavior:'smooth', block:'start'});
+}
+document.getElementById('scr').addEventListener('scroll', () => {
+  if(!PDF) return;
+  const scr = document.getElementById('scr');
+  const mid = scr.scrollTop + scr.clientHeight/2;
+  for(let p=1; p<=PDF.numPages; p++){
+    const w = document.getElementById('pw'+p); if(!w) continue;
+    if(w.offsetTop <= mid && w.offsetTop+w.offsetHeight > mid) {
+      if(curPg !== p) { curPg = p; updPgNav(); } break;
+    }
   }
 });
 
-// ══════════════════════════════════════════════
-// EXPORT — render all pages at 2× with edits applied
-// Each page → canvas → JPEG → pdf-lib page
-// Guarantees 100% page preservation
-// ══════════════════════════════════════════════
-async function loadPdfLib(){
+// ══════════════════════════════════════════════════════════
+// EXPORT
+// Render each page at high res with edits applied
+// Every page is rendered as canvas + edited text drawn on top
+// with sampled background color as cover — imperceptible
+// ══════════════════════════════════════════════════════════
+async function loadPdfLib() {
   if(pdfLibMod) return;
-  return new Promise((res,rej)=>{
-    const s=document.createElement('script');
-    s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';
-    s.onload=()=>{pdfLibMod=window.PDFLib;res();};s.onerror=rej;
+  return new Promise((res,rej) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';
+    s.onload = () => { pdfLibMod = window.PDFLib; res(); };
+    s.onerror = rej;
     document.head.appendChild(s);
   });
 }
 
-async function doExport(){
+async function doExport() {
   if(!PDF) return;
-  closeActiveEdit();
+  if(activeEditId) commitEdit(activeEditId);
 
-  if(!edits.size){
-    // No changes — download original
-    const url=URL.createObjectURL(new Blob([pdfBytes],{type:'application/pdf'}));
+  if(!edits.size) {
+    const url = URL.createObjectURL(new Blob([pdfBytes],{type:'application/pdf'}));
     Object.assign(document.createElement('a'),{href:url,download:'documento_editado.pdf'}).click();
     setTimeout(()=>URL.revokeObjectURL(url),5000);
     toast('PDF baixado (sem alterações)');
     return;
   }
 
-  showProg('Exportando PDF…','Carregando motor…');spg(5);
-  try{ await loadPdfLib(); }catch(e){ hideProg(); toast('Erro ao carregar pdf-lib','err'); return; }
+  showProg('Exportando PDF…','Carregando motor…'); setProg(5);
+  try { await loadPdfLib(); } catch(e) {
+    hideProg(); toast('Erro ao carregar pdf-lib','err'); return;
+  }
 
   const {PDFDocument} = pdfLibMod;
-  const RSCALE = 2.5; // render at 2.5× for quality
+  const RSCALE = 2.5;
   const outDoc = await PDFDocument.create();
 
-  for(let p=1;p<=PDF.numPages;p++){
-    spg(5+(p/PDF.numPages)*90,`Página ${p}/${PDF.numPages}…`);
+  for(let p=1; p<=PDF.numPages; p++){
+    setProg(5+(p/PDF.numPages)*90, `Página ${p} / ${PDF.numPages}…`);
 
     const page = await PDF.getPage(p);
     const vp1 = page.getViewport({scale:1});
-    const vp = page.getViewport({scale:RSCALE});
-    const sc = RSCALE;
-    const pH = vp1.height;
+    const vpH = page.getViewport({scale:RSCALE});
 
-    // Render base page
+    // Render page at high res
     const canvas = document.createElement('canvas');
-    canvas.width=vp.width; canvas.height=vp.height;
-    const ctx=canvas.getContext('2d');
-    await page.render({canvasContext:ctx,viewport:vp}).promise;
+    canvas.width = vpH.width;
+    canvas.height = vpH.height;
+    const ctx = canvas.getContext('2d');
+    await page.render({canvasContext:ctx, viewport:vpH}).promise;
 
-    // Draw text layer edits
-    const pageLines = lines.filter(l=>l.page===p);
-    pageLines.forEach(l=>{
-      if(!edits.has(l.id)) return;
-      const newText = edits.get(l.id);
-      const sx = l.x * sc;
-      const sy = (pH - l.y) * sc;
-      const fs = l.fontSize * sc;
-      const coverW = (l.w + l.h*5) * sc;
-      const coverH = fs * 1.6;
+    // Get text content for this page (needed for transform data)
+    const tc = await page.getTextContent({includeMarkedContent:false});
 
-      // White cover
-      ctx.fillStyle='#ffffff';
-      ctx.fillRect(sx-3, sy-coverH+fs*0.15, coverW+6, coverH+2);
+    // Apply edits
+    const pageItems = textItems.filter(t => t.page === p);
+    const itemsByLocalIdx = new Map();
+    pageItems.forEach(it => itemsByLocalIdx.set(it.localIdx, it));
 
-      // New text
-      ctx.fillStyle='#1a1a1b';
-      const weight = l.isBold?'600':'400';
-      const style = l.isItalic?'italic ':'';
-      ctx.font=`${style}${weight} ${fs}px 'IBM Plex Sans',Arial,sans-serif`;
-      ctx.textBaseline='alphabetic';
-      ctx.fillText(newText, sx, sy);
+    tc.items.forEach((tcItem, localIdx) => {
+      const item = pageItems.find(it => it.localIdx === localIdx);
+      if(!item || !edits.has(item.id)) return;
+
+      const newText = edits.get(item.id);
+      const tx = item.transform;
+      const sc = RSCALE;
+
+      // PDF.js transform: [scaleX, skewY, skewX, scaleY, tx, ty]
+      // ty is y from BOTTOM of page in PDF points
+      const originX = tx[4] * sc;
+      const originY = (vp1.height - tx[5]) * sc; // y from TOP in canvas px
+      const fontSize = Math.abs(tx[3]) * sc;
+
+      // Cover with sampled background color
+      // Get bg color from the display span
+      const bgC = bgColors.get(item.id) || '#ffffff';
+      const coverW = (item.width || tcItem.width || item.origText.length * Math.abs(tx[0]) * 0.65) * sc + fontSize * 3;
+      const coverH = fontSize * 1.55;
+
+      ctx.fillStyle = bgC;
+      ctx.fillRect(originX - 2, originY - fontSize * 1.2, coverW + 4, coverH);
+
+      // Draw new text
+      ctx.fillStyle = fgColors.get(item.id) || '#1a1a1b';
+      ctx.font = `${fontSize}px 'IBM Plex Sans',Arial,sans-serif`;
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillText(newText, originX, originY - fontSize * 0.1);
     });
 
-    // Embed as JPEG
-    const imgData = canvas.toDataURL('image/jpeg', 0.93);
+    // Embed page as JPEG
+    const imgData = canvas.toDataURL('image/jpeg', 0.94);
     const imgBytes = await fetch(imgData).then(r=>r.arrayBuffer());
     const img = await outDoc.embedJpg(imgBytes);
     const outPage = outDoc.addPage([vp1.width, vp1.height]);
-    outPage.drawImage(img,{x:0,y:0,width:vp1.width,height:vp1.height});
+    outPage.drawImage(img, {x:0,y:0,width:vp1.width,height:vp1.height});
 
-    canvas.width=1; canvas.height=1; // free memory
+    canvas.width=1; canvas.height=1;
     await new Promise(r=>setTimeout(r,8));
   }
 
-  spg(97,'Gerando arquivo…');
+  setProg(98,'Gerando arquivo…');
   await new Promise(r=>setTimeout(r,60));
   const bytes = await outDoc.save();
   hideProg();
 
-  const url=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'}));
+  const url = URL.createObjectURL(new Blob([bytes],{type:'application/pdf'}));
   Object.assign(document.createElement('a'),{href:url,download:'documento_editado.pdf'}).click();
   setTimeout(()=>URL.revokeObjectURL(url),8000);
-  toast(`PDF exportado — ${PDF.numPages} páginas`,'ok');
+  toast(`PDF exportado — ${PDF.numPages} páginas`, 'ok');
 }
 
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
 // PROGRESS & TOAST
-// ══════════════════════════════════════════════
-function showProg(title,sub=''){document.getElementById('prog').classList.add('on');document.getElementById('pgtitle').textContent=title;document.getElementById('pgsub').textContent=sub;document.getElementById('pgfill').style.width='0%';}
-function spg(pct,sub){document.getElementById('pgfill').style.width=pct+'%';if(sub)document.getElementById('pgsub').textContent=sub;}
+// ══════════════════════════════════════════════════════════
+function showProg(t,s=''){document.getElementById('prog').classList.add('on');document.getElementById('pgtitle').textContent=t;document.getElementById('pgsub').textContent=s;document.getElementById('pgfill').style.width='0%';}
+function setProg(p,s){document.getElementById('pgfill').style.width=p+'%';if(s!=null)document.getElementById('pgsub').textContent=s;}
 function hideProg(){document.getElementById('prog').classList.remove('on');}
 function toast(msg,type=''){const el=document.getElementById('toast');el.textContent=msg;el.className='on'+(type?' '+type:'');clearTimeout(el._t);el._t=setTimeout(()=>el.className='',2800);}
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');}
 
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
 // KEYBOARD
-// ══════════════════════════════════════════════
-document.addEventListener('keydown',e=>{
-  const tag=e.target.tagName,isIn=tag==='INPUT'||tag==='TEXTAREA';
-  if((e.ctrlKey||e.metaKey)&&e.key==='o'){e.preventDefault();document.getElementById('fi-pdf').click();}
-  if((e.ctrlKey||e.metaKey)&&(e.key==='h'||e.key==='f')){e.preventDefault();if(PDF){if(!fnrOpen)togFnr();else document.getElementById('fi-find').focus();}}
-  if((e.ctrlKey||e.metaKey)&&e.key==='s'&&PDF){e.preventDefault();doExport();}
-  if(e.key==='Escape'){if(fnrOpen)togFnr();if(rdrOpen)closeRdr();}
-  if(e.key==='Enter'&&isIn&&document.activeElement.id==='fi-find'){e.preventDefault();e.shiftKey?navM(-1):navM(1);}
+// ══════════════════════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  const tag = e.target.tagName;
+  const isIn = tag === 'INPUT' || tag === 'TEXTAREA' || e.target.contentEditable === 'true';
+  if((e.ctrlKey||e.metaKey) && e.key==='o'){e.preventDefault();document.getElementById('fi-pdf').click();}
+  if((e.ctrlKey||e.metaKey) && (e.key==='h'||e.key==='f')){e.preventDefault();if(PDF){if(!fnrOpen)togFnr();else document.getElementById('fi-find').focus();}}
+  if((e.ctrlKey||e.metaKey) && e.key==='s' && PDF){e.preventDefault();doExport();}
+  if(e.key==='Escape'){if(activeEditId)cancelEdit(activeEditId);else if(fnrOpen)togFnr();else if(rdrOpen)closeRdr();}
+  if(e.key==='Enter' && !isIn){if(fnrOpen){e.shiftKey?navM(-1):navM(1);}}
+  if(e.key==='Enter' && document.activeElement.id==='fi-find'){e.preventDefault();e.shiftKey?navM(-1):navM(1);}
 });
 
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
 // INIT
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
 renderRules();
 </script>
 </body>
