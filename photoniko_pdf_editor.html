@@ -3,394 +3,1028 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Photoniko PDF Editor</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<title>PDF Editor</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
-:root{--bg:#0f0f11;--surface:#17171a;--surface2:#1f1f24;--border:#2a2a32;--accent:#e8ff47;--accent2:#47d4ff;--text:#f0f0f0;--muted:#6b6b7a;--danger:#ff4747;--success:#4aff7a;--panel-w:390px;}
+/* ═══ RESET & TOKENS ═══ */
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);height:100dvh;overflow:hidden;display:flex;flex-direction:column;}
-#topbar{height:52px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 14px;gap:8px;flex-shrink:0;z-index:100;overflow-x:auto;}
-#topbar::-webkit-scrollbar{display:none;}
-#logo{font-size:17px;font-weight:800;letter-spacing:-.5px;color:var(--accent);flex-shrink:0;}
-#logo span{color:var(--muted);font-weight:400;font-size:11px;margin-left:3px;}
-.sp{flex:1;min-width:4px;}
-.tb{height:32px;padding:0 11px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:5px;flex-shrink:0;transition:all .15s;}
-.tb:hover{background:var(--border);}
-.tb:disabled{opacity:.35;cursor:not-allowed;}
-.tb.go{background:var(--accent);color:#000;border-color:var(--accent);font-weight:700;}
-.tb.go:hover:not(:disabled){background:#d4e840;}
-#main{flex:1;display:flex;overflow:hidden;}
-#panel{width:var(--panel-w);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;}
-#dropzone{margin:10px;border:2px dashed var(--border);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px 12px;text-align:center;cursor:pointer;transition:all .2s;flex-shrink:0;}
-#dropzone:hover,#dropzone.drag{border-color:var(--accent2);background:rgba(71,212,255,.05);}
-#dropzone .dicon{font-size:28px;margin-bottom:6px;}
-#dropzone .dtitle{font-size:12px;font-weight:700;margin-bottom:3px;}
-#dropzone .dsub{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;}
-#dropzone.has-file{border-color:var(--success);background:rgba(74,255,122,.04);}
-#tip{margin:0 10px 8px;padding:9px 11px;border-radius:7px;background:rgba(71,212,255,.07);border:1px solid rgba(71,212,255,.15);font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);line-height:1.6;flex-shrink:0;}
-#tip b{color:var(--accent2);}
-#reps-hdr{padding:6px 12px;font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
-#reps-list{flex:1;overflow-y:auto;padding:6px;display:flex;flex-direction:column;gap:5px;}
-#reps-list::-webkit-scrollbar{width:3px;}
-#reps-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
-.rc{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px;display:flex;flex-direction:column;gap:5px;position:relative;}
-.rc.hit{border-color:var(--accent2);}
-.rr{display:flex;gap:5px;align-items:center;}
-.rl{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);width:34px;flex-shrink:0;text-transform:uppercase;}
-.ri{flex:1;height:27px;border-radius:5px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;font-size:11px;padding:0 7px;outline:none;}
-.ri:focus{border-color:var(--accent2);}
-.ri.old{border-color:rgba(255,71,71,.25);}
-.ri.new{border-color:rgba(74,255,122,.25);}
-.rdel{position:absolute;top:5px;right:7px;color:var(--danger);font-size:12px;cursor:pointer;opacity:.4;background:none;border:none;line-height:1;}
-.rdel:hover{opacity:1;}
-.ro{display:flex;gap:8px;align-items:center;}
-.ro label{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);cursor:pointer;display:flex;align-items:center;gap:4px;}
-.ro input[type=checkbox]{accent-color:var(--accent2);}
-.rbadge{font-family:'DM Mono',monospace;font-size:9px;padding:2px 6px;border-radius:20px;background:rgba(71,212,255,.15);color:var(--accent2);margin-left:auto;}
-#addbtn{margin:0 6px 6px;height:30px;border-radius:6px;border:1px dashed var(--border);background:transparent;color:var(--muted);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;transition:all .15s;flex-shrink:0;}
-#addbtn:hover{border-color:var(--accent);color:var(--accent);}
-#scan-sec{border-top:1px solid var(--border);flex-shrink:0;max-height:200px;display:flex;flex-direction:column;display:none;}
-#scan-hdr{padding:6px 12px;font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
-#scan-list{overflow-y:auto;flex:1;}
-#scan-list::-webkit-scrollbar{width:3px;}
-.si{padding:5px 12px;border-bottom:1px solid var(--border);cursor:pointer;font-family:'DM Mono',monospace;font-size:10px;display:flex;gap:6px;transition:background .1s;}
-.si:hover{background:var(--surface2);}
-.si.ap{background:rgba(71,212,255,.06);}
-.spg{color:var(--accent2);min-width:40px;flex-shrink:0;font-size:9px;padding-top:1px;}
-.stxt{flex:1;overflow:hidden;}
-.sold{color:var(--danger);text-decoration:line-through;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.snew{color:var(--success);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-#viewer{flex:1;display:flex;flex-direction:column;overflow:hidden;background:#111;}
-#vtb{height:40px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 10px;gap:7px;flex-shrink:0;display:none;}
-.vb{height:26px;padding:0 9px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;transition:all .15s;}
-.vb:hover{background:var(--border);}
-.vb:disabled{opacity:.3;cursor:not-allowed;}
-#pg-info{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);}
-#zm-val{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);min-width:36px;text-align:center;}
-#cs{flex:1;overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:14px;display:none;}
-#cs::-webkit-scrollbar{width:5px;height:5px;}
-#cs::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
-#pdf-c{display:block;box-shadow:0 4px 24px rgba(0,0,0,.6);}
-#ev{flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;color:var(--muted);text-align:center;}
-#ev h3{font-size:20px;font-weight:700;color:var(--text);}
-#ev p{font-size:12px;font-family:'DM Mono',monospace;line-height:1.7;}
-#prog{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9999;align-items:center;justify-content:center;flex-direction:column;gap:14px;}
-#prog.on{display:flex;}
-#prog-t{font-size:15px;font-weight:700;}
-#pbw{width:270px;height:8px;background:var(--border);border-radius:4px;overflow:hidden;}
-#pb{height:100%;background:var(--accent);width:0%;transition:width .25s;}
-#plb{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);}
-#nt{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--accent);color:#000;padding:7px 18px;border-radius:8px;font-size:13px;font-weight:700;opacity:0;transition:opacity .3s;pointer-events:none;z-index:9999;white-space:nowrap;}
-#nt.on{opacity:1;}
-#nt.err{background:var(--danger);color:#fff;}
-@media(max-width:820px){:root{--panel-w:100vw;}#main{flex-direction:column;}#panel{width:100%;height:55dvh;border-right:none;border-bottom:1px solid var(--border);}#viewer{height:45dvh;}}
+:root{
+  --ink:#0a0a0b;--paper:#f4f2ed;--surface:#ffffff;--ghost:#e8e6e0;
+  --rule:#d4d0c8;--dim:#9b9790;--accent:#1a1a1b;--live:#e8ff47;
+  --red:#e53535;--green:#22c55e;--blue:#2563eb;
+  --mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;
+  --r:6px;--toolbar-h:48px;--bar-h:52px;
+}
+html,body{height:100%;overflow:hidden;background:var(--paper);color:var(--ink);font-family:var(--sans);}
+
+/* ═══ SHELL ═══ */
+#shell{display:flex;flex-direction:column;height:100dvh;}
+
+/* ═══ TOPBAR ═══ */
+#topbar{
+  height:var(--toolbar-h);background:var(--surface);
+  border-bottom:1px solid var(--rule);
+  display:flex;align-items:center;padding:0 14px;gap:0;
+  flex-shrink:0;z-index:200;
+}
+#wordmark{font-family:var(--mono);font-size:13px;font-weight:600;letter-spacing:-.3px;
+  color:var(--ink);flex-shrink:0;display:flex;align-items:center;gap:8px;}
+#wordmark .dot{width:7px;height:7px;background:var(--ink);border-radius:50%;}
+.divider{width:1px;height:20px;background:var(--rule);margin:0 12px;flex-shrink:0;}
+.cmd{height:30px;padding:0 12px;border-radius:var(--r);border:1px solid var(--rule);
+  background:transparent;color:var(--ink);font-family:var(--mono);font-size:11px;font-weight:500;
+  cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;
+  flex-shrink:0;transition:background .12s,border-color .12s,color .12s;letter-spacing:-.2px;}
+.cmd:hover{background:var(--ghost);border-color:var(--rule);}
+.cmd:disabled{opacity:.3;cursor:not-allowed;}
+.cmd.primary{background:var(--ink);color:#fff;border-color:var(--ink);}
+.cmd.primary:hover:not(:disabled){background:#333;}
+.cmd.active{background:var(--ink);color:var(--live);border-color:var(--ink);}
+.cmd svg{width:13px;height:13px;flex-shrink:0;}
+#tb-right{display:flex;align-items:center;gap:6px;margin-left:auto;}
+#tb-left{display:flex;align-items:center;gap:6px;}
+#pg-nav{display:flex;align-items:center;gap:4px;margin-left:8px;}
+#pg-input{width:36px;height:26px;border:1px solid var(--rule);border-radius:4px;
+  background:var(--ghost);font-family:var(--mono);font-size:11px;text-align:center;
+  color:var(--ink);outline:none;}
+#pg-input:focus{border-color:var(--ink);}
+#pg-of{font-family:var(--mono);font-size:11px;color:var(--dim);}
+.zm-btn{width:26px;height:26px;border:1px solid var(--rule);border-radius:4px;
+  background:transparent;font-size:14px;cursor:pointer;display:flex;align-items:center;
+  justify-content:center;transition:background .1s;flex-shrink:0;color:var(--ink);}
+.zm-btn:hover{background:var(--ghost);}
+#zm-label{font-family:var(--mono);font-size:11px;color:var(--dim);min-width:38px;text-align:center;}
+.sep{width:1px;height:18px;background:var(--rule);margin:0 6px;flex-shrink:0;}
+
+/* ═══ VIEWPORT ═══ */
+#viewport{flex:1;overflow:hidden;position:relative;background:var(--paper);}
+
+/* ═══ CANVAS SCROLL ═══ */
+#scroll{
+  position:absolute;inset:0;overflow:auto;
+  display:flex;flex-direction:column;align-items:center;
+  padding:24px 24px 100px;gap:12px;
+}
+#scroll::-webkit-scrollbar{width:6px;}
+#scroll::-webkit-scrollbar-track{background:transparent;}
+#scroll::-webkit-scrollbar-thumb{background:var(--rule);border-radius:3px;}
+.page-wrap{position:relative;flex-shrink:0;box-shadow:0 2px 12px rgba(0,0,0,.12);}
+.page-wrap canvas{display:block;}
+.page-wrap .pg-num{
+  position:absolute;bottom:-22px;left:50%;transform:translateX(-50%);
+  font-family:var(--mono);font-size:10px;color:var(--dim);white-space:nowrap;
+}
+/* highlight overlay on each page canvas — drawn directly via ctx */
+
+/* ═══ DROP ZONE (shown when no PDF) ═══ */
+#dropzone{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:14px;
+  background:var(--paper);z-index:10;cursor:pointer;
+  transition:background .2s;
+}
+#dropzone:hover,#dropzone.drag{background:var(--ghost);}
+#dropzone.hidden{display:none;}
+.dz-icon{width:64px;height:64px;border:2px dashed var(--rule);border-radius:12px;
+  display:flex;align-items:center;justify-content:center;font-size:26px;}
+.dz-title{font-size:15px;font-weight:600;letter-spacing:-.3px;}
+.dz-sub{font-family:var(--mono);font-size:11px;color:var(--dim);}
+.dz-hint{font-family:var(--mono);font-size:10px;color:var(--dim);
+  border:1px solid var(--rule);border-radius:20px;padding:4px 12px;margin-top:4px;}
+
+/* ═══ FIND & REPLACE PANEL ═══ */
+#fnr{
+  position:absolute;bottom:0;left:50%;transform:translate(-50%,100%);
+  width:min(560px,calc(100vw - 32px));
+  background:var(--surface);border:1px solid var(--rule);
+  border-radius:12px 12px 0 0;
+  box-shadow:0 -4px 24px rgba(0,0,0,.1);
+  z-index:300;padding:0;
+  transition:transform .28s cubic-bezier(.4,0,.2,1);
+  overflow:hidden;
+}
+#fnr.open{transform:translate(-50%,0);}
+#fnr-handle{
+  height:40px;display:flex;align-items:center;padding:0 14px;gap:10px;
+  border-bottom:1px solid var(--ghost);cursor:default;
+  background:var(--ghost);
+}
+#fnr-title{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.5px;
+  text-transform:uppercase;color:var(--dim);flex:1;}
+#fnr-match-info{font-family:var(--mono);font-size:11px;color:var(--dim);}
+.fnr-close{width:24px;height:24px;border-radius:4px;border:none;background:transparent;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--dim);
+  font-size:16px;transition:background .1s;flex-shrink:0;}
+.fnr-close:hover{background:var(--rule);color:var(--ink);}
+
+#fnr-body{padding:12px 14px 16px;display:flex;flex-direction:column;gap:8px;}
+.fnr-row{display:flex;gap:8px;align-items:center;}
+.fnr-label{font-family:var(--mono);font-size:10px;color:var(--dim);
+  width:64px;flex-shrink:0;letter-spacing:.3px;}
+.fnr-input{
+  flex:1;height:34px;border:1px solid var(--rule);border-radius:var(--r);
+  background:var(--paper);color:var(--ink);font-family:var(--mono);font-size:12px;
+  padding:0 10px;outline:none;transition:border-color .15s;
+}
+.fnr-input:focus{border-color:var(--ink);}
+.fnr-input::placeholder{color:var(--dim);}
+.fnr-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+.fnr-nav{display:flex;gap:4px;}
+.fnr-nav-btn{width:30px;height:30px;border:1px solid var(--rule);border-radius:var(--r);
+  background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:13px;transition:background .1s;color:var(--ink);}
+.fnr-nav-btn:hover{background:var(--ghost);}
+.fnr-nav-btn:disabled{opacity:.3;cursor:not-allowed;}
+.fnr-opts{display:flex;gap:10px;align-items:center;margin-left:auto;}
+.fnr-opts label{font-family:var(--mono);font-size:10px;color:var(--dim);
+  display:flex;align-items:center;gap:5px;cursor:pointer;user-select:none;}
+.fnr-opts input[type=checkbox]{accent-color:var(--ink);width:12px;height:12px;}
+.fnr-divider{width:1px;height:24px;background:var(--rule);flex-shrink:0;}
+
+/* ═══ SAVED RULES DRAWER ═══ */
+#rules-drawer{
+  position:absolute;right:0;top:0;bottom:0;width:min(320px,85vw);
+  background:var(--surface);border-left:1px solid var(--rule);
+  transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);
+  z-index:250;display:flex;flex-direction:column;overflow:hidden;
+}
+#rules-drawer.open{transform:translateX(0);}
+#rules-hdr{
+  height:48px;display:flex;align-items:center;padding:0 14px;gap:10px;
+  border-bottom:1px solid var(--rule);flex-shrink:0;
+}
+#rules-hdr-title{font-family:var(--mono);font-size:11px;font-weight:600;
+  letter-spacing:.5px;text-transform:uppercase;color:var(--dim);flex:1;}
+#rules-list{flex:1;overflow-y:auto;padding:8px;}
+#rules-list::-webkit-scrollbar{width:3px;}
+#rules-list::-webkit-scrollbar-thumb{background:var(--rule);border-radius:2px;}
+.rule-item{
+  display:flex;align-items:flex-start;gap:8px;padding:10px;
+  border:1px solid var(--ghost);border-radius:var(--r);margin-bottom:6px;
+  cursor:pointer;transition:border-color .12s,background .12s;
+}
+.rule-item:hover{border-color:var(--rule);background:var(--ghost);}
+.rule-item.applied{border-color:var(--green);background:rgba(34,197,94,.05);}
+.rule-texts{flex:1;min-width:0;}
+.rule-old{font-family:var(--mono);font-size:11px;color:var(--red);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;}
+.rule-arr{font-family:var(--mono);font-size:10px;color:var(--dim);}
+.rule-new{font-family:var(--mono);font-size:11px;color:var(--green);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rule-del{width:22px;height:22px;border-radius:4px;border:none;background:transparent;
+  cursor:pointer;color:var(--dim);font-size:13px;display:flex;align-items:center;
+  justify-content:center;flex-shrink:0;transition:background .1s;margin-top:1px;}
+.rule-del:hover{background:var(--ghost);color:var(--red);}
+#rules-footer{padding:10px 8px;border-top:1px solid var(--rule);display:flex;gap:6px;flex-shrink:0;}
+#rules-empty{padding:32px 16px;text-align:center;color:var(--dim);
+  font-family:var(--mono);font-size:11px;line-height:1.7;}
+
+/* ═══ PROGRESS SHEET ═══ */
+#prog-sheet{
+  display:none;position:fixed;inset:0;z-index:900;
+  background:rgba(244,242,237,.92);backdrop-filter:blur(8px);
+  align-items:center;justify-content:center;flex-direction:column;gap:20px;
+}
+#prog-sheet.on{display:flex;}
+#prog-card{
+  background:var(--surface);border:1px solid var(--rule);border-radius:12px;
+  padding:28px 32px;width:min(360px,90vw);
+  display:flex;flex-direction:column;gap:16px;
+}
+#prog-title{font-size:14px;font-weight:600;letter-spacing:-.3px;}
+#prog-sub{font-family:var(--mono);font-size:11px;color:var(--dim);}
+#prog-track{height:3px;background:var(--ghost);border-radius:2px;overflow:hidden;}
+#prog-fill{height:100%;background:var(--ink);width:0%;transition:width .3s;}
+#prog-pages{font-family:var(--mono);font-size:10px;color:var(--dim);text-align:right;}
+
+/* ═══ TOAST ═══ */
+#toast{
+  position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(12px);
+  background:var(--ink);color:#fff;padding:8px 16px;border-radius:20px;
+  font-family:var(--mono);font-size:11px;font-weight:500;
+  opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:999;
+  white-space:nowrap;
+}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
+#toast.err{background:var(--red);}
+#toast.ok{background:var(--green);color:var(--ink);}
+
+/* ═══ OVERLAY on viewport to close drawer ═══ */
+#overlay{display:none;position:absolute;inset:0;z-index:240;background:rgba(0,0,0,.15);}
+#overlay.on{display:block;}
+
+/* ═══ MOBILE ═══ */
+@media(max-width:600px){
+  #wordmark .label{display:none;}
+  #tb-left .cmd .label{display:none;}
+  #pg-nav{margin-left:4px;}
+  #scroll{padding:12px 8px 120px;}
+  #fnr{width:100vw;border-radius:12px 12px 0 0;}
+}
+@media(max-height:500px) and (orientation:landscape){
+  :root{--toolbar-h:40px;}
+  #fnr-body{padding:8px 14px 12px;}
+}
 </style>
 </head>
 <body>
+<div id="shell">
 
-<div id="topbar">
-  <div id="logo">Photoniko <span>PDF Editor</span></div>
-  <div class="sp"></div>
-  <button class="tb" id="bscan" onclick="doScan()" disabled>🔍 Escanear</button>
-  <button class="tb" id="bapply" onclick="doApply()" disabled>⚡ Aplicar todas as páginas</button>
-  <button class="tb go" id="bdl" onclick="downloadResult()" disabled>↓ Baixar PDF</button>
-  <button class="tb" onclick="exportRules()" title="Salvar regras como JSON">📤 Salvar regras</button>
-  <button class="tb" onclick="document.getElementById('fi-json').click()" title="Carregar regras">📥 Carregar regras</button>
-</div>
+  <!-- TOPBAR -->
+  <div id="topbar">
+    <div id="tb-left">
+      <div id="wordmark">
+        <div class="dot"></div>
+        <span class="label">PDF Editor</span>
+      </div>
+      <div class="divider"></div>
+      <button class="cmd" id="btn-open" onclick="document.getElementById('fi-pdf').click()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="1" width="12" height="14" rx="1.5"/><path d="M5 5h6M5 8h6M5 11h4"/></svg>
+        <span class="label">Abrir PDF</span>
+      </button>
+      <div id="pg-nav" style="display:none">
+        <button class="zm-btn" id="btn-prev" onclick="navPg(-1)" disabled>‹</button>
+        <input id="pg-input" type="number" min="1" value="1" onchange="goPage(+this.value)">
+        <span id="pg-of">/ 1</span>
+        <button class="zm-btn" id="btn-next" onclick="navPg(1)" disabled>›</button>
+      </div>
+    </div>
+    <div id="tb-right">
+      <button class="zm-btn" onclick="doZoom(-.2)">−</button>
+      <span id="zm-label">100%</span>
+      <button class="zm-btn" onclick="doZoom(+.2)">+</button>
+      <button class="zm-btn" onclick="zoomFit()" title="Ajustar à tela">⊡</button>
+      <div class="sep"></div>
+      <button class="cmd" id="btn-fnr" onclick="toggleFnr()" disabled>
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6.5" cy="6.5" r="4"/><path d="M11 11l3 3"/><path d="M9 13h5M11 15h3" stroke-width="1.2"/></svg>
+        <span class="label">Localizar e substituir</span>
+      </button>
+      <button class="cmd" id="btn-rules" onclick="toggleRules()" title="Regras salvas">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h8M2 12h10"/></svg>
+      </button>
+      <div class="sep"></div>
+      <button class="cmd primary" id="btn-export" onclick="doExport()" disabled>
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v8M5 7l3 3 3-3M2 12v1a1 1 0 001 1h10a1 1 0 001-1v-1"/></svg>
+        <span class="label">Exportar PDF</span>
+      </button>
+    </div>
+  </div>
 
-<div id="main">
-  <div id="panel">
+  <!-- VIEWPORT -->
+  <div id="viewport">
+    <!-- Drop zone -->
     <div id="dropzone" onclick="document.getElementById('fi-pdf').click()">
-      <div class="dicon">📄</div>
-      <div class="dtitle" id="dz-title">Arraste o PDF aqui</div>
-      <div class="dsub" id="dz-sub">ou clique para selecionar</div>
+      <div class="dz-icon">📄</div>
+      <div class="dz-title">Abrir PDF</div>
+      <div class="dz-sub">Arraste aqui ou clique para selecionar</div>
+      <div class="dz-hint">Ctrl+O para abrir · Ctrl+F para localizar</div>
     </div>
-    <div id="tip"><b>Como usar:</b> 1) Carregue o PDF. 2) Preencha as substituições. 3) <b>Escanear</b> para preview. 4) <b>Aplicar</b>. 5) Baixar.</div>
-    <div id="reps-hdr"><span>Substituições</span><span id="rcnt" style="color:var(--accent);font-family:'DM Mono',monospace;font-size:11px">0 regras</span></div>
-    <div id="reps-list"></div>
-    <button id="addbtn" onclick="addRep()">+ Adicionar substituição</button>
-    <div id="scan-sec">
-      <div id="scan-hdr"><span>Preview de mudanças</span><span id="scnt" style="color:var(--accent2);font-family:'DM Mono',monospace;font-size:11px"></span></div>
-      <div id="scan-list"></div>
-    </div>
-  </div>
 
-  <div id="viewer">
-    <div id="ev"><h3>Nenhum PDF carregado</h3><p>Carregue um PDF no painel esquerdo.<br>O preview aparece aqui.</p></div>
-    <div id="vtb">
-      <button class="vb" id="bprev" onclick="changePg(-1)" disabled>← Ant</button>
-      <div id="pg-info">1/1</div>
-      <button class="vb" id="bnext" onclick="changePg(1)" disabled>Próx →</button>
-      <div style="flex:1"></div>
-      <button class="vb" onclick="zm(-0.25)">−</button>
-      <div id="zm-val">100%</div>
-      <button class="vb" onclick="zm(+0.25)">+</button>
-      <button class="vb" onclick="zmFit()">⊡</button>
+    <!-- Canvas scroll -->
+    <div id="scroll" style="display:none"></div>
+
+    <!-- Drawer overlay -->
+    <div id="overlay" onclick="closeRules()"></div>
+
+    <!-- Find & Replace -->
+    <div id="fnr">
+      <div id="fnr-handle">
+        <span id="fnr-title">Localizar e Substituir</span>
+        <span id="fnr-match-info"></span>
+        <button class="fnr-close" onclick="toggleFnr()">×</button>
+      </div>
+      <div id="fnr-body">
+        <div class="fnr-row">
+          <span class="fnr-label">LOCALIZAR</span>
+          <input class="fnr-input" id="fnr-find" placeholder="texto a localizar…" oninput="onFindInput()">
+          <div class="fnr-nav">
+            <button class="fnr-nav-btn" id="fnr-prev" onclick="navMatch(-1)" disabled title="Anterior">↑</button>
+            <button class="fnr-nav-btn" id="fnr-next" onclick="navMatch(1)" disabled title="Próximo">↓</button>
+          </div>
+        </div>
+        <div class="fnr-row">
+          <span class="fnr-label">SUBSTITUIR</span>
+          <input class="fnr-input" id="fnr-repl" placeholder="substituir por…">
+        </div>
+        <div class="fnr-actions">
+          <button class="cmd" id="fnr-one" onclick="replaceOne()" disabled>Substituir este</button>
+          <button class="cmd primary" id="fnr-all" onclick="replaceAll()" disabled>Substituir todos</button>
+          <div class="fnr-divider"></div>
+          <div class="fnr-opts">
+            <label><input type="checkbox" id="fnr-cs"> Aa</label>
+            <label><input type="checkbox" id="fnr-whole"> Palavra inteira</label>
+          </div>
+          <button class="cmd" id="fnr-save" onclick="saveRule()" disabled title="Salvar esta regra">
+            <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 2h8l2 2v8H2V2z"/><rect x="4" y="8" width="6" height="4"/><rect x="4" y="2" width="5" height="3"/></svg>
+            Salvar regra
+          </button>
+        </div>
+      </div>
     </div>
-    <div id="cs"><canvas id="pdf-c"></canvas></div>
+
+    <!-- Saved Rules Drawer -->
+    <div id="rules-drawer">
+      <div id="rules-hdr">
+        <span id="rules-hdr-title">Regras salvas</span>
+        <button class="cmd" onclick="importRulesFile()" title="Importar JSON" style="padding:0 8px;height:26px;font-size:10px">
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" width="11" height="11"><path d="M7 2v7M4 6l3 3 3-3"/><path d="M2 11h10"/></svg>
+          Importar
+        </button>
+        <button class="cmd" onclick="exportRulesFile()" title="Exportar JSON" style="padding:0 8px;height:26px;font-size:10px">
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" width="11" height="11"><path d="M7 9V2M4 5l3-3 3 3"/><path d="M2 11h10"/></svg>
+          Exportar
+        </button>
+        <button class="fnr-close" onclick="closeRules()">×</button>
+      </div>
+      <div id="rules-list"></div>
+      <div id="rules-footer">
+        <button class="cmd primary" onclick="applyAllRules()" id="btn-apply-all" disabled style="flex:1">Aplicar todas as regras</button>
+      </div>
+    </div>
+  </div><!-- #viewport -->
+</div><!-- #shell -->
+
+<!-- Progress -->
+<div id="prog-sheet">
+  <div id="prog-card">
+    <div id="prog-title">Processando PDF</div>
+    <div id="prog-sub">Preparando…</div>
+    <div id="prog-track"><div id="prog-fill"></div></div>
+    <div id="prog-pages"></div>
   </div>
 </div>
 
-<div id="prog"><div id="prog-t">Processando...</div><div id="pbw"><div id="pb"></div></div><div id="plb"></div></div>
-<div id="nt"></div>
-<input type="file" id="fi-pdf" accept=".pdf" style="display:none" onchange="loadPDF(this.files[0])">
-<input type="file" id="fi-json" accept=".json" style="display:none" onchange="importRules(this.files[0])">
+<div id="toast"></div>
+<input type="file" id="fi-pdf" accept=".pdf" style="display:none" onchange="openPDF(this.files[0])">
+<input type="file" id="fi-rules" accept=".json" style="display:none" onchange="importRules(this.files[0])">
 
 <script>
-pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+// ═══════════════════════════════════════════════════════
+// PDF.js
+// ═══════════════════════════════════════════════════════
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-let pdfDoc=null, pdfBytes=null, resultBytes=null;
-let curPg=1, zoom=1.0, scanMatches=[];
-let reps=[], rid=0;
-let pdfLib=null;
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+const LS_KEY = 'pdf_editor_rules_v2';
+let pdfDoc = null;          // pdf.js document
+let pdfBytes = null;        // original Uint8Array (preserved always)
+let editedBytes = null;     // result after apply
+let curPage = 1;
+let zoom = 1.0;
+let fnrOpen = false;
+let rulesOpen = false;
+let pdfLib = null;
 
-// ── DROP ZONE ──
-const dz=document.getElementById('dropzone');
-dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag');});
-dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
-dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag');const f=e.dataTransfer.files[0];if(f&&f.name.endsWith('.pdf'))loadPDF(f);});
+// Text index: array of {page, itemIdx, text, x, y, w, h, pdfH, fontName}
+let textIndex = [];
 
-async function loadPDF(file){
-  if(!file)return;
-  document.getElementById('dz-title').textContent=file.name;
-  document.getElementById('dz-sub').textContent=(file.size/1024/1024).toFixed(1)+' MB';
-  dz.classList.add('has-file');
-  const ab=await file.arrayBuffer();
-  pdfBytes=ab.slice(0);resultBytes=null;
-  pdfDoc=await pdfjsLib.getDocument({data:ab.slice(0)}).promise;
-  document.getElementById('ev').style.display='none';
-  document.getElementById('vtb').style.display='flex';
-  document.getElementById('cs').style.display='flex';
-  curPg=1;scanMatches=[];
-  updatePgInfo();await renderPg(curPg);
-  document.getElementById('bscan').disabled=false;
-  document.getElementById('bdl').disabled=true;
-  document.getElementById('scan-sec').style.display='none';
-  notify('PDF carregado — '+pdfDoc.numPages+' página(s)');
+// Find state
+let matches = [];   // indices into textIndex
+let matchCursor = -1;
+
+// Replacements applied: Map of { itemKey → newText }
+// itemKey = `${page}:${itemIdx}`
+let replacements = new Map();
+
+// Saved rules: [{id, find, replace, cs, whole}]
+let rules = loadRules();
+
+// ═══════════════════════════════════════════════════════
+// OPEN PDF
+// ═══════════════════════════════════════════════════════
+const dropzone = document.getElementById('dropzone');
+const scroll = document.getElementById('scroll');
+
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+dropzone.addEventListener('drop', e => {
+  e.preventDefault(); dropzone.classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if (f?.name.endsWith('.pdf')) openPDF(f);
+});
+
+async function openPDF(file) {
+  if (!file) return;
+  const ab = await file.arrayBuffer();
+  pdfBytes = new Uint8Array(ab);
+  editedBytes = null;
+  replacements.clear();
+  matches = []; matchCursor = -1;
+  textIndex = [];
+
+  showProg('Carregando PDF…', 'Lendo estrutura do documento…');
+  setProg(10);
+
+  pdfDoc = await pdfjsLib.getDocument({ data: pdfBytes.slice() }).promise;
+  setProg(20, `${pdfDoc.numPages} páginas encontradas`);
+
+  // Build text index
+  await buildIndex();
+  setProg(70);
+
+  // Render all pages
+  dropzone.classList.add('hidden');
+  scroll.style.display = 'flex';
+  scroll.innerHTML = '';
+
+  for (let p = 1; p <= pdfDoc.numPages; p++) {
+    setProg(70 + (p / pdfDoc.numPages) * 28, `Renderizando página ${p}/${pdfDoc.numPages}…`);
+    await renderPage(p);
+  }
+
+  hideProg();
+  curPage = 1;
+  updatePageNav();
+
+  document.getElementById('btn-fnr').disabled = false;
+  document.getElementById('btn-export').disabled = false;
+  document.getElementById('pg-nav').style.display = 'flex';
+  document.getElementById('btn-apply-all').disabled = rules.length === 0;
+
+  toast(`PDF carregado — ${pdfDoc.numPages} páginas`, 'ok');
+
+  // After load, scroll to top
+  scroll.scrollTop = 0;
 }
 
-async function renderPg(n){
-  if(!pdfDoc)return;
-  const page=await pdfDoc.getPage(n);
-  const vp=page.getViewport({scale:zoom});
-  const c=document.getElementById('pdf-c');
-  const ctx=c.getContext('2d');
-  c.width=vp.width;c.height=vp.height;
-  await page.render({canvasContext:ctx,viewport:vp}).promise;
-  // Highlights
-  const hits=scanMatches.filter(m=>m.page===n);
-  if(hits.length){
-    ctx.save();
-    hits.forEach(m=>{
-      const [sx,sy]=vp.convertToViewportPoint(m.x,m.pdfH-m.y);
-      const h=m.size*zoom*1.3,w=Math.min(500,m.textW*zoom);
-      ctx.fillStyle='rgba(232,255,71,0.22)';ctx.fillRect(sx,sy-h,w,h);
-      ctx.strokeStyle='rgba(232,255,71,0.7)';ctx.lineWidth=1.5;ctx.strokeRect(sx,sy-h,w,h);
+// ─── Build full text index ───
+async function buildIndex() {
+  textIndex = [];
+  for (let p = 1; p <= pdfDoc.numPages; p++) {
+    const page = await pdfDoc.getPage(p);
+    const tc = await page.getTextContent();
+    const vp = page.getViewport({ scale: 1 });
+    tc.items.forEach((item, idx) => {
+      if (!item.str || !item.str.trim()) return;
+      const tx = item.transform;
+      textIndex.push({
+        page: p,
+        itemIdx: idx,
+        text: item.str,
+        x: tx[4], y: tx[5],
+        w: item.width || item.str.length * Math.abs(tx[3]) * 0.55,
+        h: Math.abs(tx[3]) || item.height || 10,
+        pdfH: vp.height,
+        pdfW: vp.width,
+        fontName: item.fontName || '',
+      });
     });
-    ctx.restore();
   }
 }
 
-function updatePgInfo(){
-  if(!pdfDoc)return;
-  document.getElementById('pg-info').textContent=curPg+' / '+pdfDoc.numPages;
-  document.getElementById('bprev').disabled=curPg<=1;
-  document.getElementById('bnext').disabled=curPg>=pdfDoc.numPages;
+// ─── Render one page ───
+async function renderPage(pageNum) {
+  const page = await pdfDoc.getPage(pageNum);
+  const vp = page.getViewport({ scale: zoom });
+
+  let wrap = document.getElementById(`pw-${pageNum}`);
+  if (!wrap) {
+    wrap = document.createElement('div');
+    wrap.className = 'page-wrap';
+    wrap.id = `pw-${pageNum}`;
+    const cv = document.createElement('canvas');
+    cv.id = `pc-${pageNum}`;
+    const label = document.createElement('div');
+    label.className = 'pg-num';
+    label.textContent = pageNum;
+    wrap.appendChild(cv);
+    wrap.appendChild(label);
+    scroll.appendChild(wrap);
+  }
+
+  const canvas = document.getElementById(`pc-${pageNum}`);
+  canvas.width = vp.width;
+  canvas.height = vp.height;
+  wrap.style.width = vp.width + 'px';
+  wrap.style.height = (vp.height + 24) + 'px';
+
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  await page.render({ canvasContext: ctx, viewport: vp }).promise;
+
+  // Draw replacements overlay
+  drawOverlayOnCanvas(ctx, pageNum, vp);
+
+  // Draw match highlights
+  drawMatchHighlights(ctx, pageNum, vp);
 }
-async function changePg(d){const n=curPg+d;if(!pdfDoc||n<1||n>pdfDoc.numPages)return;curPg=n;updatePgInfo();await renderPg(curPg);}
-function zm(d){zoom=Math.max(0.2,Math.min(4,zoom+d));document.getElementById('zm-val').textContent=Math.round(zoom*100)+'%';renderPg(curPg);}
-function zmFit(){if(!pdfDoc)return;pdfDoc.getPage(curPg).then(pg=>{const vp=pg.getViewport({scale:1});const w=document.getElementById('cs').clientWidth-30;zoom=Math.min(w/vp.width,2.5);document.getElementById('zm-val').textContent=Math.round(zoom*100)+'%';renderPg(curPg);});}
 
-// ── REPS ──
-function addRep(o='',n='',cs=false){const id=++rid;reps.push({id,old:o,new:n,caseSensitive:cs});renderReps();}
-function removeRep(id){reps=reps.filter(r=>r.id!==id);renderReps();}
-function updRep(id,f,v){const r=reps.find(r=>r.id===id);if(r)r[f]=v;}
+function drawOverlayOnCanvas(ctx, pageNum, vp) {
+  const sc = vp.scale;
+  const entries = textIndex.filter(t => t.page === pageNum);
+  entries.forEach((t, i) => {
+    const key = `${t.page}:${t.itemIdx}`;
+    const newText = replacements.get(key);
+    if (newText === undefined) return;
 
-function renderReps(){
-  const list=document.getElementById('reps-list');list.innerHTML='';
-  reps.forEach(r=>{
-    const cnt=scanMatches.filter(m=>m.ruleId===r.id).length;
-    const d=document.createElement('div');d.className='rc'+(cnt?' hit':'');
-    d.innerHTML=`<button class="rdel" onclick="removeRep(${r.id})">✕</button>
-    <div class="rr"><span class="rl">Buscar</span><input class="ri old" value="${eh(r.old)}" placeholder="texto original..." oninput="updRep(${r.id},'old',this.value)"></div>
-    <div class="rr"><span class="rl">Trocar</span><input class="ri new" value="${eh(r.new)}" placeholder="novo texto..." oninput="updRep(${r.id},'new',this.value)"></div>
-    <div class="ro"><label><input type="checkbox" ${r.caseSensitive?'checked':''} onchange="updRep(${r.id},'caseSensitive',this.checked)"> Case sensitive</label>${cnt?`<span class="rbadge">${cnt} ocorrência(s)</span>`:''}</div>`;
-    list.appendChild(d);
+    // White cover
+    const sx = t.x * sc;
+    const sy = vp.height - t.y * sc;
+    const sw = (t.w + t.h * 4) * sc;
+    const sh = t.h * sc * 1.5;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(sx - 2, sy - sh + 2, sw + 4, sh + 2);
+
+    // New text
+    const fs = Math.max(6, t.h * sc * 0.85);
+    ctx.fillStyle = '#1a1a1b';
+    ctx.font = `${fs}px 'IBM Plex Mono', monospace`;
+    ctx.fillText(newText, sx, sy);
   });
-  document.getElementById('rcnt').textContent=reps.length+' regra(s)';
-  const hasPdf=!!pdfDoc,hasReps=reps.length>0;
-  document.getElementById('bscan').disabled=!hasPdf||!hasReps;
-  document.getElementById('bapply').disabled=!hasPdf||!hasReps;
 }
-function eh(s){return(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
-function er(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
 
-// ── SCAN ──
-async function doScan(){
-  if(!pdfDoc||!reps.length)return;
-  showProg('Escaneando...');scanMatches=[];
-  for(let i=1;i<=pdfDoc.numPages;i++){
-    setProg(i/pdfDoc.numPages*100,'Página '+i+'/'+pdfDoc.numPages);
-    const page=await pdfDoc.getPage(i);
-    const tc=await page.getTextContent();
-    const vp=page.getViewport({scale:1});
-    const pH=vp.height;
-    for(const item of tc.items){
-      const txt=item.str;if(!txt.trim())continue;
-      const tx=item.transform,x=tx[4],y=tx[5];
-      const fs=Math.abs(tx[3])||item.height||10;
-      const tw=item.width||txt.length*fs*0.55;
-      for(const rep of reps){
-        if(!rep.old)continue;
-        const fl=rep.caseSensitive?'g':'gi';
-        if(new RegExp(er(rep.old),fl).test(txt)){
-          const newTxt=txt.replace(new RegExp(er(rep.old),fl),rep.new);
-          scanMatches.push({page:i,ruleId:rep.id,original:txt,replacement:newTxt,x,y,size:fs,textW:tw,pdfH:pH});
-        }
-      }
+function drawMatchHighlights(ctx, pageNum, vp) {
+  const sc = vp.scale;
+  matches.forEach((mi, i) => {
+    const t = textIndex[mi];
+    if (t.page !== pageNum) return;
+    const sx = t.x * sc;
+    const sy = vp.height - t.y * sc;
+    const sw = Math.max(20, (t.w) * sc);
+    const sh = t.h * sc * 1.4;
+    const isCurrent = i === matchCursor;
+    ctx.fillStyle = isCurrent ? 'rgba(232,255,71,0.55)' : 'rgba(232,255,71,0.25)';
+    ctx.fillRect(sx - 2, sy - sh + 2, sw + 4, sh);
+    if (isCurrent) {
+      ctx.strokeStyle = 'rgba(180,200,0,0.8)';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(sx - 2, sy - sh + 2, sw + 4, sh);
     }
-    if(i%3===0)await new Promise(r=>setTimeout(r,10));
-  }
-  hideProg();renderScanList();renderReps();renderPg(curPg);
-  notify(scanMatches.length+' ocorrência(s) encontrada(s)'+(scanMatches.length===0));
+  });
 }
 
-function renderScanList(){
-  const sec=document.getElementById('scan-sec'),list=document.getElementById('scan-list');
-  list.innerHTML='';
-  if(!scanMatches.length){sec.style.display='none';notify('Nenhuma correspondência',true);return;}
-  sec.style.display='flex';
-  document.getElementById('scnt').textContent=scanMatches.length+' match(es)';
-  scanMatches.forEach(m=>{
-    const d=document.createElement('div');d.className='si'+(m.page===curPg?' ap':'');
-    d.innerHTML=`<span class="spg">Pág ${m.page}</span><div class="stxt"><div class="sold">${eh(m.original.slice(0,55))}${m.original.length>55?'…':''}</div><div class="snew">→ ${eh(m.replacement.slice(0,55))}${m.replacement.length>55?'…':''}</div></div>`;
-    d.addEventListener('click',async()=>{
-      if(m.page!==curPg){curPg=m.page;updatePgInfo();await renderPg(curPg);}
-      document.querySelectorAll('.si').forEach(el=>el.classList.remove('ap'));d.classList.add('ap');
+async function rerenderAll() {
+  for (let p = 1; p <= pdfDoc.numPages; p++) {
+    await renderPage(p);
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════
+function updatePageNav() {
+  if (!pdfDoc) return;
+  const inp = document.getElementById('pg-input');
+  inp.value = curPage;
+  inp.max = pdfDoc.numPages;
+  document.getElementById('pg-of').textContent = '/ ' + pdfDoc.numPages;
+  document.getElementById('btn-prev').disabled = curPage <= 1;
+  document.getElementById('btn-next').disabled = curPage >= pdfDoc.numPages;
+}
+function navPg(d) {
+  const n = curPage + d;
+  if (!pdfDoc || n < 1 || n > pdfDoc.numPages) return;
+  goPage(n);
+}
+function goPage(n) {
+  if (!pdfDoc) return;
+  n = Math.max(1, Math.min(pdfDoc.numPages, n));
+  curPage = n;
+  updatePageNav();
+  const wrap = document.getElementById(`pw-${n}`);
+  if (wrap) wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ═══════════════════════════════════════════════════════
+// ZOOM
+// ═══════════════════════════════════════════════════════
+async function doZoom(d) {
+  zoom = Math.max(0.3, Math.min(4.0, zoom + d));
+  document.getElementById('zm-label').textContent = Math.round(zoom * 100) + '%';
+  await rerenderAll();
+}
+async function zoomFit() {
+  if (!pdfDoc) return;
+  const page = await pdfDoc.getPage(1);
+  const vp = page.getViewport({ scale: 1 });
+  const sw = scroll.clientWidth - 48;
+  zoom = Math.min(sw / vp.width, 2.5);
+  document.getElementById('zm-label').textContent = Math.round(zoom * 100) + '%';
+  await rerenderAll();
+}
+window.addEventListener('resize', () => { if (pdfDoc) rerenderAll(); });
+
+// ═══════════════════════════════════════════════════════
+// FIND & REPLACE
+// ═══════════════════════════════════════════════════════
+function toggleFnr() {
+  fnrOpen = !fnrOpen;
+  document.getElementById('fnr').classList.toggle('open', fnrOpen);
+  document.getElementById('btn-fnr').classList.toggle('active', fnrOpen);
+  if (fnrOpen) {
+    setTimeout(() => document.getElementById('fnr-find').focus(), 300);
+  } else {
+    matches = []; matchCursor = -1;
+    updateMatchInfo();
+    rerenderAll();
+  }
+}
+
+function buildRegex(term, cs, whole) {
+  let flags = cs ? 'g' : 'gi';
+  let pattern = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  if (whole) pattern = `\\b${pattern}\\b`;
+  return new RegExp(pattern, flags);
+}
+
+function onFindInput() {
+  const term = document.getElementById('fnr-find').value;
+  const repl = document.getElementById('fnr-repl').value;
+  const cs = document.getElementById('fnr-cs').checked;
+  const whole = document.getElementById('fnr-whole').checked;
+  document.getElementById('fnr-save').disabled = !term || !repl;
+  if (!term) {
+    matches = []; matchCursor = -1;
+    updateMatchInfo();
+    rerenderAll();
+    setFnrActions(false);
+    return;
+  }
+  try {
+    const re = buildRegex(term, cs, whole);
+    matches = textIndex.reduce((acc, t, i) => {
+      if (re.test(t.text)) acc.push(i);
+      return acc;
+    }, []);
+    matchCursor = matches.length > 0 ? 0 : -1;
+    updateMatchInfo();
+    setFnrActions(matches.length > 0);
+    rerenderAll();
+    if (matchCursor >= 0) scrollToMatch(matches[matchCursor]);
+  } catch(e) {}
+}
+
+function setFnrActions(has) {
+  document.getElementById('fnr-prev').disabled = !has;
+  document.getElementById('fnr-next').disabled = !has;
+  document.getElementById('fnr-one').disabled = !has;
+  document.getElementById('fnr-all').disabled = !has;
+}
+
+function updateMatchInfo() {
+  const el = document.getElementById('fnr-match-info');
+  if (!matches.length) { el.textContent = ''; return; }
+  el.textContent = `${matchCursor + 1} de ${matches.length}`;
+}
+
+function navMatch(d) {
+  if (!matches.length) return;
+  matchCursor = ((matchCursor + d) + matches.length) % matches.length;
+  updateMatchInfo();
+  rerenderAll();
+  scrollToMatch(matches[matchCursor]);
+}
+
+function scrollToMatch(mi) {
+  const t = textIndex[mi];
+  if (!t) return;
+  if (t.page !== curPage) { curPage = t.page; updatePageNav(); }
+  const wrap = document.getElementById(`pw-${t.page}`);
+  if (wrap) wrap.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function replaceOne() {
+  if (matchCursor < 0 || !matches.length) return;
+  const mi = matches[matchCursor];
+  const t = textIndex[mi];
+  const key = `${t.page}:${t.itemIdx}`;
+  const find = document.getElementById('fnr-find').value;
+  const repl = document.getElementById('fnr-repl').value;
+  const cs = document.getElementById('fnr-cs').checked;
+  const whole = document.getElementById('fnr-whole').checked;
+  const re = buildRegex(find, cs, whole);
+  const newText = t.text.replace(re, repl);
+  replacements.set(key, newText);
+  editedBytes = null; // invalidate export
+  document.getElementById('btn-export').disabled = false;
+  // remove from matches
+  matches.splice(matchCursor, 1);
+  if (matchCursor >= matches.length) matchCursor = matches.length - 1;
+  updateMatchInfo();
+  setFnrActions(matches.length > 0);
+  renderPage(t.page);
+  toast(`Substituído na página ${t.page}`);
+}
+
+function replaceAll() {
+  if (!matches.length) return;
+  const find = document.getElementById('fnr-find').value;
+  const repl = document.getElementById('fnr-repl').value;
+  const cs = document.getElementById('fnr-cs').checked;
+  const whole = document.getElementById('fnr-whole').checked;
+  const re = buildRegex(find, cs, whole);
+  let count = 0;
+  const pages = new Set();
+  matches.forEach(mi => {
+    const t = textIndex[mi];
+    const key = `${t.page}:${t.itemIdx}`;
+    const newText = t.text.replace(re, repl);
+    replacements.set(key, newText);
+    pages.add(t.page);
+    count++;
+  });
+  matches = []; matchCursor = -1;
+  updateMatchInfo();
+  setFnrActions(false);
+  editedBytes = null;
+  document.getElementById('btn-export').disabled = false;
+  pages.forEach(p => renderPage(p));
+  toast(`${count} substituição(ões) aplicada(s)`, 'ok');
+}
+
+// ═══════════════════════════════════════════════════════
+// SAVED RULES
+// ═══════════════════════════════════════════════════════
+function loadRules() {
+  try { return JSON.parse(localStorage.getItem(LS_KEY) || '[]'); } catch { return []; }
+}
+function persistRules() {
+  localStorage.setItem(LS_KEY, JSON.stringify(rules));
+}
+
+function saveRule() {
+  const find = document.getElementById('fnr-find').value.trim();
+  const repl = document.getElementById('fnr-repl').value;
+  if (!find) return;
+  const cs = document.getElementById('fnr-cs').checked;
+  const whole = document.getElementById('fnr-whole').checked;
+  const id = Date.now();
+  rules.push({ id, find, replace: repl, cs, whole });
+  persistRules();
+  renderRulesList();
+  document.getElementById('btn-apply-all').disabled = false;
+  toast('Regra salva');
+}
+
+function deleteRule(id) {
+  rules = rules.filter(r => r.id !== id);
+  persistRules();
+  renderRulesList();
+  document.getElementById('btn-apply-all').disabled = rules.length === 0;
+}
+
+function loadRuleIntoFnr(rule) {
+  document.getElementById('fnr-find').value = rule.find;
+  document.getElementById('fnr-repl').value = rule.replace;
+  document.getElementById('fnr-cs').checked = rule.cs || false;
+  document.getElementById('fnr-whole').checked = rule.whole || false;
+  onFindInput();
+  if (!fnrOpen) toggleFnr();
+}
+
+function applyAllRules() {
+  if (!pdfDoc || !rules.length) return;
+  let count = 0;
+  const pages = new Set();
+  rules.forEach(rule => {
+    if (!rule.find) return;
+    const re = buildRegex(rule.find, rule.cs, rule.whole);
+    textIndex.forEach(t => {
+      if (!re.test(t.text)) return;
+      const key = `${t.page}:${t.itemIdx}`;
+      const newText = t.text.replace(re, rule.replace);
+      replacements.set(key, newText);
+      pages.add(t.page);
+      count++;
     });
+  });
+  editedBytes = null;
+  document.getElementById('btn-export').disabled = false;
+  pages.forEach(p => renderPage(p));
+  toast(`${count} substituição(ões) de ${rules.length} regra(s)`, 'ok');
+}
+
+function renderRulesList() {
+  const list = document.getElementById('rules-list');
+  if (!rules.length) {
+    list.innerHTML = '<div id="rules-empty">Nenhuma regra salva.<br>Use "Salvar regra" no painel de busca.</div>';
+    return;
+  }
+  list.innerHTML = '';
+  rules.forEach(r => {
+    const d = document.createElement('div');
+    d.className = 'rule-item';
+    const hasApplied = [...replacements.values()].length > 0;
+    d.innerHTML = `
+      <div class="rule-texts">
+        <div class="rule-old">${esc(r.find)}</div>
+        <div class="rule-arr">→</div>
+        <div class="rule-new">${esc(r.replace || '(vazio)')}</div>
+      </div>
+      <button class="rule-del" onclick="deleteRule(${r.id})" title="Remover">×</button>`;
+    d.addEventListener('click', e => { if (e.target.classList.contains('rule-del')) return; loadRuleIntoFnr(r); });
     list.appendChild(d);
   });
 }
 
-// ── APPLY ──
-async function loadPdfLib(){
-  if(pdfLib)return;
-  return new Promise((res,rej)=>{
-    const s=document.createElement('script');
-    s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';
-    s.onload=()=>{pdfLib=window.PDFLib;res();};s.onerror=rej;
+function toggleRules() {
+  rulesOpen = !rulesOpen;
+  document.getElementById('rules-drawer').classList.toggle('open', rulesOpen);
+  document.getElementById('overlay').classList.toggle('on', rulesOpen);
+  document.getElementById('btn-rules').classList.toggle('active', rulesOpen);
+  if (rulesOpen) renderRulesList();
+}
+function closeRules() {
+  rulesOpen = false;
+  document.getElementById('rules-drawer').classList.remove('open');
+  document.getElementById('overlay').classList.remove('on');
+  document.getElementById('btn-rules').classList.remove('active');
+}
+
+function exportRulesFile() {
+  const blob = new Blob([JSON.stringify(rules, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  Object.assign(document.createElement('a'), { href: url, download: 'pdf_rules.json' }).click();
+  setTimeout(() => URL.revokeObjectURL(url), 3000);
+  toast('Regras exportadas');
+}
+function importRulesFile() { document.getElementById('fi-rules').click(); }
+function importRules(file) {
+  if (!file) return;
+  const r = new FileReader();
+  r.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      rules = data.map((d, i) => ({ id: Date.now() + i, find: d.find || d.old || '', replace: d.replace || d.new || '', cs: d.cs || false, whole: d.whole || false }));
+      persistRules();
+      renderRulesList();
+      document.getElementById('btn-apply-all').disabled = rules.length === 0;
+      toast(rules.length + ' regra(s) importada(s)', 'ok');
+    } catch { toast('JSON inválido', 'err'); }
+  };
+  r.readAsText(file);
+  document.getElementById('fi-rules').value = '';
+}
+
+// ═══════════════════════════════════════════════════════
+// EXPORT — render all pages to canvas then build PDF
+// This approach guarantees ALL pages are preserved
+// ═══════════════════════════════════════════════════════
+async function loadPdfLib() {
+  if (pdfLib) return;
+  return new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';
+    s.onload = () => { pdfLib = window.PDFLib; res(); };
+    s.onerror = rej;
     document.head.appendChild(s);
   });
 }
 
-async function doApply(){
-  if(!pdfDoc||!reps.length||!pdfBytes)return;
-  showProg('Carregando motor...');
-  try{await loadPdfLib();}catch(e){hideProg();notify('Erro ao carregar pdf-lib',true);return;}
-  const{PDFDocument,rgb,StandardFonts}=pdfLib;
-  showProg('Aplicando substituições...');setProg(0,'Iniciando...');
-  const outDoc=await PDFDocument.load(pdfBytes);
-  const pages=outDoc.getPages();
-  const fH=await outDoc.embedFont(StandardFonts.Helvetica);
-  const fHB=await outDoc.embedFont(StandardFonts.HelveticaBold);
-  const fHO=await outDoc.embedFont(StandardFonts.HelveticaOblique);
-  const fHBO=await outDoc.embedFont(StandardFonts.HelveticaBoldOblique);
-  const fC=await outDoc.embedFont(StandardFonts.Courier);
-  const fT=await outDoc.embedFont(StandardFonts.TimesRoman);
-  const fTB=await outDoc.embedFont(StandardFonts.TimesRomanBold);
-  let tot=0;
-  for(let pi=0;pi<pages.length;pi++){
-    setProg((pi/pages.length)*100,'Página '+(pi+1)+'/'+pages.length);
-    const pjPage=await pdfDoc.getPage(pi+1);
-    const tc=await pjPage.getTextContent();
-    const vp=pjPage.getViewport({scale:1});
-    const pH=vp.height;
-    const plPage=pages[pi];
-    for(const item of tc.items){
-      const txt=item.str;if(!txt.trim())continue;
-      let nt=txt;
-      for(const rep of reps){
-        if(!rep.old)continue;
-        nt=nt.replace(new RegExp(er(rep.old),rep.caseSensitive?'g':'gi'),rep.new);
-      }
-      if(nt===txt)continue;
-      tot++;
-      const tx=item.transform,x=tx[4],y=tx[5];
-      const fs=Math.abs(tx[3])||item.height||10;
-      const aw=(item.width||txt.length*fs*0.55)+fs*4;
-      const ah=fs*1.45;
-      // White cover
-      plPage.drawRectangle({x:x-2,y:y-fs*0.25-2,width:aw+6,height:ah+4,color:rgb(1,1,1),opacity:1});
-      // Pick font
-      let font=fH;
-      const fn=(item.fontName||'').toLowerCase();
-      if(fn.includes('bold')&&(fn.includes('italic')||fn.includes('oblique')))font=fHBO;
-      else if(fn.includes('bold')||fn.includes('heavy'))font=fHB;
-      else if(fn.includes('italic')||fn.includes('oblique'))font=fHO;
-      else if(fn.includes('times')||fn.includes('roman'))font=fn.includes('bold')?fTB:fT;
-      else if(fn.includes('courier')||fn.includes('mono'))font=fC;
-      plPage.drawText(nt,{x,y,size:fs,font,color:rgb(0,0,0),opacity:1});
-    }
-    if(pi%4===0)await new Promise(r=>setTimeout(r,8));
+async function doExport() {
+  if (!pdfDoc) return;
+  if (!replacements.size) {
+    // No changes — just download original
+    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    Object.assign(document.createElement('a'), { href: url, download: 'documento_editado.pdf' }).click();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    toast('PDF baixado (sem alterações)');
+    return;
   }
-  setProg(100,'Finalizando...');await new Promise(r=>setTimeout(r,60));
-  resultBytes=await outDoc.save();
+
+  showProg('Exportando PDF…', 'Carregando motor de PDF…');
+  setProg(5);
+
+  try { await loadPdfLib(); } catch(e) {
+    hideProg(); toast('Erro ao carregar pdf-lib — verifique conexão', 'err'); return;
+  }
+
+  const { PDFDocument, rgb } = pdfLib;
+  const HIGH_ZOOM = 2.0; // render at 2x for quality
+
+  const outDoc = await PDFDocument.create();
+  const totalPages = pdfDoc.numPages;
+
+  for (let p = 1; p <= totalPages; p++) {
+    setProg(5 + (p / totalPages) * 90, `Página ${p} / ${totalPages}…`);
+
+    const page = await pdfDoc.getPage(p);
+    const vp1 = page.getViewport({ scale: 1 });
+    const vp = page.getViewport({ scale: HIGH_ZOOM });
+
+    // Render to offscreen canvas
+    const canvas = document.createElement('canvas');
+    canvas.width = vp.width;
+    canvas.height = vp.height;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    await page.render({ canvasContext: ctx, viewport: vp }).promise;
+
+    // Draw replacement overlays at high zoom
+    const sc = HIGH_ZOOM;
+    textIndex.filter(t => t.page === p).forEach(t => {
+      const key = `${t.page}:${t.itemIdx}`;
+      const newText = replacements.get(key);
+      if (newText === undefined) return;
+      const sx = t.x * sc;
+      const sy = vp.height - t.y * sc;
+      const sw = (t.w + t.h * 4) * sc;
+      const sh = t.h * sc * 1.5;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(sx - 3, sy - sh + 2, sw + 6, sh + 3);
+      const fs = Math.max(8, t.h * sc * 0.85);
+      ctx.fillStyle = '#1a1a1b';
+      ctx.font = `${fs}px 'IBM Plex Mono', Arial, monospace`;
+      ctx.fillText(newText, sx, sy);
+    });
+
+    // Embed canvas as image into pdf-lib page
+    const imgData = canvas.toDataURL('image/jpeg', 0.92);
+    const jpgBytes = await fetch(imgData).then(r => r.arrayBuffer());
+    const img = await outDoc.embedJpg(jpgBytes);
+
+    const pdfPage = outDoc.addPage([vp1.width, vp1.height]);
+    pdfPage.drawImage(img, { x: 0, y: 0, width: vp1.width, height: vp1.height });
+
+    // Free canvas memory
+    canvas.width = 1; canvas.height = 1;
+  }
+
+  setProg(97, 'Gerando arquivo…');
+  await new Promise(r => setTimeout(r, 60));
+
+  const bytes = await outDoc.save();
   hideProg();
-  notify('✓ '+tot+' substituição(ões) aplicada(s)!');
-  // Reload viewer with result
-  const blob=new Blob([resultBytes],{type:'application/pdf'});
-  const url=URL.createObjectURL(blob);
-  pdfDoc=await pdfjsLib.getDocument(url).promise;
-  scanMatches=[];document.getElementById('scan-sec').style.display='none';
-  renderReps();updatePgInfo();await renderPg(curPg);
-  document.getElementById('bdl').disabled=false;
+
+  const blob = new Blob([bytes], { type: 'application/pdf' });
+  const url = URL.createObjectURL(blob);
+  Object.assign(document.createElement('a'), { href: url, download: 'documento_editado.pdf' }).click();
+  setTimeout(() => URL.revokeObjectURL(url), 8000);
+
+  toast(`PDF exportado — ${totalPages} páginas`, 'ok');
 }
 
-function downloadResult(){
-  if(!resultBytes)return;
-  const url=URL.createObjectURL(new Blob([resultBytes],{type:'application/pdf'}));
-  Object.assign(document.createElement('a'),{href:url,download:'photoniko_edited.pdf'}).click();
-  setTimeout(()=>URL.revokeObjectURL(url),5000);
+// ═══════════════════════════════════════════════════════
+// PROGRESS
+// ═══════════════════════════════════════════════════════
+function showProg(title, sub='') {
+  document.getElementById('prog-sheet').classList.add('on');
+  document.getElementById('prog-title').textContent = title;
+  document.getElementById('prog-sub').textContent = sub;
+  document.getElementById('prog-fill').style.width = '0%';
+  document.getElementById('prog-pages').textContent = '';
+}
+function setProg(pct, label='') {
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('prog-sub').textContent = label;
+}
+function hideProg() { document.getElementById('prog-sheet').classList.remove('on'); }
+
+// ═══════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════
+function toast(msg, type='') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'on' + (type ? ' ' + type : '');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.className = '', 2800);
 }
 
-// ── RULES IMPORT/EXPORT ──
-function exportRules(){
-  const data=reps.map(r=>({old:r.old,new:r.new,caseSensitive:r.caseSensitive}));
-  const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
-  Object.assign(document.createElement('a'),{href:url,download:'photoniko_rules.json'}).click();
-  setTimeout(()=>URL.revokeObjectURL(url),3000);notify('Regras exportadas!');
-}
-function importRules(file){
-  if(!file)return;
-  const r=new FileReader();
-  r.onload=e=>{
-    try{const data=JSON.parse(e.target.result);reps=[];
-      data.forEach(d=>addRep(d.old||'',d.new||'',d.caseSensitive||false));
-      notify(data.length+' regra(s) importada(s)');
-    }catch{notify('JSON inválido',true);}
-  };
-  r.readAsText(file);document.getElementById('fi-json').value='';
-}
+// ═══════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
 
-// ── PROG & NOTIFY ──
-function showProg(t=''){document.getElementById('prog').classList.add('on');document.getElementById('prog-t').textContent=t;document.getElementById('pb').style.width='0%';document.getElementById('plb').textContent='';}
-function setProg(p,l=''){document.getElementById('pb').style.width=p+'%';document.getElementById('plb').textContent=l;}
-function hideProg(){document.getElementById('prog').classList.remove('on');}
-function notify(msg,err=false){const n=document.getElementById('nt');n.textContent=msg;n.className='on'+(err?' err':'');clearTimeout(n._t);n._t=setTimeout(()=>n.className='',3200);}
+// ═══════════════════════════════════════════════════════
+// KEYBOARD
+// ═══════════════════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  const tag = e.target.tagName;
+  const isInput = tag === 'INPUT' || tag === 'TEXTAREA';
+  if ((e.ctrlKey || e.metaKey) && e.key === 'o') { e.preventDefault(); document.getElementById('fi-pdf').click(); }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'f') { e.preventDefault(); if (pdfDoc) { if (!fnrOpen) toggleFnr(); else document.getElementById('fnr-find').focus(); } }
+  if ((e.ctrlKey || e.metaKey) && e.key === 's' && pdfDoc) { e.preventDefault(); doExport(); }
+  if (e.key === 'Escape') { if (fnrOpen) toggleFnr(); if (rulesOpen) closeRules(); }
+  if (e.key === 'Enter' && isInput && document.getElementById('fnr-find') === document.activeElement) {
+    e.shiftKey ? navMatch(-1) : navMatch(1);
+  }
+});
 
-// ── INIT ──
-function init(){
-  addRep('vendas@mdl-brasil.com.br','',false);
-  addRep('www.mdl-brasil.com.br','',false);
-  addRep('MDL - Danly','',false);
-  addRep('Máquinas Danly Ltda','',false);
-  addRep('(11) 2107 - 0400','',false);
-  addRep('(11) 97614 - 2735','',false);
-  addRep('Mairinque - SP','',false);
-  addRep('Avenida Prink, 151','',false);
-}
-init();
+// Scroll spy for page nav
+scroll.addEventListener('scroll', () => {
+  if (!pdfDoc) return;
+  const scrollMid = scroll.scrollTop + scroll.clientHeight / 2;
+  for (let p = 1; p <= pdfDoc.numPages; p++) {
+    const wrap = document.getElementById(`pw-${p}`);
+    if (!wrap) continue;
+    if (wrap.offsetTop <= scrollMid && wrap.offsetTop + wrap.offsetHeight > scrollMid) {
+      if (curPage !== p) { curPage = p; updatePageNav(); }
+      break;
+    }
+  }
+});
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+renderRulesList();
+document.getElementById('btn-apply-all').disabled = rules.length === 0;
 </script>
 </body>
 </html>
